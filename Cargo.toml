@@ -4,3 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[features]
+default = ["ob11", "ob12"]
+ob11 = []
+ob12 = []
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+serde = { version = "*", features = ["derive"]}
+serde_json = { version = "*"}
