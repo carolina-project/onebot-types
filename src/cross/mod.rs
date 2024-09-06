@@ -38,7 +38,8 @@ pub trait ParseData {
         Self: Sized;
 }
 
-pub trait DataImpl: ParseData + JSONPointer {}
-impl<T: ParseData + JSONPointer> DataImpl for T {}
+pub trait DataImpl: ParseData + JSONPointer {
+    fn new() -> Self;
+}
 
 pub use data::Data;

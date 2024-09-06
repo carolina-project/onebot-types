@@ -1,4 +1,4 @@
-use super::{JSONPointer, ParseData};
+use super::{DataImpl, JSONPointer, ParseData};
 
 pub type Data = serde_json::Value;
 
@@ -115,5 +115,11 @@ impl ParseData for Data {
         Self: Sized,
     {
         self.as_array()
+    }
+}
+
+impl DataImpl for Data {
+    fn new() -> Self {
+        Data::default()
     }
 }

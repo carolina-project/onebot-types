@@ -1,27 +1,4 @@
-pub enum MessageSeg {
-    /// text message, contains text
-    Text(String),
-    /// see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)
-    Face(u16),
-    Image(Image),
-    Record(Record),
-    Video(Video),
-    At(AtTarget),
-    Rps,
-    Dice,
-    Shake,
-    Poke(Poke),
-    Anonymous,
-    Share(Share),
-    Contact(Contact),
-    Location(Location),
-    Music(Music),
-    /// represents reply message by message id
-    Reply(u64),
-    /// https://github.com/botuniverse/onebot-11/blob/master/message/segment.md#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-
-    Forward(u64),
-    Node(u64),
-}
+use super::MessageSeg;
 
 pub enum FileOption {
     Send {
@@ -98,4 +75,15 @@ pub enum MusicType {
     NCM,
     QQ,
     XM,
+}
+
+pub enum ForwardNode {
+    Message {
+        id: u32,
+    },
+    Custom {
+        user_id: u64,
+        nickname: String,
+        content: Vec<MessageSeg>,
+    },
 }
