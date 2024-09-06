@@ -5,7 +5,7 @@ use crate::cross::Data;
     not(target_arch = "wasm32"),
     derive(serde::Serialize, serde::Deserialize)
 )]
-pub struct OB11Action {
+pub struct OB11ActionData {
     pub action: String,
     pub params: Data,
 }
@@ -27,7 +27,7 @@ pub enum OB11RespStatus {
     not(target_arch = "wasm32"),
     derive(serde::Serialize, serde::Deserialize)
 )]
-pub struct OB11Resp {
+pub struct OB11RespData {
     pub status: OB11RespStatus,
     pub retcode: i64,
     pub data: Data,

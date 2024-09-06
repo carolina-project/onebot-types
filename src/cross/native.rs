@@ -1,12 +1,14 @@
-use super::JSONPointer;
+use super::{JSONPointer, ParseData};
 
 pub type Data = serde_json::Value;
 
 impl JSONPointer for Data {
+    #[inline]
     fn pointer(&self, pointer: &str) -> Option<&Self> {
         self.pointer(pointer)
     }
 
+    #[inline]
     fn pointer_mut(&mut self, pointer: &str) -> Option<&mut Self> {
         self.pointer_mut(pointer)
     }
@@ -39,5 +41,79 @@ impl JSONPointer for Data {
                 current = current.get_mut(key).unwrap();
             }
         }
+    }
+}
+impl ParseData for Data {
+    #[inline]
+    fn is_str(&self) -> bool {
+        self.is_string()
+    }
+
+    #[inline]
+    fn is_i64(&self) -> bool {
+        self.is_f64()
+    }
+
+    #[inline]
+    fn is_u64(&self) -> bool {
+        self.is_u64()
+    }
+
+    #[inline]
+    fn is_f64(&self) -> bool {
+        self.is_f64()
+    }
+
+    #[inline]
+    fn is_bool(&self) -> bool {
+        self.is_boolean()
+    }
+
+    #[inline]
+    fn is_arr(&self) -> bool {
+        self.is_array()
+    }
+
+    #[inline]
+    fn is_obj(&self) -> bool {
+        self.is_object()
+    }
+
+    #[inline]
+    fn is_none(&self) -> bool {
+        self.is_null()
+    }
+
+    #[inline]
+    fn as_str(&self) -> Option<&str> {
+        self.as_str()
+    }
+
+    #[inline]
+    fn as_i64(&self) -> Option<i64> {
+        self.as_i64()
+    }
+
+    #[inline]
+    fn as_u64(&self) -> Option<u64> {
+        self.as_u64()
+    }
+
+    #[inline]
+    fn as_f64(&self) -> Option<f64> {
+        self.as_f64()
+    }
+
+    #[inline]
+    fn as_bool(&self) -> Option<bool> {
+        self.as_bool()
+    }
+
+    #[inline]
+    fn as_arr(&self) -> Option<&Vec<Self>>
+    where
+        Self: Sized,
+    {
+        self.as_array()
     }
 }

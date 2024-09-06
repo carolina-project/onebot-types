@@ -18,7 +18,7 @@ pub enum OB12EventType {
     not(target_arch = "wasm32"),
     derive(serde::Serialize, serde::Deserialize)
 )]
-pub struct OB12Event {
+pub struct OB12EventData {
     pub id: String,
     pub time: f64,
     #[cfg_attr(not(target_arch = "wasm32"), serde(rename = "self"))]
