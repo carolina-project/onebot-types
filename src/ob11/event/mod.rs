@@ -1,9 +1,15 @@
-use crate::cross::Data;
+use meta::MetaEvent;
+use notice::NoticeEvent;
+use ob_types_base::cross::Data;
+use ob_types_macro::native_data;
+use request::RequestEvent;
 
 use self::message::MessageEvent;
 
 pub mod message;
 pub mod meta;
+pub mod notice;
+pub mod request;
 
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(
@@ -19,10 +25,7 @@ pub enum OB11PostType {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize)
-)]
+#[native_data]
 pub struct OB11EventRaw {
     pub time: u64,
     pub self_id: u64,
@@ -38,5 +41,8 @@ pub struct Event {
 }
 
 pub enum EventKind {
-    MessageEvent(MessageEvent),
+    Message(MessageEvent),
+    Meta(MetaEvent),
+    Request(RequestEvent),
+    Notice(NoticeEvent),
 }

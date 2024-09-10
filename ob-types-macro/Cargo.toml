@@ -1,20 +1,19 @@
 [package]
-name = "onebot-types"
+name = "ob-types-macro"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-thiserror = { version = "*"}
-ob-types-macro = { path = "./ob-types-macro" }
-ob-types-base = { path = "./ob-types-base" }
-
-[features]
-default = ["ob11", "ob12"]
-ob11 = []
-ob12 = []
+syn = { version = "*", features = ["full"]}
+quote = "*"
+proc-macro2 = "*"
+ob-types-base = { path = "../ob-types-base"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 serde = { version = "*", features = ["derive"]}
 serde_json = { version = "*"}
+
+[lib]
+proc-macro = true

@@ -1,18 +1,17 @@
 pub mod types;
 
-use crate::cross::Data;
+use ob_types_base::cross::Data;
+use ob_types_macro::native_data;
 use types::*;
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize)
-)]
+#[native_data]
 pub struct OB11MessageSegRaw {
     pub r#type: String,
     pub data: Data,
 }
 
+#[native_data]
 pub enum MessageSeg {
     /// text message, contains text
     Text(String),

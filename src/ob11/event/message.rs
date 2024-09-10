@@ -1,3 +1,5 @@
+use ob_types_macro::native_data;
+
 use crate::ob11::message::MessageSeg;
 
 pub struct MessageEvent {
@@ -11,6 +13,8 @@ pub struct Message {
     pub raw_message: String,
     pub font: u32,
 }
+
+#[native_data(serde(rename_all = "lowercase"))]
 pub enum Sex {
     Male,
     Female,
@@ -35,6 +39,8 @@ pub enum PrivateSubType {
     Group,
     Other,
 }
+
+#[native_data]
 pub struct PrivateSender {
     pub user_id: u64,
     pub nickname: String,
@@ -47,6 +53,8 @@ pub enum GroupSubType {
     Anonymous,
     Notice,
 }
+
+#[native_data(serde(rename_all = "lowercase"))]
 pub struct GroupSender {
     pub user_id: u64,
     pub nickname: String,
@@ -58,6 +66,7 @@ pub struct GroupSender {
     pub role: String,
     pub title: String,
 }
+#[native_data]
 pub struct AnonymousSender {
     pub id: u64,
     pub name: String,

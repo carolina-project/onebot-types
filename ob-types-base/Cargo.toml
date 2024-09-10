@@ -1,17 +1,10 @@
 [package]
-name = "onebot-types"
+name = "ob-types-base"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-thiserror = { version = "*"}
-ob-types-macro = { path = "./ob-types-macro" }
-ob-types-base = { path = "./ob-types-base" }
-
-[features]
-default = ["ob11", "ob12"]
-ob11 = []
-ob12 = []
+thiserror = "*"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 

@@ -1,3 +1,7 @@
+use serde::de::DeserializeOwned;
+
+use crate::OBRespData;
+
 use super::{DataImpl, JSONPointer, ParseData};
 
 pub type Data = serde_json::Value;
@@ -121,5 +125,15 @@ impl ParseData for Data {
 impl DataImpl for Data {
     fn new() -> Self {
         Data::default()
+    }
+}
+
+impl<T: DeserializeOwned> OBRespData for T {
+    #[inline]
+    fn from_data(data: Data) -> crate::error::OBResult<Self>
+    where
+        Self: Sized,
+    {
+        Ok(serde_json::from_value(data)?)
     }
 }

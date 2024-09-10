@@ -1,4 +1,4 @@
-use crate::cross::Data;
+use ob_types_base::cross::Data;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(
