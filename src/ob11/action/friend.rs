@@ -1,8 +1,8 @@
-use ob_types_macro::onebot_action;
+use ob_types_macro::{native_data, onebot_action};
 
-use crate::ob11::event::request::AddGroupType;
+use crate::ob11::Sex;
 
-use super::bot::EmptyResp;
+use super::EmptyResp;
 
 #[onebot_action("send_like", EmptyResp)]
 pub struct SendLike {
@@ -17,10 +17,25 @@ pub struct SetFriendAddRequest {
     pub remark: Option<String>,
 }
 
-#[onebot_action("set_group_add_request", EmptyResp)]
-pub struct SetGroupAddRequest {
-    pub flag: String,
-    pub sub_type: AddGroupType,
-    pub approve: Option<bool>,
-    pub reason: Option<String>,
+#[onebot_action("get_stranger_info", StrangerInfoResp)]
+pub struct GetStrangerInfo {
+    pub user_id: u64,
+    pub no_cache: Option<bool>,
+}
+
+#[native_data]
+pub struct StrangerInfoResp {
+    pub user_id: u64,
+    pub nickname: String,
+    pub sex: Sex
+}
+
+#[onebot_action("get_friend_list", Vec<FriendInfo>)]
+pub struct GetFriendList;
+
+#[native_data]
+pub struct FriendInfo {
+    pub user_id: u64,
+    pub nickname: String,
+    pub remark: String
 }

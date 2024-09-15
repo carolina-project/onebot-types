@@ -5,6 +5,8 @@ pub mod bot;
 pub mod friend;
 pub mod group;
 
+pub type EmptyResp = ();
+
 #[derive(Clone, Debug)]
 #[native_data]
 pub struct OB11ActionRaw {

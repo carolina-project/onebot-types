@@ -1,11 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, parse_macro_input, token::Comma, Ident, ItemStruct, LitStr};
+use syn::{parse::Parse, parse_macro_input, token::Comma, ItemStruct, LitStr, Type};
 
 struct OBActionArgs {
     action_name: LitStr,
     _comma: Comma,
-    response_type: Ident,
+    response_type: Type,
 }
 impl Parse for OBActionArgs {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {

@@ -1,6 +1,6 @@
 use ob_types_macro::native_data;
 
-use crate::ob11::message::MessageSeg;
+use crate::ob11::{message::MessageSeg, Sex};
 
 pub struct MessageEvent {
     pub message: Message,
@@ -12,13 +12,6 @@ pub struct Message {
     pub message: Vec<MessageSeg>,
     pub raw_message: String,
     pub font: u32,
-}
-
-#[native_data(serde(rename_all = "lowercase"))]
-pub enum Sex {
-    Male,
-    Female,
-    Unknown,
 }
 
 pub enum MessageKind {
