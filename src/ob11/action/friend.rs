@@ -27,7 +27,8 @@ pub struct GetStrangerInfo {
 pub struct StrangerInfoResp {
     pub user_id: u64,
     pub nickname: String,
-    pub sex: Sex
+    pub sex: Sex,
+    pub age: u32
 }
 
 #[onebot_action("get_friend_list", Vec<FriendInfo>)]

@@ -2,6 +2,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, parse_macro_input, token::Comma, ItemStruct, LitStr, Type};
 
+mod tool;
+
 struct OBActionArgs {
     action_name: LitStr,
     _comma: Comma,
@@ -43,30 +45,31 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn native(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
+pub fn native_attrs(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let attrs: proc_macro2::TokenStream = attrs.into();
-    quote! {
+    tool::append_tokens(quote! {
         #[cfg_attr(
             not(target_arch = "wasm32"),
             #attrs
         )]
-        #input
-    }
-    .into()
+    }, input)
+}
+
+#[proc_macro_attribute]
+pub fn native_cfg(_: TokenStream, input: TokenStream) -> TokenStream {
+    tool::append_tokens(quote! {
+        #[cfg(not(target_arch = "wasm32"))]
+    }, input)
 }
 
 #[proc_macro_attribute]
 pub fn native_data(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let input: proc_macro2::TokenStream = input.into();
     let attrs: proc_macro2::TokenStream = attrs.into();
-    quote! {
+    tool::append_tokens(quote! {
         #[cfg_attr(
             not(target_arch = "wasm32"),
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]
-        #input
-    }
-    .into()
+    }, input)
 }

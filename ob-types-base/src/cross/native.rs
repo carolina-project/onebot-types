@@ -1,4 +1,6 @@
-use serde::de::DeserializeOwned;
+use std::time::Duration;
+
+use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 
 use crate::OBRespData;
 
@@ -136,4 +138,12 @@ impl<T: DeserializeOwned> OBRespData for T {
     {
         Ok(serde_json::from_value(data)?)
     }
+}
+
+pub fn duration_from_seconds<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let seconds: Option<u64> = Deserialize::deserialize(deserializer)?;
+    Ok(seconds.map(Duration::from_secs))
 }

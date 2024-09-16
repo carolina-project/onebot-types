@@ -1,6 +1,6 @@
 #[cfg_attr(target_arch = "wasm32", path = "./wasm.rs")]
 #[cfg_attr(not(target_arch = "wasm32"), path = "./native.rs")]
-mod data;
+pub mod data;
 
 /// A trait for data that can be accessed by JSON Pointer
 pub trait JSONPointer {

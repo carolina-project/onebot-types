@@ -1,9 +1,12 @@
 use std::{marker::PhantomData, time::Duration};
 
 use ob_types_base::{OBAction, OBRespData};
-use ob_types_macro::{native_data, onebot_action};
+use ob_types_macro::{native_cfg, native_data, onebot_action};
 
-use crate::ob11::event::{message::AnonymousSender, request::AddGroupType};
+use crate::{
+    ob11::event::{message::AnonymousSender, request::AddGroupType},
+    value_to_hashmap,
+};
 
 use super::EmptyResp;
 
@@ -18,6 +21,10 @@ pub struct SetGroupKick {
 pub struct SetGroupBan {
     pub group_id: u64,
     pub user_id: u64,
+    #[cfg_attr(
+        not(target_arch = "wasm32"),
+        serde(deserialize_with = "ob_types_base::cross::data::duration_from_seconds")
+    )]
     pub duration: Option<Duration>,
 }
 
@@ -77,6 +84,10 @@ pub struct SetGroupSpecialTitle {
     pub group_id: u64,
     pub user_id: u64,
     pub special_title: Option<String>,
+    #[cfg_attr(
+        not(target_arch = "wasm32"),
+        serde(deserialize_with = "ob_types_base::cross::data::duration_from_seconds")
+    )]
     pub duration: Option<Duration>,
 }
 
@@ -200,43 +211,30 @@ pub struct GroupTalkative {
     pub talkative_list: Vec<GroupHonorUser>,
 }
 
-pub struct GroupHonorListed<S: GroupHonor> {
+pub struct GroupHonorList<S: GroupHonor> {
     pub group_id: u64,
     pub list: Vec<GroupHonorUser>,
     _marker: PhantomData<S>,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorListed<S> {
+#[native_cfg]
+impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de;
-        use serde_json::Value;
-
-        let mut value = serde_json::Value::deserialize(deserializer)?;
+        let mut value = value_to_hashmap(deserializer)?;
         let field = format!("{}_list", S::type_name());
         Ok(Self {
-            group_id: value
-                .get("group_id")
-                .and_then(Value::as_u64)
-                .ok_or_else(|| de::Error::missing_field("group_id"))?,
-            list: value
-                .get_mut(&field)
-                .and_then(Value::as_array_mut)
-                .ok_or_else(|| de::Error::custom(format!("missing field {}", field)))?
-                .drain(..)
-                .map(serde_json::from_value::<GroupHonorUser>)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(de::Error::custom)?,
+            group_id: crate::hashmap_value_get::<_, D>(&mut value, "group_id")?,
+            list: crate::hashmap_value_get::<_, D>(&mut value, &field)?,
             _marker: PhantomData,
         })
     }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-impl<T: GroupHonor> serde::Serialize for GroupHonorListed<T> {
+impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -250,7 +248,7 @@ impl<T: GroupHonor> serde::Serialize for GroupHonorListed<T> {
     }
 }
 
-impl<T: GroupHonor> GroupHonorListed<T> {
+impl<T: GroupHonor> GroupHonorList<T> {
     pub fn new(group_id: u64, list: Vec<GroupHonorUser>) -> Self {
         Self {
             group_id,
@@ -263,10 +261,16 @@ impl<T: GroupHonor> GroupHonorListed<T> {
 #[native_data]
 pub struct GroupAllHonor {
     pub group_id: u64,
+    pub current_talkative: CurrentTalkative,
+    pub talkative_list: Vec<GroupHonorUser>,
+    pub performer_list: Vec<GroupHonorUser>,
+    pub legend_list: Vec<GroupHonorUser>,
+    pub strong_newbie_list: Vec<GroupHonorUser>,
+    pub emotion_list: Vec<GroupHonorUser>,
 }
 
 pub mod honor {
-    use super::{GroupHonor, GroupHonorListed};
+    use super::{GroupAllHonor, GroupHonor, GroupHonorList};
 
     // -talkative
     pub struct Talkative;
@@ -281,7 +285,7 @@ pub mod honor {
     // -performer
     pub struct Performer;
     impl GroupHonor for Performer {
-        type Output = GroupHonorListed<Self>;
+        type Output = GroupHonorList<Self>;
 
         fn type_name() -> &'static str {
             "performer"
@@ -291,7 +295,7 @@ pub mod honor {
     // -legend
     pub struct Legend;
     impl GroupHonor for Legend {
-        type Output = GroupHonorListed<Self>;
+        type Output = GroupHonorList<Self>;
 
         fn type_name() -> &'static str {
             "legend"
@@ -301,7 +305,7 @@ pub mod honor {
     // -strong_newbie
     pub struct StrongNewbie;
     impl GroupHonor for StrongNewbie {
-        type Output = GroupHonorListed<Self>;
+        type Output = GroupHonorList<Self>;
 
         fn type_name() -> &'static str {
             "strong_newbie"
@@ -311,10 +315,20 @@ pub mod honor {
     // -emotion
     pub struct Emotion;
     impl GroupHonor for Emotion {
-        type Output = GroupHonorListed<Self>;
+        type Output = GroupHonorList<Self>;
 
         fn type_name() -> &'static str {
             "emotion"
+        }
+    }
+
+    // -all
+    pub struct All;
+    impl GroupHonor for All {
+        type Output = GroupAllHonor;
+
+        fn type_name() -> &'static str {
+            "all"
         }
     }
 }
