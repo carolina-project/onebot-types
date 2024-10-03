@@ -1,4 +1,4 @@
-use ob_types_macro::native_data;
+use ob_types_macro::json;
 
 pub struct RequestEvent {
     pub user_id: u64,
@@ -17,7 +17,7 @@ pub struct AddGroup {
     pub group_id: u64,
 }
 
-#[native_data(serde(rename_all = "lowercase"))]
+#[json(serde(rename_all = "lowercase"))]
 pub enum AddGroupType {
     Add,
     Invite,

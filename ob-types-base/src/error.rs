@@ -2,9 +2,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum OBError {
+    #[cfg(feature = "json")]
     #[error(transparent)]
-    #[cfg(not(target_arch = "wasm32"))]
-    Data(#[from] serde_json::Error),
+    Serde(#[from] serde_json::Error)
 }
 
 pub type OBResult<T> = Result<T, OBError>;

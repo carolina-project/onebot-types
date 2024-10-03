@@ -3,11 +3,15 @@ name = "ob-types-base"
 version = "0.1.0"
 edition = "2021"
 
+
 [dependencies]
 thiserror = "*"
+serde = { version = "*", features = ["derive"], optional = true }
+serde_json = { version = "*", optional = true }
+
+[features]
+json = ["serde", "serde_json"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-serde = { version = "*", features = ["derive"]}
-serde_json = { version = "*"}

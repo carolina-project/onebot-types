@@ -1,18 +1,16 @@
-use cross::Data;
-use error::OBResult;
-use serde::Serialize;
-
-pub mod cross;
 pub mod error;
+pub mod json;
+
+pub use error::OBResult;
+pub use json::JSONValue;
+
+pub mod tool;
 
 pub trait OBRespData {
-    fn from_data(data: Data) -> OBResult<Self>
+    #[cfg(feature = "json")]
+    fn from_json_raw(data: serde_json::Value) -> OBResult<Self>
     where
         Self: Sized;
-}
-
-pub trait ToData {
-    fn to_data(self) -> OBResult<Data>;
 }
 
 pub trait OBAction {
@@ -21,9 +19,14 @@ pub trait OBAction {
     fn action(&self) -> &str;
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-impl<T: Serialize> ToData for T {
-    fn to_data(self) -> OBResult<Data> {
-        Ok(serde_json::to_value(self)?)
+#[cfg(feature = "json")]
+mod serde_impl {
+    impl<T: serde::de::DeserializeOwned> super::OBRespData for T {
+        fn from_json_raw(data: serde_json::Value) -> super::OBResult<Self>
+        where
+            Self: Sized,
+        {
+            Ok(serde_json::from_value(data)?)
+        }
     }
 }

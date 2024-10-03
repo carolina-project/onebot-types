@@ -1,4 +1,4 @@
-use ob_types_macro::native_data;
+use ob_types_macro::json;
 
 use crate::ob11::{message::MessageSeg, Sex};
 
@@ -33,7 +33,7 @@ pub enum PrivateSubType {
     Other,
 }
 
-#[native_data]
+#[json]
 pub struct PrivateSender {
     pub user_id: u64,
     pub nickname: String,
@@ -47,7 +47,7 @@ pub enum GroupSubType {
     Notice,
 }
 
-#[native_data(serde(rename_all = "lowercase"))]
+#[json(serde(rename_all = "lowercase"))]
 pub struct GroupSender {
     pub user_id: u64,
     pub nickname: String,
@@ -59,7 +59,7 @@ pub struct GroupSender {
     pub role: String,
     pub title: String,
 }
-#[native_data]
+#[json]
 pub struct AnonymousSender {
     pub id: u64,
     pub name: String,

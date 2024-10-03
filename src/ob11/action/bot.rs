@@ -4,12 +4,12 @@ use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::MessageSeg,
 };
-use ob_types_base::{cross::Data, OBAction};
-use ob_types_macro::{native_attrs, native_cfg, native_data, onebot_action};
+use ob_types_base::{json::JSONValue, OBAction};
+use ob_types_macro::{json, onebot_action};
 
 use super::EmptyResp;
 
-#[native_data]
+#[json]
 pub enum ChatTarget {
     Private(u64),
     Group(u64),
@@ -26,66 +26,73 @@ impl OBAction for SendMessage {
         "send_msg"
     }
 }
-#[native_cfg]
-impl<'de> serde::Deserialize<'de> for SendMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde_json::Value;
-        let mut value = Value::deserialize(deserializer)?;
 
-        let target = {
-            let getter = |index| value.get(index).and_then(Value::as_u64);
-            if let Some(id) = getter("group_id") {
-                ChatTarget::Group(id)
-            } else if let Some(id) = getter("user_id") {
-                ChatTarget::Private(id)
-            } else {
-                return Err(serde::de::Error::missing_field("group_id/user_id"));
-            }
-        };
-        let message: Vec<MessageSeg> = value
-            .get_mut("message")
-            .and_then(Value::as_array_mut)
-            .ok_or_else(|| serde::de::Error::missing_field("message"))?
-            .drain(..)
-            .map(serde_json::from_value::<MessageSeg>)
-            .collect::<serde_json::Result<_>>()
-            .map_err(|e| serde::de::Error::custom(e))?;
-        Ok(Self { target, message })
-    }
-}
-#[native_cfg]
-impl serde::Serialize for SendMessage {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut result = serializer.serialize_struct("SendMessage", 3)?;
-        match self.target {
-            ChatTarget::Private(id) => {
-                result.serialize_field("message_type", "private")?;
-                result.serialize_field("user_id", &id)?;
-            }
-            ChatTarget::Group(id) => {
-                result.serialize_field("message_type", "group")?;
-                result.serialize_field("group_id", &id)?;
-            }
+#[cfg(feature = "json")]
+mod serde_impl {
+    use crate::ob11::MessageSeg;
+
+    use super::{ChatTarget, SendMessage};
+
+    impl<'de> serde::Deserialize<'de> for SendMessage {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            use serde_json::Value;
+            let mut value = Value::deserialize(deserializer)?;
+
+            let target = {
+                let getter = |index| value.get(index).and_then(Value::as_u64);
+                if let Some(id) = getter("group_id") {
+                    ChatTarget::Group(id)
+                } else if let Some(id) = getter("user_id") {
+                    ChatTarget::Private(id)
+                } else {
+                    return Err(serde::de::Error::missing_field("group_id/user_id"));
+                }
+            };
+            let message: Vec<MessageSeg> = value
+                .get_mut("message")
+                .and_then(Value::as_array_mut)
+                .ok_or_else(|| serde::de::Error::missing_field("message"))?
+                .drain(..)
+                .map(serde_json::from_value::<MessageSeg>)
+                .collect::<serde_json::Result<_>>()
+                .map_err(|e| serde::de::Error::custom(e))?;
+            Ok(Self { target, message })
         }
-        result.serialize_field("message", &self.message)?;
-        result.end()
+    }
+    #[cfg(feature = "json")]
+    impl serde::Serialize for SendMessage {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            use serde::ser::SerializeStruct;
+            let mut result = serializer.serialize_struct("SendMessage", 3)?;
+            match self.target {
+                ChatTarget::Private(id) => {
+                    result.serialize_field("message_type", "private")?;
+                    result.serialize_field("user_id", &id)?;
+                }
+                ChatTarget::Group(id) => {
+                    result.serialize_field("message_type", "group")?;
+                    result.serialize_field("group_id", &id)?;
+                }
+            }
+            result.serialize_field("message", &self.message)?;
+            result.end()
+        }
     }
 }
 
-#[native_data]
+#[json]
 pub struct MessageResp {
     pub message_id: u32,
 }
 
 #[onebot_action("delete_msg", EmptyResp)]
-#[native_attrs(serde(transparent))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct DeleteMessage {
     message_id: u32,
 }
@@ -95,7 +102,7 @@ pub struct GetMessage {
     pub message_id: u32,
 }
 
-#[native_data(serde(untagged))]
+#[json(serde(untagged))]
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
@@ -108,14 +115,15 @@ pub struct GetMessageResp {
     pub sender: MessageSender,
     pub message: Vec<MessageSeg>,
 }
-#[native_cfg]
+
+#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for GetMessageResp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        use serde_json::Value;
         use crate::hashmap_value_get;
+        use serde_json::Value;
         let mut value: HashMap<String, Value> = HashMap::deserialize(deserializer)?;
 
         let message_type: String = hashmap_value_get::<_, D>(&mut value, "message_type")?;
@@ -149,7 +157,7 @@ pub struct GetForwardMsg {
     pub id: String,
 }
 
-#[native_data]
+#[json]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
@@ -157,7 +165,7 @@ pub struct GetForwardMsgResp {
 #[onebot_action("get_login_info", LoginInfo)]
 pub struct GetLoginInfo;
 
-#[native_data]
+#[json]
 pub struct LoginInfo {
     pub user_id: u64,
     pub nickname: String,
@@ -168,17 +176,17 @@ pub struct GetCookies {
     pub domain: Option<String>,
 }
 
-#[native_data]
+#[json]
 pub struct Cookies {
-    pub cookies: String
+    pub cookies: String,
 }
 
 #[onebot_action("get_csrf_token", u32)]
 pub struct GetCSRFToken;
 
-#[native_data]
+#[json]
 pub struct CSRFToken {
-    pub token: u32
+    pub token: u32,
 }
 
 #[onebot_action("get_credentials", Credentials)]
@@ -186,15 +194,15 @@ pub struct GetCredentials {
     pub domain: Option<String>,
 }
 
-#[native_data]
+#[json]
 pub struct Credentials {
     pub cookies: String,
     pub csrf_token: u32,
 }
 
-#[native_data]
+#[json]
 pub struct FileResp {
-    pub file: String
+    pub file: String,
 }
 
 #[onebot_action("get_record", FileResp)]
@@ -208,10 +216,9 @@ pub struct GetImage {
     pub file: String,
 }
 
-
-#[native_data]
+#[json]
 pub struct IsAllowd {
-    pub yes: bool
+    pub yes: bool,
 }
 
 #[onebot_action("can_send_image", IsAllowd)]
@@ -223,24 +230,24 @@ pub struct CanSendRecord;
 #[onebot_action("get_status", Status)]
 pub struct GetStatus;
 
-#[native_data]
+#[json]
 pub struct Status {
     pub online: bool,
     pub good: bool,
     #[cfg_attr(not(target_arch = "wasm32"), serde(flatten))]
-    pub extra: Data,
+    pub extra: JSONValue,
 }
 
 #[onebot_action("get_version_info", VersionInfo)]
 pub struct GetVersion;
 
-#[native_data]
+#[json]
 pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,
     pub protocol_version: String,
     #[cfg_attr(not(target_arch = "wasm32"), serde(flatten))]
-    pub extra: Data,
+    pub extra: JSONValue,
 }
 
 #[onebot_action("set_restart", EmptyResp)]

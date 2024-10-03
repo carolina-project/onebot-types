@@ -1,12 +1,10 @@
-use ob_types_base::cross::Data;
+use ob_types_base::json::JSONValue;
+use ob_types_macro::json;
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize)
-)]
+#[json]
 pub struct OB12MessageSegData {
     pub r#type: String,
-    pub data: Data,
+    pub data: JSONValue,
     pub alt_message: Option<String>,
 }

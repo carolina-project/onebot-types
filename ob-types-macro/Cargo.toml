@@ -8,12 +8,13 @@ syn = { version = "*", features = ["full"]}
 quote = "*"
 proc-macro2 = "*"
 ob-types-base = { path = "../ob-types-base"}
+serde = { version = "*", features = ["derive"], optional = true }
+serde_json = { version = "*", optional = true }
+
+[features]
+json = ["serde", "serde_json"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-serde = { version = "*", features = ["derive"]}
-serde_json = { version = "*"}
 
 [lib]
 proc-macro = true

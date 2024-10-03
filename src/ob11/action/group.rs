@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, time::Duration};
 
 use ob_types_base::{OBAction, OBRespData};
-use ob_types_macro::{native_cfg, native_data, onebot_action};
+use ob_types_macro::{json, native_cfg, onebot_action};
 
 use crate::{
     ob11::event::{message::AnonymousSender, request::AddGroupType},
@@ -23,12 +23,12 @@ pub struct SetGroupBan {
     pub user_id: u64,
     #[cfg_attr(
         not(target_arch = "wasm32"),
-        serde(deserialize_with = "ob_types_base::cross::data::duration_from_seconds")
+        serde(deserialize_with = "ob_types_base::tool::duration_from_seconds")
     )]
     pub duration: Option<Duration>,
 }
 
-#[native_data]
+#[json]
 pub enum AnonymousFlag {
     Sender(AnonymousSender),
     Flag(String),
@@ -86,7 +86,7 @@ pub struct SetGroupSpecialTitle {
     pub special_title: Option<String>,
     #[cfg_attr(
         not(target_arch = "wasm32"),
-        serde(deserialize_with = "ob_types_base::cross::data::duration_from_seconds")
+        serde(deserialize_with = "ob_types_base::tool::duration_from_seconds")
     )]
     pub duration: Option<Duration>,
 }
@@ -105,7 +105,7 @@ pub struct GetGroupInfo {
     pub no_cache: Option<bool>,
 }
 
-#[native_data]
+#[json]
 pub struct GroupInfo {
     pub group_id: u64,
     pub group_name: String,
@@ -123,7 +123,7 @@ pub struct GetGroupMemberInfo {
     pub no_cache: Option<bool>,
 }
 
-#[native_data]
+#[json]
 pub struct GroupMemberInfo {
     pub group_id: u64,
     pub user_id: u64,
@@ -155,7 +155,7 @@ pub trait GroupHonor {
 }
 
 /// see [get_group_honor_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF)
-#[native_data]
+#[json]
 pub struct GetGroupHonor<Type>
 where
     Type: GroupHonor,
@@ -187,7 +187,7 @@ where
     }
 }
 
-#[native_data]
+#[json]
 pub struct GroupHonorUser {
     pub user_id: u64,
     pub nickname: String,
@@ -196,7 +196,7 @@ pub struct GroupHonorUser {
 }
 
 // -talkative
-#[native_data]
+#[json]
 pub struct CurrentTalkative {
     pub user_id: u64,
     pub nickname: String,
@@ -204,7 +204,7 @@ pub struct CurrentTalkative {
     pub day_count: u32,
 }
 
-#[native_data]
+#[json]
 pub struct GroupTalkative {
     pub group_id: u64,
     pub current_talkative: CurrentTalkative,
@@ -258,7 +258,7 @@ impl<T: GroupHonor> GroupHonorList<T> {
     }
 }
 
-#[native_data]
+#[json]
 pub struct GroupAllHonor {
     pub group_id: u64,
     pub current_talkative: CurrentTalkative,

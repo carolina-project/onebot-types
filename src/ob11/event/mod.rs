@@ -1,7 +1,7 @@
 use meta::MetaEvent;
 use notice::NoticeEvent;
-use ob_types_base::cross::Data;
-use ob_types_macro::native_data;
+use ob_types_base::JSONValue;
+use ob_types_macro::json;
 use request::RequestEvent;
 
 use self::message::MessageEvent;
@@ -12,11 +12,7 @@ pub mod notice;
 pub mod request;
 
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
+#[json(serde(rename_all = "snake_case"))]
 pub enum OB11PostType {
     MetaEvent,
     Message,
@@ -25,19 +21,29 @@ pub enum OB11PostType {
 }
 
 #[derive(Clone, Debug)]
-#[native_data]
+#[json]
 pub struct OB11EventRaw {
     pub time: u64,
     pub self_id: u64,
     pub post_type: OB11PostType,
-    #[cfg_attr(not(target_arch = "wasm32"), serde(flatten))]
-    pub extra: Data,
+    #[cfg_attr(feature = "json", serde(flatten))]
+    pub extra: JSONValue,
 }
 
 pub struct Event {
     pub time: i64,
     pub self_id: i64,
     pub kind: EventKind,
+}
+
+#[cfg(feature = "json")]
+impl<'de> serde::Deserialize<'de> for Event {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+
+    }
 }
 
 pub enum EventKind {

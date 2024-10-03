@@ -7,14 +7,11 @@ edition = "2021"
 thiserror = { version = "*"}
 ob-types-macro = { path = "./ob-types-macro" }
 ob-types-base = { path = "./ob-types-base" }
+serde = { version = "*", features = ["derive"], optional = true }
+serde_json = { version = "*", optional = true }
 
 [features]
 default = ["ob11", "ob12"]
+json = ["serde", "serde_json", "ob-types-base/json"]
 ob11 = []
 ob12 = []
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-serde = { version = "*", features = ["derive"]}
-serde_json = { version = "*"}

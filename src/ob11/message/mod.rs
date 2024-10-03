@@ -1,17 +1,17 @@
 pub mod types;
 
-use ob_types_base::cross::Data;
-use ob_types_macro::native_data;
+use ob_types_base::json::JSONValue;
+use ob_types_macro::json;
 use types::*;
 
 #[derive(Clone, Debug)]
-#[native_data]
+#[json]
 pub struct OB11MessageSegRaw {
     pub r#type: String,
-    pub data: Data,
+    pub data: JSONValue,
 }
 
-#[native_data]
+#[json]
 pub enum MessageSeg {
     /// text message, contains text
     Text(String),

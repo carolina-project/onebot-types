@@ -29,7 +29,7 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
     let struct_name = &input_struct.ident;
     TokenStream::from(quote! {
         #[cfg_attr(
-            not(target_arch = "wasm32"),
+            feature = "json",
             derive(serde::Deserialize, serde::Serialize),
         )]
         #input_struct
@@ -45,17 +45,6 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn native_attrs(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let attrs: proc_macro2::TokenStream = attrs.into();
-    tool::append_tokens(quote! {
-        #[cfg_attr(
-            not(target_arch = "wasm32"),
-            #attrs
-        )]
-    }, input)
-}
-
-#[proc_macro_attribute]
 pub fn native_cfg(_: TokenStream, input: TokenStream) -> TokenStream {
     tool::append_tokens(quote! {
         #[cfg(not(target_arch = "wasm32"))]
@@ -63,11 +52,11 @@ pub fn native_cfg(_: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn native_data(attrs: TokenStream, input: TokenStream) -> TokenStream {
+pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let attrs: proc_macro2::TokenStream = attrs.into();
     tool::append_tokens(quote! {
         #[cfg_attr(
-            not(target_arch = "wasm32"),
+            feature = "json",
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]

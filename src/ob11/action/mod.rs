@@ -1,5 +1,5 @@
-use ob_types_base::cross::Data;
-use ob_types_macro::native_data;
+use ob_types_base::json::JSONValue;
+use ob_types_macro::json;
 
 pub mod bot;
 pub mod friend;
@@ -8,15 +8,15 @@ pub mod group;
 pub type EmptyResp = ();
 
 #[derive(Clone, Debug)]
-#[native_data]
+#[json]
 pub struct OB11ActionRaw {
     pub action: String,
-    pub params: Data,
+    pub params: JSONValue,
     pub echo: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug)]
-#[native_data(
+#[json(
     serde(rename_all = "lowercase")
 )]
 pub enum OB11RespStatus {
@@ -26,10 +26,10 @@ pub enum OB11RespStatus {
 }
 
 #[derive(Clone, Debug)]
-#[native_data]
+#[json]
 pub struct OB11RespData {
     pub status: OB11RespStatus,
     pub retcode: i64,
-    pub data: Data,
+    pub data: JSONValue,
     pub echo: Option<String>,
 }

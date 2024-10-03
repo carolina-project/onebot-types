@@ -1,8 +1,9 @@
-use ob_types_base::cross::Data;
+use ob_types_base::json::JSONValue;
+
 
 pub enum MetaEvent {
     LifeCycle(LifeCycle),
-    Heartbeat { status: Data, interval: u64 },
+    Heartbeat { status: JSONValue, interval: u64 },
 }
 
 pub enum LifeCycle {

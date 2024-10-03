@@ -1,38 +1,29 @@
-use ob_types_base::cross::Data;
+use ob_types_base::json::JSONValue;
+use ob_types_macro::json;
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize)
-)]
-pub struct OB12ActionData {
+#[json]
+pub struct OB12ActionJSONValue {
     pub action: String,
     pub echo: Option<String>,
-    #[cfg_attr(not(target_arch = "wasm32"), serde(rename = "self"))]
+    #[cfg_attr(feature = "json", serde(rename = "self"))]
     pub self_: super::BotSelf,
-    pub params: Data,
+    pub params: JSONValue,
 }
 
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "lowercase")
-)]
+#[json(serde(rename_all = "lowercase"))]
 pub enum OB12RespStatus {
     Ok,
     Failed,
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    not(target_arch = "wasm32"),
-    derive(serde::Serialize, serde::Deserialize)
-)]
-pub struct OB12RespData {
+#[json]
+pub struct OB12RespJSONValue {
     pub status: OB12RespStatus,
     pub retcode: i64,
-    pub data: Data,
+    pub data: JSONValue,
     pub message: String,
     pub echo: Option<String>,
 }
