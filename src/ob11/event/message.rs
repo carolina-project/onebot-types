@@ -2,10 +2,14 @@ use ob_types_macro::json;
 
 use crate::ob11::{message::MessageSeg, Sex};
 
+#[json]
 pub struct MessageEvent {
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub message: Message,
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub kind: MessageKind,
 }
+#[json]
 pub struct Message {
     pub message_id: u32,
     pub user_id: u64,
@@ -14,6 +18,7 @@ pub struct Message {
     pub font: u32,
 }
 
+#[json(serde(untagged))]
 pub enum MessageKind {
     Private {
         sub_type: PrivateSubType,
@@ -27,6 +32,7 @@ pub enum MessageKind {
     },
 }
 
+#[json(serde(rename_all = "lowercase"))]
 pub enum PrivateSubType {
     Friend,
     Group,
@@ -41,6 +47,7 @@ pub struct PrivateSender {
     pub age: u32,
 }
 
+#[json(serde(rename_all = "lowercase"))]
 pub enum GroupSubType {
     Normal,
     Anonymous,
@@ -64,9 +71,4 @@ pub struct AnonymousSender {
     pub id: u64,
     pub name: String,
     pub flag: String,
-}
-
-#[cfg(feature = "json")]
-mod serde_impl {
-
 }

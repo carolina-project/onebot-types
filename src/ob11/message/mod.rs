@@ -1,8 +1,6 @@
 pub mod types;
 
-use std::collections::HashMap;
-
-use ob_types_base::json::{JSONMap, JSONValue};
+use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
 use types::*;
 
@@ -48,99 +46,138 @@ fn serialze_msg_seg(
 }
 
 macro_rules! msg_seg_ser_impl {
-    ($name:ident, $var:ident($inner:ty = $field:literal) $typ_name:literal) => {
-        $name::$var(r) => single_field_seg($typ_name, $field, r),
+    ($typ_name:literal, $r:ident, $inner:ty, $field:literal) => {
+        Ok(single_field_seg($typ_name, $field, $r.to_owned()))
     };
-    ($name:ident, $var:ident($inner:ty) $typ_name:literal) => {
-        $name::$var(r) => serialze_msg_seg($typ_name, r),
+    ($typ_name:literal, $r:ident, $inner:ty) => {
+        serialze_msg_seg($typ_name, $r.to_owned())
+    };
+    ($typ_name:literal) => {
+        Ok(serde_json::json!({
+            "type": $typ_name,
+        }))
+    };
+}
+
+macro_rules! msg_ser_match_rule {
+    ($var:ident, $r:ident, $inner:ty) => {
+        MessageSeg::$var($r)
+    };
+    ($var:ident) => {
+        MessageSeg::$var
+    };
+}
+
+#[cfg(feature = "json")]
+fn get_json_field<T: serde::de::DeserializeOwned>(
+    mut json: serde_json::Value,
+    field: &'static str,
+) -> serde_json::Result<T> {
+    use serde::de::Error;
+
+    serde_json::from_value(
+        json.get_mut(field)
+            .ok_or_else(|| serde_json::Error::missing_field(field))?
+            .take(),
+    )
+}
+
+macro_rules! msg_seg_deser_impl {
+    ($var:ident, $r:expr, $inner:ty, $field:expr) => {
+        get_json_field($r, $field).map(MessageSeg::$var)
+    };
+    ($var:ident, $r:expr, $inner:ty) => {
+        serde_json::from_value($r).map(MessageSeg::$var)
+    };
+    ($var:ident) => {
+        Ok(MessageSeg::$var)
     };
 }
 
 macro_rules! message_seg {
-    ($vi:vis enum $name:ident {
-        $($var:tt,)*,
-    }) => {
-        $vi enum $name {
-            $(message_seg!($var), )*
+    ($($var:ident$(($inner:ty $(= $field:literal)? ))? $typ_name:literal $($doc:expr)?),* $(,)?) => {
+        pub enum MessageSeg {
+            $(
+                $(#[doc = $doc])?
+                $var$(($inner))?,
+            )*
         }
 
         #[cfg(feature = "json")]
-        impl $name {
+        impl<'de> MessageSeg {
             pub fn to_json(&self) -> serde_json::Result<serde_json::Value> {
                 match self {
-                    $(msg_seg_ser_impl!($name, $var))*
+                    $(
+                        msg_ser_match_rule!($var $(, r, $inner)?) => msg_seg_ser_impl!($typ_name $(, r, $inner $(, $field)?)?),
+                    )*
                 }
+            }
+
+            pub fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<MessageSeg, D::Error> {
+                use serde::{de::Error, Deserialize};
+
+                #[derive(Deserialize)]
+                struct Helper {
+                    r#type: String,
+                    data: serde_json::Value,
+                }
+
+                let helper = Helper::deserialize(deserializer)?;
+                match helper.r#type.as_str() {
+                    $(
+                        $typ_name => msg_seg_deser_impl!($var $(, helper.data, $inner $(, $field)?)?),
+                    )*
+                    _ => Err(serde_json::Error::custom(format!("Unknown message segment type: {}", helper.r#type) ))
+                }.map_err(serde::de::Error::custom)
             }
         }
     };
-    ($var:ident($inner:ty = $field:literal) $typ_name:literal) => {
-        $var($inner),
-    };
-    ($var:ident($inner:ty) $typ_name:literal) => {
-        $var($inner),
-    };
 }
 
-message_seg!(pub enum MessageSeg {
+message_seg!(
     Text(String = "text") "text",
-});
-
-pub enum MessageSeg {
-    /// text message, contains text
-    Text(String),
-    /// see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)
-    Face(u16),
-    Image(Image),
-    Record(Record),
-    Video(Video),
-    At(AtTarget),
-    Rps,
-    Dice,
-    Shake,
-    Poke(Poke),
-    Anonymous,
-    Share(Share),
-    Contact(Contact),
-    Location(Location),
-    Music(Music),
-    /// represents reply message by message id
-    Reply(u32),
-    /// https://github.com/botuniverse/onebot-11/blob/master/message/segment.md#%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-
-    Forward(u64),
-    ForwardNode(ForwardNode),
-    XML(String),
-    JSON(String),
-}
-
-macro_rules! msg_ele_match {
-    // Match the main structure, taking self and a variable number of type-field pairs
-    ($self:ident $(, $typ:ident: $field:literal)*) => {
-        match $self {
-            // Expand each type-field pair into a match pattern
-            $(MessageSeg::$typ(r) => {
-            },)*
-            // Default case
-            _ => None,
-        }
-    };
-}
-
-impl MessageSeg {
-    pub(crate) fn into_single_ele_json(&self) -> Option<(&str, JSONValue)> {
-        msg_ele_match!(self, Text: "text",);
-        todo!("read the doc")
-    }
-}
+    Face(u16 = "id") "face"
+        "see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)",
+    Image(Image) "image",
+    Record(Record) "record",
+    Video(Video) "video",
+    At(AtTarget) "at",
+    Rps "rps",
+    Dice "dice",
+    Shake "shake",
+    Poke(Poke) "poke",
+    Anonymous "anonymous",
+    Share(Share) "share",
+    Contact(Contact) "contact",
+    Location(Location) "location",
+    Music(Music) "music",
+    Reply(u32) "reply",
+    Forward(u64) "forward",
+    ForwardNode(ForwardNode) "node",
+    XML(String) "xml",
+    JSON(String) "json",
+);
 
 #[cfg(feature = "json")]
 mod serde_impl {
-    use serde::Serialize;
+    use serde::{Deserialize, Serialize};
 
     impl Serialize for super::MessageSeg {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,
         {
+            let v = self.to_json().map_err(|e| serde::ser::Error::custom(e))?;
+            v.serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for super::MessageSeg {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            Self::deserialize(deserializer)
         }
     }
 }

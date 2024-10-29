@@ -30,27 +30,18 @@ pub struct OB11EventRaw {
     pub extra: JSONValue,
 }
 
+#[json]
 pub struct Event {
     pub time: i64,
     pub self_id: i64,
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub kind: EventKind,
 }
 
-#[json]
+#[json(serde(untagged))]
 pub enum EventKind {
     Message(MessageEvent),
     Meta(MetaEvent),
     Request(RequestEvent),
     Notice(NoticeEvent),
-}
-
-#[cfg(feature = "json")]
-mod serde_impl {
-    impl<'de> serde::Deserialize<'de> for super::Event {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-        }
-    }
 }
