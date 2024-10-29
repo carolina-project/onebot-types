@@ -104,3 +104,4 @@ pub enum ForwardNode {
         content: Vec<MessageSeg>,
     },
 }
+

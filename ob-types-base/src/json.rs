@@ -1,5 +1,17 @@
 use std::collections::HashMap;
 
+macro_rules! json_from {
+    ($typ: ty, $into: ident) => {
+        impl From<$typ> for JSONValue {
+            fn from(value: $typ) -> Self {
+                Self::$into(value.into())
+            }
+        }
+    };
+}
+
+pub type JSONMap = HashMap<String, JSONValue>;
+
 #[derive(Debug, Clone)]
 pub enum JSONValue {
     Object(HashMap<String, JSONValue>),
@@ -10,6 +22,12 @@ pub enum JSONValue {
     Boolean(bool),
     Null,
 }
+
+json_from!(String, String);
+json_from!(u16, Int);
+json_from!(i64, Int);
+json_from!(HashMap<String, JSONValue>, Object);
+json_from!(&str, String);
 
 #[cfg(feature = "json")]
 mod serde_impl {

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::MessageSeg,
@@ -28,7 +26,7 @@ impl OBAction for SendMessage {
 }
 
 #[cfg(feature = "json")]
-mod serde_impl {
+mod serde_impl_send {
     use crate::ob11::MessageSeg;
 
     use super::{ChatTarget, SendMessage};
@@ -102,7 +100,7 @@ pub struct GetMessage {
     pub message_id: u32,
 }
 
-#[json(serde(untagged))]
+#[json]
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
@@ -116,39 +114,80 @@ pub struct GetMessageResp {
     pub message: Vec<MessageSeg>,
 }
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for GetMessageResp {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use crate::hashmap_value_get;
-        use serde_json::Value;
-        let mut value: HashMap<String, Value> = HashMap::deserialize(deserializer)?;
+#[cfg(feature = "json")]
+mod serde_impl_get {
+    use serde::{Deserialize, Serialize};
+    use serde_json::Value;
 
-        let message_type: String = hashmap_value_get::<_, D>(&mut value, "message_type")?;
-        let message_id: u32 = hashmap_value_get::<_, D>(&mut value, "message_id")?;
-        let real_id = hashmap_value_get::<_, D>(&mut value, "real_id")?;
-        let time = hashmap_value_get::<_, D>(&mut value, "time")?;
-        let sender: MessageSender = match message_type.as_str() {
-            "private" => {
-                hashmap_value_get::<_, D>(&mut value, "sender").map(MessageSender::Private)?
+    use crate::ob11::{action::bot::MessageSender, MessageSeg};
+
+    #[derive(Deserialize)]
+    struct DeHelper<'a> {
+        time: u32,
+        message_id: u32,
+        real_id: u32,
+        sender: Value,
+        message: Vec<MessageSeg>,
+        message_type: &'a str,
+    }
+    #[derive(Serialize)]
+    struct SerHelper<'a> {
+        time: u32,
+        message_id: u32,
+        real_id: u32,
+        sender: &'a MessageSender,
+        message: &'a Vec<MessageSeg>,
+        message_type: &'a str,
+    }
+
+    impl<'de> Deserialize<'de> for super::GetMessageResp {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let value = DeHelper::deserialize(deserializer)?;
+
+            let sender: MessageSender = match value.message_type {
+                "private" => serde_json::from_value(value.sender)
+                    .map_err(serde::de::Error::custom)
+                    .map(MessageSender::Private)?,
+                "group" => serde_json::from_value(value.sender)
+                    .map_err(serde::de::Error::custom)
+                    .map(MessageSender::Group)?,
+                t => Err(serde::de::Error::custom(format!(
+                    "unkown message type: {}",
+                    t
+                )))?,
+            };
+            Ok(Self {
+                time: value.time,
+                message_id: value.message_id,
+                real_id: value.real_id,
+                sender,
+                message: value.message,
+            })
+        }
+    }
+
+    impl Serialize for super::GetMessageResp {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let message_type = match &self.sender {
+                MessageSender::Private(_) => "private",
+                MessageSender::Group(_) => "group",
+            };
+            SerHelper {
+                time: self.time,
+                message_id: self.message_id,
+                real_id: self.real_id,
+                sender: &self.sender,
+                message: &self.message,
+                message_type,
             }
-            "group" => hashmap_value_get::<_, D>(&mut value, "sender").map(MessageSender::Group)?,
-            t => Err(serde::de::Error::custom(format!(
-                "unkown message type: {}",
-                t
-            )))?,
-        };
-        let message = hashmap_value_get::<_, D>(&mut value, "message")?;
-
-        Ok(Self {
-            time,
-            message_id,
-            real_id,
-            sender,
-            message,
-        })
+            .serialize(serializer)
+        }
     }
 }
 

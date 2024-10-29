@@ -65,3 +65,8 @@ pub struct AnonymousSender {
     pub name: String,
     pub flag: String,
 }
+
+#[cfg(feature = "json")]
+mod serde_impl {
+
+}

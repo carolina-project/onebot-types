@@ -36,19 +36,21 @@ pub struct Event {
     pub kind: EventKind,
 }
 
-#[cfg(feature = "json")]
-impl<'de> serde::Deserialize<'de> for Event {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-
-    }
-}
-
+#[json]
 pub enum EventKind {
     Message(MessageEvent),
     Meta(MetaEvent),
     Request(RequestEvent),
     Notice(NoticeEvent),
+}
+
+#[cfg(feature = "json")]
+mod serde_impl {
+    impl<'de> serde::Deserialize<'de> for super::Event {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+        }
+    }
 }

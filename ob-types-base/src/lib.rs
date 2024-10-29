@@ -21,7 +21,7 @@ pub trait OBAction {
 
 #[cfg(feature = "json")]
 mod serde_impl {
-    impl<T: serde::de::DeserializeOwned> super::OBRespData for T {
+    impl<T: serde::de::DeserializeOwned + serde::Serialize> super::OBRespData for T {
         fn from_json_raw(data: serde_json::Value) -> super::OBResult<Self>
         where
             Self: Sized,
