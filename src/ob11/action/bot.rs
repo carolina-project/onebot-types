@@ -2,8 +2,8 @@ use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::MessageSeg,
 };
-use ob_types_base::{json::JSONValue, OBAction};
-use ob_types_macro::{json, onebot_action};
+use ob_types_base::{json::JSONValue, OBAction, OBRespData};
+use ob_types_macro::{json, onebot_action, OBRespData};
 
 use super::EmptyResp;
 
@@ -106,6 +106,7 @@ pub enum MessageSender {
     Group(GroupSender),
 }
 
+#[derive(OBRespData)]
 pub struct GetMessageResp {
     pub time: u32,
     pub message_id: u32,
@@ -273,7 +274,7 @@ pub struct GetStatus;
 pub struct Status {
     pub online: bool,
     pub good: bool,
-    #[cfg_attr(not(target_arch = "wasm32"), serde(flatten))]
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub extra: JSONValue,
 }
 
@@ -285,7 +286,7 @@ pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,
     pub protocol_version: String,
-    #[cfg_attr(not(target_arch = "wasm32"), serde(flatten))]
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub extra: JSONValue,
 }
 

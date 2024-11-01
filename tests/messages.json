@@ -1,0 +1,83 @@
+[
+    {
+        "type": "text",
+        "data": {
+            "text": "Hello, world!"
+        }
+    },
+    {
+        "type": "face",
+        "data": {
+            "id": "123"
+        }
+    },
+    {
+        "type": "image",
+        "data": {
+            "file": "http://baidu.com/1.jpg"
+        }
+    },
+    {
+        "type": "record",
+        "data": {
+            "file": "http://baidu.com/1.mp3"
+        }
+    },
+    {
+        "type": "at",
+        "data": {
+            "qq": "10001000"
+        }
+    },
+    {
+        "type": "rps",
+        "data": {}
+    },
+    {
+        "type": "dice",
+        "data": {}
+    },
+    {
+        "type": "shake",
+        "data": {}
+    },
+    {
+        "type": "poke",
+        "data": {
+            "type": "126",
+            "id": "2003"
+        }
+    },
+    {
+        "type": "anonymous",
+        "data": {}
+    },
+    {
+        "type": "share",
+        "data": {
+            "url": "http://baidu.com",
+            "title": "百度"
+        }
+    },
+    {
+        "type": "contact",
+        "data": {
+            "type": "qq",
+            "id": "10001000"
+        }
+    },
+    {
+        "type": "location",
+        "data": {
+            "lat": "39.8969426",
+            "lon": "116.3109099"
+        }
+    },
+    {
+        "type": "music",
+        "data": {
+            "type": "163",
+            "id": "28949129"
+        }
+    }
+]

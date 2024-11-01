@@ -13,6 +13,44 @@ pub trait OBRespData {
         Self: Sized;
 }
 
+macro_rules! impl_ob_resp_data {
+    ($($types:ty),*) => {
+        #[cfg(not(feature = "json"))]
+        mod impl_ob_resp {
+            $(
+                impl super::OBRespData for $types {}
+            )*
+        }
+    };
+}
+
+macro_rules! impl_ob_resp_gene {
+    ($($types:ty)*) => {
+        #[cfg(not(feature = "json"))]
+        mod impl_ob_resp_gene {$(
+            impl<T> super::OBRespData for $types {}
+        )*}
+    };
+}
+
+impl_ob_resp_data!(
+    (),
+    bool,
+    u8,
+    u16,
+    u32,
+    u64,
+    i8,
+    i16,
+    i32,
+    i64,
+    f32,
+    f64,
+    String
+);
+
+impl_ob_resp_gene!(Vec<T>);
+
 pub trait OBAction {
     type Resp: OBRespData;
 

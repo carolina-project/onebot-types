@@ -1,4 +1,3 @@
-use ob_types_macro::native_cfg;
 use std::collections::HashMap;
 
 #[cfg(feature = "ob11")]
@@ -6,7 +5,7 @@ pub mod ob11;
 #[cfg(feature = "ob12")]
 pub mod ob12;
 
-#[native_cfg]
+#[cfg(feature = "json")]
 pub(crate) fn hashmap_value_get<'de, T, D>(
     map: &mut HashMap<String, serde_json::Value>,
     key: &str,
@@ -20,7 +19,7 @@ where
         .and_then(|r| serde_json::from_value::<T>(r).map_err(|e| serde::de::Error::custom(e)))
 }
 
-#[native_cfg]
+#[cfg(feature = "json")]
 #[inline]
 pub(crate) fn value_to_hashmap<'de, D: serde::de::Deserializer<'de>>(
     deserializer: D,

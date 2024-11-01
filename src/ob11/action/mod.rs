@@ -7,7 +7,7 @@ pub mod group;
 
 pub type EmptyResp = ();
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[json]
 pub struct OB11ActionRaw {
     pub action: String,
@@ -15,17 +15,15 @@ pub struct OB11ActionRaw {
     pub echo: Option<String>,
 }
 
-#[derive(Clone, Copy, Debug)]
-#[json(
-    serde(rename_all = "lowercase")
-)]
+#[derive(Clone, Copy)]
+#[json(serde(rename_all = "lowercase"))]
 pub enum OB11RespStatus {
     Ok,
     Async,
     Failed,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[json]
 pub struct OB11RespData {
     pub status: OB11RespStatus,

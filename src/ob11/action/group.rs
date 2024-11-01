@@ -1,12 +1,14 @@
 use std::{marker::PhantomData, time::Duration};
 
 use ob_types_base::{OBAction, OBRespData};
-use ob_types_macro::{json, native_cfg, onebot_action};
+use ob_types_macro::{json, onebot_action, OBRespData};
 
-use crate::{
-    ob11::event::{message::AnonymousSender, request::AddGroupType},
-    value_to_hashmap,
-};
+use crate::ob11::event::{message::AnonymousSender, request::AddGroupType};
+
+#[cfg(feature = "json")]
+use crate::value_to_hashmap;
+#[cfg(feature = "json")]
+use ob_types_base::tool::duration_secs_opt;
 
 use super::EmptyResp;
 
@@ -22,8 +24,8 @@ pub struct SetGroupBan {
     pub group_id: u64,
     pub user_id: u64,
     #[cfg_attr(
-        not(target_arch = "wasm32"),
-        serde(deserialize_with = "ob_types_base::tool::duration_from_seconds")
+        feature = "json",
+        serde(with = "duration_secs_opt")
     )]
     pub duration: Option<Duration>,
 }
@@ -85,8 +87,8 @@ pub struct SetGroupSpecialTitle {
     pub user_id: u64,
     pub special_title: Option<String>,
     #[cfg_attr(
-        not(target_arch = "wasm32"),
-        serde(deserialize_with = "ob_types_base::tool::duration_from_seconds")
+        feature = "json",
+        serde(with = "duration_secs_opt")
     )]
     pub duration: Option<Duration>,
 }
@@ -211,13 +213,14 @@ pub struct GroupTalkative {
     pub talkative_list: Vec<GroupHonorUser>,
 }
 
+#[derive(OBRespData)]
 pub struct GroupHonorList<S: GroupHonor> {
     pub group_id: u64,
     pub list: Vec<GroupHonorUser>,
     _marker: PhantomData<S>,
 }
 
-#[native_cfg]
+#[cfg(feature = "json")]
 impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -233,7 +236,7 @@ impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "json")]
 impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

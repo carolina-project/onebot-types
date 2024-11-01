@@ -2,9 +2,10 @@ pub mod types;
 
 use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
+use std::fmt::Display;
 use types::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[json]
 pub struct OB11MessageSegRaw {
     pub r#type: String,
@@ -12,11 +13,7 @@ pub struct OB11MessageSegRaw {
 }
 
 #[cfg(feature = "json")]
-fn single_field_seg(
-    typ: &str,
-    field: &str,
-    var: impl Into<serde_json::Value>,
-) -> serde_json::Value {
+fn single_field_seg(typ: &str, field: &str, var: impl Display) -> serde_json::Value {
     use serde_json::{Map, Value};
 
     let mut v = Map::new();
@@ -25,7 +22,7 @@ fn single_field_seg(
         "data".into(),
         Value::Object({
             let mut map = serde_json::Map::new();
-            map.insert(field.into(), var.into());
+            map.insert(field.into(), Value::String(var.to_string()));
             map
         }),
     );
@@ -68,20 +65,27 @@ macro_rules! msg_ser_match_rule {
     };
 }
 
+use std::str::FromStr;
 #[cfg(feature = "json")]
-fn get_json_field<T: serde::de::DeserializeOwned>(
-    mut json: serde_json::Value,
-    field: &'static str,
-) -> serde_json::Result<T> {
+fn get_json_field<T>(mut json: serde_json::Value, field: &'static str) -> serde_json::Result<T>
+where
+    T: serde::de::DeserializeOwned + FromStr,
+    <T as FromStr>::Err: Display,
+{
     use serde::de::Error;
+    use serde_json::Value;
 
-    serde_json::from_value(
-        json.get_mut(field)
-            .ok_or_else(|| serde_json::Error::missing_field(field))?
-            .take(),
-    )
+    let v = json
+        .get_mut(field)
+        .ok_or_else(|| serde_json::Error::missing_field(field))?
+        .take();
+    match v {
+        Value::String(s) => s.parse().map_err(serde_json::Error::custom),
+        r => serde_json::from_value(r).map_err(serde_json::Error::custom),
+    }
 }
 
+#[allow(unused)]
 macro_rules! msg_seg_deser_impl {
     ($var:ident, $r:expr, $inner:ty, $field:expr) => {
         get_json_field($r, $field).map(MessageSeg::$var)
@@ -96,6 +100,7 @@ macro_rules! msg_seg_deser_impl {
 
 macro_rules! message_seg {
     ($($var:ident$(($inner:ty $(= $field:literal)? ))? $typ_name:literal $($doc:expr)?),* $(,)?) => {
+        #[derive(Debug)]
         pub enum MessageSeg {
             $(
                 $(#[doc = $doc])?
@@ -141,7 +146,7 @@ message_seg!(
     Image(Image) "image",
     Record(Record) "record",
     Video(Video) "video",
-    At(AtTarget) "at",
+    At(AtTarget = "qq") "at",
     Rps "rps",
     Dice "dice",
     Shake "shake",
