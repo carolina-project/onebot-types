@@ -88,12 +88,12 @@ impl MessageSegs {
 
 #[json]
 pub struct Message {
-    pub message_id: u32,
-    pub user_id: u64,
+    pub message_id: i32,
+    pub user_id: i64,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub message_segs: MessageSegs,
     pub raw_message: String,
-    pub font: u32,
+    pub font: i32,
 }
 #[json]
 #[allow(unused)]
@@ -105,7 +105,7 @@ pub struct PrivateMessageKind {
 #[allow(unused)]
 pub struct GroupMessageKind {
     sub_type: GroupSubType,
-    group_id: u64,
+    group_id: i64,
     sender: GroupSender,
     anonymous: Option<AnonymousSender>,
 }
@@ -124,7 +124,7 @@ pub enum PrivateSubType {
 
 #[json]
 pub struct PrivateSender {
-    pub user_id: Option<u64>,
+    pub user_id: Option<i64>,
     pub nickname: Option<String>,
     pub sex: Option<Sex>,
     pub age: Option<u32>,
@@ -139,7 +139,7 @@ pub enum GroupSubType {
 
 #[json(serde(rename_all = "snake_case"))]
 pub struct GroupSender {
-    pub user_id: Option<u64>,
+    pub user_id: Option<i64>,
     pub nickname: Option<String>,
     pub card: Option<String>,
     pub sex: Option<Sex>,
@@ -151,7 +151,7 @@ pub struct GroupSender {
 }
 #[json]
 pub struct AnonymousSender {
-    pub id: u64,
+    pub id: i64,
     pub name: String,
     pub flag: String,
 }

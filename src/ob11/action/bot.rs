@@ -2,17 +2,16 @@ use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::MessageSeg,
 };
-use ob_types_base::{json::JSONValue, OBAction};
 #[allow(unused)]
 use ob_types_base::OBRespData;
+use ob_types_base::{json::JSONValue, OBAction};
 use ob_types_macro::{json, onebot_action, OBRespData};
 
 use super::EmptyResp;
 
-#[json]
 pub enum ChatTarget {
-    Private(u64),
-    Group(u64),
+    Private(i64),
+    Group(i64),
 }
 
 pub struct SendMessage {
@@ -29,6 +28,8 @@ impl OBAction for SendMessage {
 
 #[cfg(feature = "json")]
 mod serde_impl_send {
+    use serde::Deserialize;
+
     use crate::ob11::MessageSeg;
 
     use super::{ChatTarget, SendMessage};
@@ -38,28 +39,27 @@ mod serde_impl_send {
         where
             D: serde::Deserializer<'de>,
         {
-            use serde_json::Value;
-            let mut value = Value::deserialize(deserializer)?;
+            #[derive(Deserialize)]
+            struct Helper {
+                group_id: Option<i64>,
+                user_id: Option<i64>,
+                message: Vec<MessageSeg>,
+            }
+            let helper = Helper::deserialize(deserializer)?;
 
             let target = {
-                let getter = |index| value.get(index).and_then(Value::as_u64);
-                if let Some(id) = getter("group_id") {
+                if let Some(id) = helper.group_id {
                     ChatTarget::Group(id)
-                } else if let Some(id) = getter("user_id") {
+                } else if let Some(id) = helper.user_id {
                     ChatTarget::Private(id)
                 } else {
                     return Err(serde::de::Error::missing_field("group_id/user_id"));
                 }
             };
-            let message: Vec<MessageSeg> = value
-                .get_mut("message")
-                .and_then(Value::as_array_mut)
-                .ok_or_else(|| serde::de::Error::missing_field("message"))?
-                .drain(..)
-                .map(serde_json::from_value::<MessageSeg>)
-                .collect::<serde_json::Result<_>>()
-                .map_err(|e| serde::de::Error::custom(e))?;
-            Ok(Self { target, message })
+            Ok(Self {
+                target,
+                message: helper.message,
+            })
         }
     }
     #[cfg(feature = "json")]
@@ -88,19 +88,19 @@ mod serde_impl_send {
 
 #[json]
 pub struct MessageResp {
-    pub message_id: u32,
+    pub message_id: i32,
 }
 
 #[onebot_action("delete_msg", EmptyResp)]
 #[cfg_attr(feature = "serde", serde(transparent))]
 #[allow(unused)]
 pub struct DeleteMessage {
-    message_id: u32,
+    message_id: i32,
 }
 
 #[onebot_action("get_msg", GetMessageResp)]
 pub struct GetMessage {
-    pub message_id: u32,
+    pub message_id: i32,
 }
 
 #[json]
@@ -112,8 +112,8 @@ pub enum MessageSender {
 #[derive(OBRespData)]
 pub struct GetMessageResp {
     pub time: u32,
-    pub message_id: u32,
-    pub real_id: u32,
+    pub message_id: i32,
+    pub real_id: i32,
     pub sender: MessageSender,
     pub message: Vec<MessageSeg>,
 }
@@ -128,8 +128,8 @@ mod serde_impl_get {
     #[derive(Deserialize)]
     struct DeHelper<'a> {
         time: u32,
-        message_id: u32,
-        real_id: u32,
+        message_id: i32,
+        real_id: i32,
         sender: Value,
         message: Vec<MessageSeg>,
         message_type: &'a str,
@@ -137,8 +137,8 @@ mod serde_impl_get {
     #[derive(Serialize)]
     struct SerHelper<'a> {
         time: u32,
-        message_id: u32,
-        real_id: u32,
+        message_id: i32,
+        real_id: i32,
         sender: &'a MessageSender,
         message: &'a Vec<MessageSeg>,
         message_type: &'a str,
@@ -210,7 +210,7 @@ pub struct GetLoginInfo;
 
 #[json]
 pub struct LoginInfo {
-    pub user_id: u64,
+    pub user_id: i64,
     pub nickname: String,
 }
 
@@ -224,12 +224,12 @@ pub struct Cookies {
     pub cookies: String,
 }
 
-#[onebot_action("get_csrf_token", u32)]
+#[onebot_action("get_csrf_token", i32)]
 pub struct GetCSRFToken;
 
 #[json]
 pub struct CSRFToken {
-    pub token: u32,
+    pub token: i32,
 }
 
 #[onebot_action("get_credentials", Credentials)]
@@ -240,7 +240,7 @@ pub struct GetCredentials {
 #[json]
 pub struct Credentials {
     pub cookies: String,
-    pub csrf_token: u32,
+    pub csrf_token: i32,
 }
 
 #[json]
@@ -295,7 +295,7 @@ pub struct VersionInfo {
 
 #[onebot_action("set_restart", EmptyResp)]
 pub struct SetRestart {
-    pub delay: u32,
+    pub delay: i32,
 }
 
 #[onebot_action("clean_cache", EmptyResp)]

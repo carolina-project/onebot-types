@@ -14,19 +14,16 @@ use super::EmptyResp;
 
 #[onebot_action("set_group_kick", EmptyResp)]
 pub struct SetGroupKick {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub reject_add_request: Option<bool>,
 }
 
 #[onebot_action("set_group_ban", EmptyResp)]
 pub struct SetGroupBan {
-    pub group_id: u64,
-    pub user_id: u64,
-    #[cfg_attr(
-        feature = "json",
-        serde(with = "duration_secs_opt")
-    )]
+    pub group_id: i64,
+    pub user_id: i64,
+    #[cfg_attr(feature = "json", serde(with = "duration_secs_opt"))]
     pub duration: Option<Duration>,
 }
 
@@ -38,58 +35,55 @@ pub enum AnonymousFlag {
 
 #[onebot_action("set_group_anonymous_ban", EmptyResp)]
 pub struct SetGroupAnonymousBan {
-    pub group_id: u64,
+    pub group_id: i64,
     pub anonymous: AnonymousFlag,
     pub duration: Option<Duration>,
 }
 
 #[onebot_action("set_group_whole_ban", EmptyResp)]
 pub struct SetGroupWholeBan {
-    pub group_id: u64,
+    pub group_id: i64,
     pub enable: Option<bool>,
 }
 
 #[onebot_action("set_group_admin", EmptyResp)]
 pub struct SetGroupAdmin {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub enable: Option<bool>,
 }
 
 #[onebot_action("set_group_anonymous", EmptyResp)]
 pub struct SetGroupAnonymous {
-    pub group_id: u64,
+    pub group_id: i64,
     pub enable: Option<bool>,
 }
 
 #[onebot_action("set_group_card", EmptyResp)]
 pub struct SetGroupCard {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub card: Option<String>,
 }
 
 #[onebot_action("set_group_name", EmptyResp)]
 pub struct SetGroupName {
-    pub group_id: u64,
+    pub group_id: i64,
     pub group_name: String,
 }
 
 #[onebot_action("set_group_leave", EmptyResp)]
 pub struct SetGroupLeave {
-    pub group_id: u64,
+    pub group_id: i64,
     pub is_dismiss: Option<bool>,
 }
 
 #[onebot_action("set_group_special_title", EmptyResp)]
 pub struct SetGroupSpecialTitle {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub special_title: Option<String>,
-    #[cfg_attr(
-        feature = "json",
-        serde(with = "duration_secs_opt")
-    )]
+    #[cfg_attr(feature = "json", serde(with = "duration_secs_opt"))]
     pub duration: Option<Duration>,
 }
 
@@ -103,13 +97,13 @@ pub struct SetGroupAddRequest {
 
 #[onebot_action("get_group_info", GroupInfo)]
 pub struct GetGroupInfo {
-    pub group_id: u64,
+    pub group_id: i64,
     pub no_cache: Option<bool>,
 }
 
 #[json]
 pub struct GroupInfo {
-    pub group_id: u64,
+    pub group_id: i64,
     pub group_name: String,
     pub member_count: u32,
     pub max_member_count: u32,
@@ -120,15 +114,15 @@ pub struct GetGroupList;
 
 #[onebot_action("get_group_member_info", GroupMemberInfo)]
 pub struct GetGroupMemberInfo {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub no_cache: Option<bool>,
 }
 
 #[json]
 pub struct GroupMemberInfo {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     pub nickname: String,
     pub card: String,
     pub sex: String,
@@ -146,7 +140,7 @@ pub struct GroupMemberInfo {
 
 #[onebot_action("get_group_member_list", Vec<GroupMemberInfo>)]
 pub struct GetGroupMemberList {
-    pub group_id: u64,
+    pub group_id: i64,
 }
 
 // get group honor
@@ -162,7 +156,7 @@ pub struct GetGroupHonor<Type>
 where
     Type: GroupHonor,
 {
-    pub group_id: u64,
+    pub group_id: i64,
     _marker: PhantomData<Type>,
 }
 
@@ -181,7 +175,7 @@ impl<Type> GetGroupHonor<Type>
 where
     Type: GroupHonor,
 {
-    pub fn new(group_id: u64) -> Self {
+    pub fn new(group_id: i64) -> Self {
         Self {
             group_id,
             _marker: PhantomData,
@@ -191,7 +185,7 @@ where
 
 #[json]
 pub struct GroupHonorUser {
-    pub user_id: u64,
+    pub user_id: i64,
     pub nickname: String,
     pub avatar: String,
     pub description: String,
@@ -200,7 +194,7 @@ pub struct GroupHonorUser {
 // -talkative
 #[json]
 pub struct CurrentTalkative {
-    pub user_id: u64,
+    pub user_id: i64,
     pub nickname: String,
     pub avatar: String,
     pub day_count: u32,
@@ -208,14 +202,14 @@ pub struct CurrentTalkative {
 
 #[json]
 pub struct GroupTalkative {
-    pub group_id: u64,
+    pub group_id: i64,
     pub current_talkative: CurrentTalkative,
     pub talkative_list: Vec<GroupHonorUser>,
 }
 
 #[derive(OBRespData)]
 pub struct GroupHonorList<S: GroupHonor> {
-    pub group_id: u64,
+    pub group_id: i64,
     pub list: Vec<GroupHonorUser>,
     _marker: PhantomData<S>,
 }
@@ -252,7 +246,7 @@ impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
 }
 
 impl<T: GroupHonor> GroupHonorList<T> {
-    pub fn new(group_id: u64, list: Vec<GroupHonorUser>) -> Self {
+    pub fn new(group_id: i64, list: Vec<GroupHonorUser>) -> Self {
         Self {
             group_id,
             list,
@@ -263,7 +257,7 @@ impl<T: GroupHonor> GroupHonorList<T> {
 
 #[json]
 pub struct GroupAllHonor {
-    pub group_id: u64,
+    pub group_id: i64,
     pub current_talkative: CurrentTalkative,
     pub talkative_list: Vec<GroupHonorUser>,
     pub performer_list: Vec<GroupHonorUser>,

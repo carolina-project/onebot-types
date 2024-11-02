@@ -37,8 +37,8 @@ impl<'de> serde::Deserialize<'de> for NoticeEvent {
 
 #[json]
 pub struct GroupNotice {
-    pub group_id: u64,
-    pub user_id: u64,
+    pub group_id: i64,
+    pub user_id: i64,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub kind: GroupNoticeKind,
 }
@@ -56,32 +56,32 @@ pub enum GroupNoticeKind {
     #[cfg_attr(feature = "json", serde(rename = "group_increase"))]
     MemberIncrease {
         sub_type: IncreaseType,
-        operator_id: u64,
+        operator_id: i64,
     },
     #[cfg_attr(feature = "json", serde(rename = "group_decrease"))]
     MemberDecrease {
         sub_type: DecreaseType,
-        operator_id: u64,
+        operator_id: i64,
     },
     #[cfg_attr(feature = "json", serde(rename = "group_ban"))]
     Mute {
         sub_type: MuteType,
-        operator_id: u64,
+        operator_id: i64,
         #[cfg_attr(feature = "json", serde(with = "duration_secs"))]
         duration: Duration,
     },
     #[cfg_attr(feature = "json", serde(rename = "group_recall"))]
     Recall {
-        operator_id: u64,
-        message_id: u32,
+        operator_id: i64,
+        message_id: i32,
     },
     /// poke target user id
     Poke {
-        target_id: u64,
+        target_id: i64,
     },
     /// lucky king user id
     LuckyKing {
-        target_id: u64,
+        target_id: i64,
     },
     Honor {
         honor_type: GroupHonor,
@@ -93,7 +93,7 @@ pub struct GroupUpload {
     pub id: String,
     pub name: String,
     pub size: u64,
-    pub busid: u64,
+    pub busid: i64,
 }
 
 #[json(serde(rename_all = "snake_case"))]
@@ -130,7 +130,7 @@ pub enum GroupHonor {
 
 #[json]
 pub struct FriendNotice {
-    pub user_id: u64,
+    pub user_id: i64,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub kind: FriendNoticeKind,
 }
@@ -140,5 +140,7 @@ pub enum FriendNoticeKind {
     FriendAdd,
     #[cfg_attr(feature = "json", serde(rename = "friend_recall"))]
     /// recalled message's id
-    Recall(#[cfg_attr(feature = "json", serde(rename = "message_id"))] u32),
+    Recall {
+        message_id: i32,
+    },
 }

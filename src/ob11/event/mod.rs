@@ -23,7 +23,7 @@ pub enum OB11PostType {
 #[json]
 pub struct OB11EventRaw {
     pub time: u64,
-    pub self_id: u64,
+    pub self_id: i64,
     pub post_type: OB11PostType,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub extra: JSONValue,

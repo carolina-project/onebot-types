@@ -102,7 +102,7 @@ pub struct Video {
 #[json_from_str]
 pub enum AtTarget {
     All,
-    QQ(u64),
+    QQ(i64),
 }
 
 impl FromStr for AtTarget {
@@ -179,10 +179,10 @@ pub enum Music {
 #[json_from_str(serde(untagged))]
 pub enum ForwardNode {
     Message {
-        id: u32,
+        id: i32,
     },
     Custom {
-        user_id: u64,
+        user_id: i64,
         nickname: String,
         content: Vec<MessageSeg>,
     },
