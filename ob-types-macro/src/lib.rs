@@ -89,6 +89,7 @@ fn enum_fields_proc(
 ) -> proc_macro2::TokenStream {
     let vars = data.variants.into_iter().map(|v| {
         let v_name = v.ident;
+        let attrs = v.attrs;
         let v_fields = match v.fields {
             Fields::Unit => quote! {},
             Fields::Named(fields) => {
@@ -105,7 +106,7 @@ fn enum_fields_proc(
             }
         };
         quote! {
-            #v_name #v_fields
+            #(#attrs)* #v_name #v_fields
         }
     });
 
@@ -160,7 +161,7 @@ pub fn json_from_str(attrs: TokenStream, input: TokenStream) -> TokenStream {
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]
-        #[derive(ob_types_macro::OBRespData, Debug)]
+        #[derive(ob_types_macro::OBRespData, Debug, Clone)]
         #input
     }
     .into()
@@ -176,7 +177,7 @@ pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]
-        #[derive(ob_types_macro::OBRespData, Debug)]
+        #[derive(ob_types_macro::OBRespData, Debug, Clone)]
         #input
     }
     .into()

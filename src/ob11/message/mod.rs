@@ -2,10 +2,11 @@ pub mod types;
 
 use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
-use std::fmt::Display;
+
+#[allow(unused)]
+use std::{fmt::Display, str::FromStr};
 use types::*;
 
-#[derive(Clone)]
 #[json]
 pub struct OB11MessageSegRaw {
     pub r#type: String,
@@ -13,49 +14,53 @@ pub struct OB11MessageSegRaw {
 }
 
 #[cfg(feature = "json")]
-fn single_field_seg(typ: &str, field: &str, var: impl Display) -> serde_json::Value {
-    use serde_json::{Map, Value};
+fn single_field_seg<S, D>(serializer: S, typ: &str, field: &str, var: D) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    D: Display,
+{
+    use std::collections::HashMap;
 
-    let mut v = Map::new();
-    v.insert("type".into(), typ.into());
-    v.insert(
-        "data".into(),
-        Value::Object({
-            let mut map = serde_json::Map::new();
-            map.insert(field.into(), Value::String(var.to_string()));
-            map
-        }),
-    );
+    use serde::ser::SerializeMap;
 
-    serde_json::Value::Object(v)
+    let map = HashMap::from([(field, var.to_string())]);
+    let mut ser_map = serializer.serialize_map(Some(2))?;
+    ser_map.serialize_entry("type", typ)?;
+    ser_map.serialize_entry("data", &map)?;
+    ser_map.end()
 }
 
 #[cfg(feature = "json")]
-fn serialze_msg_seg(
-    typ: &str,
-    data: impl serde::Serialize,
-) -> serde_json::Result<serde_json::Value> {
-    use serde_json::Map;
-    let mut v = Map::new();
-    v.insert("type".into(), typ.into());
-    v.insert("data".into(), serde_json::to_value(data)?);
-    Ok(serde_json::Value::Object(v))
+fn serialze_msg_seg<S, D>(serializer: S, typ: &str, data: &D) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    D: serde::Serialize,
+{
+    use serde::ser::SerializeMap;
+    let mut v = serializer.serialize_map(Some(2))?;
+    v.serialize_entry("type", typ)?;
+    v.serialize_entry("data", data)?;
+
+    v.end()
 }
 
+#[allow(unused)]
 macro_rules! msg_seg_ser_impl {
-    ($typ_name:literal, $r:ident, $inner:ty, $field:literal) => {
-        Ok(single_field_seg($typ_name, $field, $r.to_owned()))
+    ($ser:expr, $typ_name:literal, $r:ident, $inner:ty, $field:literal) => {
+        single_field_seg($ser, $typ_name, $field, $r)
     };
-    ($typ_name:literal, $r:ident, $inner:ty) => {
-        serialze_msg_seg($typ_name, $r.to_owned())
+    ($ser:expr, $typ_name:literal, $r:ident, $inner:ty) => {
+        serialze_msg_seg($ser, $typ_name, $r)
     };
-    ($typ_name:literal) => {
-        Ok(serde_json::json!({
-            "type": $typ_name,
-        }))
-    };
+    ($ser:expr, $typ_name:literal) => {{
+        use serde::ser::SerializeMap;
+        let mut map = $ser.serialize_map(Some(1))?;
+        map.serialize_entry("type", $typ_name)?;
+        map.end()
+    }};
 }
 
+#[allow(unused)]
 macro_rules! msg_ser_match_rule {
     ($var:ident, $r:ident, $inner:ty) => {
         MessageSeg::$var($r)
@@ -65,7 +70,6 @@ macro_rules! msg_ser_match_rule {
     };
 }
 
-use std::str::FromStr;
 #[cfg(feature = "json")]
 fn get_json_field<T>(mut json: serde_json::Value, field: &'static str) -> serde_json::Result<T>
 where
@@ -100,39 +104,55 @@ macro_rules! msg_seg_deser_impl {
 
 macro_rules! message_seg {
     ($($var:ident$(($inner:ty $(= $field:literal)? ))? $typ_name:literal $($doc:expr)?),* $(,)?) => {
-        #[derive(Debug)]
+        /// Message segment types, only support json messages currently.
+        #[derive(Debug, Clone)]
         pub enum MessageSeg {
             $(
                 $(#[doc = $doc])?
                 $var$(($inner))?,
             )*
+            Custom(OB11MessageSegRaw),
         }
 
         #[cfg(feature = "json")]
-        impl<'de> MessageSeg {
-            pub fn to_json(&self) -> serde_json::Result<serde_json::Value> {
+        impl serde::Serialize for super::MessageSeg {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
                 match self {
                     $(
-                        msg_ser_match_rule!($var $(, r, $inner)?) => msg_seg_ser_impl!($typ_name $(, r, $inner $(, $field)?)?),
+                        msg_ser_match_rule!($var $(, r, $inner)?) => msg_seg_ser_impl!(serializer, $typ_name $(, r, $inner $(, $field)?)?),
                     )*
+                    MessageSeg::Custom(r) => r.serialize(serializer),
                 }
             }
+        }
 
-            pub fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<MessageSeg, D::Error> {
-                use serde::{de::Error, Deserialize};
+        #[cfg(feature = "json")]
+        impl<'de> serde::Deserialize<'de> for super::MessageSeg {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                use serde::Deserialize;
+                use std::borrow::Cow;
 
                 #[derive(Deserialize)]
-                struct Helper {
-                    r#type: String,
+                struct Helper<'a> {
+                    r#type: Cow<'a, str>,
                     data: serde_json::Value,
                 }
 
                 let helper = Helper::deserialize(deserializer)?;
-                match helper.r#type.as_str() {
+                match helper.r#type.as_ref() {
                     $(
                         $typ_name => msg_seg_deser_impl!($var $(, helper.data, $inner $(, $field)?)?),
                     )*
-                    _ => Err(serde_json::Error::custom(format!("Unknown message segment type: {}", helper.r#type) ))
+                    typ => Ok(MessageSeg::Custom(OB11MessageSegRaw {
+                        r#type: typ.into(),
+                        data: helper.data.into(),
+                    })),
                 }.map_err(serde::de::Error::custom)
             }
         }
@@ -156,33 +176,9 @@ message_seg!(
     Contact(Contact) "contact",
     Location(Location) "location",
     Music(Music) "music",
-    Reply(u32) "reply",
-    Forward(u64) "forward",
+    Reply(u32 = "id") "reply",
+    Forward(u64 = "id") "forward",
     ForwardNode(ForwardNode) "node",
-    XML(String) "xml",
-    JSON(String) "json",
+    XML(String = "data") "xml",
+    JSON(String = "data") "json",
 );
-
-#[cfg(feature = "json")]
-mod serde_impl {
-    use serde::{Deserialize, Serialize};
-
-    impl Serialize for super::MessageSeg {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            let v = self.to_json().map_err(|e| serde::ser::Error::custom(e))?;
-            v.serialize(serializer)
-        }
-    }
-
-    impl<'de> Deserialize<'de> for super::MessageSeg {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            Self::deserialize(deserializer)
-        }
-    }
-}

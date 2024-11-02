@@ -4,10 +4,35 @@ use std::time::Duration;
 use ob_types_base::tool::duration_secs;
 use ob_types_macro::json;
 
-#[json(serde(untagged))]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
+#[derive(Clone, Debug)]
 pub enum NoticeEvent {
     GroupNotice(GroupNotice),
     FriendNotice(FriendNotice),
+}
+
+#[cfg(feature = "json")]
+impl<'de> serde::Deserialize<'de> for NoticeEvent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+        use serde_json::Value;
+        let v = Value::deserialize(deserializer)?;
+        let Value::String(s) = v
+            .get("notice_type")
+            .ok_or_else(|| serde::de::Error::custom("missing field `notice_type`"))?
+        else {
+            return Err(serde::de::Error::custom("invalid type: not a string"));
+        };
+        if s.starts_with("group") {
+            GroupNotice::deserialize(v).map(NoticeEvent::GroupNotice)
+        } else {
+            FriendNotice::deserialize(v).map(NoticeEvent::FriendNotice)
+        }
+        .map_err(Error::custom)
+    }
 }
 
 #[json]
@@ -21,9 +46,13 @@ pub struct GroupNotice {
 #[json(serde(tag = "notice_type", rename_all = "snake_case"))]
 pub enum GroupNoticeKind {
     #[cfg_attr(feature = "json", serde(rename = "group_upload"))]
-    Upload(#[cfg_attr(feature = "json", serde(rename = "file"))] GroupUpload),
+    Upload {
+        file: GroupUpload,
+    },
     #[cfg_attr(feature = "json", serde(rename = "group_admin"))]
-    Admin(#[cfg_attr(feature = "json", serde(rename = "sub_type"))] AdminChange),
+    Admin {
+        sub_type: AdminChange,
+    },
     #[cfg_attr(feature = "json", serde(rename = "group_increase"))]
     MemberIncrease {
         sub_type: IncreaseType,
@@ -47,10 +76,16 @@ pub enum GroupNoticeKind {
         message_id: u32,
     },
     /// poke target user id
-    Poke(#[cfg_attr(feature = "json", serde(rename = "target_id"))] u64),
+    Poke {
+        target_id: u64,
+    },
     /// lucky king user id
-    LuckyKing(#[cfg_attr(feature = "json", serde(rename = "target_id"))] u64),
-    Honor(GroupHonor),
+    LuckyKing {
+        target_id: u64,
+    },
+    Honor {
+        honor_type: GroupHonor,
+    },
 }
 
 #[json]

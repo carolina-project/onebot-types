@@ -4,6 +4,7 @@ use ob_types_macro::json_from_str;
 
 use super::MessageSeg;
 
+#[cfg(feature = "json")]
 const fn true_value() -> bool {
     true
 }
@@ -23,6 +24,7 @@ pub struct FileSendOpt {
 
 #[json_from_str]
 pub struct FileRecvOpt {
+    #[allow(dead_code)]
     url: String,
 }
 
@@ -32,7 +34,7 @@ pub enum FileOption {
     Receive(FileRecvOpt),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ImageType {
     Flash,
     Normal,
@@ -174,7 +176,7 @@ pub enum Music {
     },
 }
 
-#[json_from_str]
+#[json_from_str(serde(untagged))]
 pub enum ForwardNode {
     Message {
         id: u32,

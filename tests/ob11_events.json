@@ -1,0 +1,145 @@
+[
+    {
+        "time": 1730550565,
+        "self_id": 11223344,
+        "post_type": "meta_event",
+        "meta_event_type": "lifecycle",
+        "sub_type": "connect"
+    },
+    {
+        "time": 1730552229,
+        "self_id": 11223344,
+        "post_type": "meta_event",
+        "meta_event_type": "heartbeat",
+        "status": {
+            "online": true,
+            "good": true
+        },
+        "interval": 30000
+    },
+    {
+        "self_id": 11223344,
+        "user_id": 123214214,
+        "time": 1730466588,
+        "message_id": 1006774114,
+        "message_seq": 1006774114,
+        "real_id": 1006774114,
+        "message_type": "private",
+        "sender": {
+            "user_id": 123214214,
+            "nickname": "nnn",
+            "card": ""
+        },
+        "raw_message": "test",
+        "font": 14,
+        "sub_type": "friend",
+        "message": [
+            {
+                "type": "text",
+                "data": {
+                    "text": "test"
+                }
+            }
+        ],
+        "message_format": "array",
+        "post_type": "message"
+    },
+    {
+        "time": 1730552780,
+        "self_id": 11223344,
+        "post_type": "notice",
+        "group_id": 11223344,
+        "user_id": 11223344,
+        "notice_type": "group_upload",
+        "file": {
+            "id": "000000dc4e61704361744f6e65426f747c4d736746696c657c327c3437373531373138327c373433323636373539343331393132303637307c373433323636373539343331393132303636397c2f38393163626235362d626534642d343163382d396165622d376630373132326636366530.libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
+            "url": "file:///asda",
+            "name": "libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
+            "size": 60232,
+            "busid": 102
+        }
+    },
+    {
+        "self_id": 11223344,
+        "user_id": 11223344,
+        "time": 1730552780,
+        "message_id": 1480015905,
+        "message_seq": 1480015905,
+        "real_id": 1480015905,
+        "message_type": "group",
+        "sender": {
+            "user_id": 11223344,
+            "nickname": "sadaw",
+            "card": "",
+            "role": "owner"
+        },
+        "raw_message": "[CQ:file,file=libnghttp2-14_1.57.0-1_mipsel_24kc.ipk,url=/sadwa,file_id=000000dc4e61704361744f6e65426f747c4d736746696c657c327c3437373531373138327c373433323636373539343331393132303637307c373433323636373539343331393132303636397c2f38393163626235362d626534642d343163382d396165622d376630373132326636366530.libnghttp2-14_1.57.0-1_mipsel_24kc.ipk,file_size=60232,file_unique=b0e430871ec831f481d4f3a34d6abe84]",
+        "font": 14,
+        "sub_type": "normal",
+        "message": [
+            {
+                "type": "file",
+                "data": {
+                    "file": "libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
+                    "path": "",
+                    "url": "file://sadwa",
+                    "file_id": "000000dc4e61704361744f6e65426f747c4d736746696c657c327c3437373531373138327c373433323636373539343331393132303637307c373433323636373539343331393132303636397c2f38393163626235362d626534642d343163382d396165622d376630373132326636366530.libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
+                    "file_size": "60232",
+                    "file_unique": "b0e430871ec831f481d4f3a34d6abe84"
+                }
+            }
+        ],
+        "message_format": "array",
+        "post_type": "message",
+        "group_id": 112233
+    },
+    {
+        "time": 1730554793,
+        "self_id": 11223344,
+        "post_type": "notice",
+        "group_id": 11223344,
+        "user_id": 11223344,
+        "notice_type": "group_admin",
+        "sub_type": "set"
+    },
+    {
+        "time": 1730554916,
+        "self_id": 11223344,
+        "post_type": "notice",
+        "group_id": 11223344,
+        "user_id": 11223344,
+        "notice_type": "group_decrease",
+        "sub_type": "kick",
+        "operator_id": 11223344
+    },
+    {
+        "time": 1730555082,
+        "self_id": 11223344,
+        "post_type": "notice",
+        "group_id": 11223344,
+        "user_id": 11223344,
+        "notice_type": "group_increase",
+        "operator_id": 11223344,
+        "sub_type": "invite"
+    },
+    {
+        "time": 1730555140,
+        "self_id": 112233,
+        "post_type": "notice",
+        "group_id": 112233,
+        "user_id": 112233,
+        "notice_type": "group_ban",
+        "operator_id": 112233,
+        "duration": 600,
+        "sub_type": "ban"
+    },
+    {
+        "time": 112233,
+        "self_id": 112233,
+        "post_type": "request",
+        "request_type": "friend",
+        "user_id": 112233,
+        "comment": "",
+        "flag": ""
+    }
+]

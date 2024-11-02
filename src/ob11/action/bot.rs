@@ -2,7 +2,9 @@ use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::MessageSeg,
 };
-use ob_types_base::{json::JSONValue, OBAction, OBRespData};
+use ob_types_base::{json::JSONValue, OBAction};
+#[allow(unused)]
+use ob_types_base::OBRespData;
 use ob_types_macro::{json, onebot_action, OBRespData};
 
 use super::EmptyResp;
@@ -91,6 +93,7 @@ pub struct MessageResp {
 
 #[onebot_action("delete_msg", EmptyResp)]
 #[cfg_attr(feature = "serde", serde(transparent))]
+#[allow(unused)]
 pub struct DeleteMessage {
     message_id: u32,
 }

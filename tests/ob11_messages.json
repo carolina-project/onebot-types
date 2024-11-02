@@ -79,5 +79,55 @@
             "type": "163",
             "id": "28949129"
         }
+    },
+    {
+        "type": "music",
+        "data": {
+            "type": "custom",
+            "url": "http://baidu.com",
+            "audio": "http://baidu.com/1.mp3",
+            "title": "音乐标题"
+        }
+    },
+    {
+        "type": "reply",
+        "data": {
+            "id": "123456"
+        }
+    },
+    {
+        "type": "forward",
+        "data": {
+            "id": "123456"
+        }
+    },
+    {
+        "type": "node",
+        "data": {
+            "id": "123456"
+        }
+    },
+    {
+        "type": "node",
+        "data": {
+            "user_id": "10001000",
+            "nickname": "某人",
+            "content": [
+                { "type": "face", "data": { "id": "123" } },
+                { "type": "text", "data": { "text": "哈喽～" } }
+            ]
+        }
+    },
+    {
+        "type": "xml",
+        "data": {
+            "data": "<?xml ..."
+        }
+    },
+    {
+        "type": "json",
+        "data": {
+            "data": "{\"app\": ..."
+        }
     }
 ]

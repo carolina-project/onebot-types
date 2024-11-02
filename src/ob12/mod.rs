@@ -4,7 +4,6 @@ pub mod action;
 pub mod event;
 pub mod message;
 
-#[derive(Clone)]
 #[json]
 pub struct BotSelf {
     pub platform: String,

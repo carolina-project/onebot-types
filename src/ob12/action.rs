@@ -1,7 +1,6 @@
 use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
 
-#[derive(Clone)]
 #[json]
 pub struct OB12ActionJSONValue {
     pub action: String,
@@ -11,14 +10,13 @@ pub struct OB12ActionJSONValue {
     pub params: JSONValue,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy)]
 #[json(serde(rename_all = "lowercase"))]
 pub enum OB12RespStatus {
     Ok,
     Failed,
 }
 
-#[derive(Clone)]
 #[json]
 pub struct OB12RespJSONValue {
     pub status: OB12RespStatus,

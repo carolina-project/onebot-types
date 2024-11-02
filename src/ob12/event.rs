@@ -1,7 +1,7 @@
 use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
 
-#[derive(Clone, Copy)]
+#[derive(Copy)]
 #[json(serde(rename_all = "lowercase"))]
 pub enum OB12EventType {
     Meta,
@@ -10,7 +10,6 @@ pub enum OB12EventType {
     Request,
 }
 
-#[derive(Clone)]
 #[json]
 pub struct OB12EventData {
     pub id: String,
