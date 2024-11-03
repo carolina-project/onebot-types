@@ -17,6 +17,7 @@ pub enum MessageSegs {
     String(String),
 }
 
+#[cfg(feature = "json")]
 mod serde_impl_segs {
     use std::borrow::Cow;
 

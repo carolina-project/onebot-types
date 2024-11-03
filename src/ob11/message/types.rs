@@ -11,14 +11,11 @@ const fn true_value() -> bool {
 
 #[json_from_str]
 pub struct FileSendOpt {
-    #[cfg_attr(feature = "json", serde(default = "true_value"))]
+    #[serde(default = "true_value")]
     pub cache: bool,
-    #[cfg_attr(feature = "json", serde(default = "true_value"))]
+    #[serde(default = "true_value")]
     pub proxy: bool,
-    #[cfg_attr(
-        feature = "json",
-        serde(with = "ob_types_base::tool::duration_str_opt")
-    )]
+    #[serde(with = "ob_types_base::tool::duration_str_opt")]
     pub timeout: Option<Duration>,
 }
 
@@ -155,9 +152,9 @@ pub struct Location {
     pub content: Option<String>,
 }
 
-#[json_from_str(serde(tag = "type", rename_all="lowercase"))]
+#[json_from_str(serde(tag = "type", rename_all = "lowercase"))]
 pub enum Music {
-    #[cfg_attr(feature = "json", serde(rename = "163"))]
+    #[serde(rename = "163")]
     NCM {
         id: u64,
     },

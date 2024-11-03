@@ -141,5 +141,16 @@
         "user_id": 112233,
         "comment": "",
         "flag": ""
+    },
+    {
+        "time": 112233,
+        "self_id": 112233,
+        "post_type": "request",
+        "request_type": "group",
+        "sub_type": "invite",
+        "group_id": 12123,
+        "user_id": 112233,
+        "comment": "",
+        "flag": ""
     }
 ]
