@@ -1,25 +1,27 @@
-use ob_types_base::json::JSONValue;
+use std::borrow::Cow;
+
+use ob_types_base::{json::JSONValue, OBAction};
 use ob_types_macro::json;
 
 #[json]
-pub struct OB12ActionJSONValue {
-    pub action: String,
+pub struct ActionRaw<'a, T: OBAction> {
+    pub action: Cow<'a, str>,
+    pub params: T,
     pub echo: Option<String>,
-    #[cfg_attr(feature = "json", serde(rename = "self"))]
+    #[serde(rename = "self")]
     pub self_: super::BotSelf,
-    pub params: JSONValue,
 }
 
 #[derive(Copy)]
 #[json(serde(rename_all = "lowercase"))]
-pub enum OB12RespStatus {
+pub enum RespStatus {
     Ok,
     Failed,
 }
 
 #[json]
-pub struct OB12RespJSONValue {
-    pub status: OB12RespStatus,
+pub struct RespData {
+    pub status: RespStatus,
     pub retcode: i64,
     pub data: JSONValue,
     pub message: String,

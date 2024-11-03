@@ -1,8 +1,14 @@
 use ob_types_macro::{json, onebot_action};
 
-use crate::ob11::Sex;
+use crate::ob11::{MessageSeg, Sex};
 
-use super::EmptyResp;
+use super::{bot::MessageResp, EmptyResp};
+
+#[onebot_action("send_private_msg", MessageResp)]
+pub struct SendPrivateMsg {
+    pub user_id: i64,
+    pub message: Vec<MessageSeg>,
+}
 
 #[onebot_action("send_like", EmptyResp)]
 pub struct SendLike {

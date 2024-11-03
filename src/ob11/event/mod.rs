@@ -13,7 +13,7 @@ pub mod request;
 
 #[derive(Copy)]
 #[json(serde(rename_all = "snake_case"))]
-pub enum OB11PostType {
+pub enum PostType {
     MetaEvent,
     Message,
     Notice,
@@ -21,10 +21,10 @@ pub enum OB11PostType {
 }
 
 #[json]
-pub struct OB11EventRaw {
+pub struct EventRaw {
     pub time: u64,
     pub self_id: i64,
-    pub post_type: OB11PostType,
+    pub post_type: PostType,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub extra: JSONValue,
 }

@@ -1,29 +1,28 @@
-use ob_types_base::OBResult;
 use ob_types_macro::json;
 
-use crate::ob11::{message::MessageSeg, Sex};
+use crate::ob11::{
+    message::MessageChain,
+    Sex,
+};
 
 #[json]
 pub struct MessageEvent {
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[serde(flatten)]
     pub message: Message,
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[serde(flatten)]
     pub kind: MessageKind,
 }
 
-#[derive(Debug, Clone)]
-pub enum MessageSegs {
-    Array(Vec<MessageSeg>),
-    String(String),
-}
+#[derive(Clone, Debug)]
+pub struct MsgEventChain(MessageChain);
 
 #[cfg(feature = "json")]
 mod serde_impl_segs {
     use std::borrow::Cow;
 
-    use super::MessageSegs;
+    use super::MessageChain;
     use serde::{de, ser, Serialize};
-    impl ser::Serialize for MessageSegs {
+    impl ser::Serialize for super::MsgEventChain {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: ser::Serializer,
@@ -34,13 +33,13 @@ mod serde_impl_segs {
                 message: &'a T,
             }
 
-            match self {
-                MessageSegs::Array(segs) => Helper {
+            match &self.0 {
+                MessageChain::Array(segs) => Helper {
                     message_format: "array",
                     message: segs,
                 }
                 .serialize(serializer),
-                MessageSegs::String(s) => Helper {
+                MessageChain::String(s) => Helper {
                     message_format: "string",
                     message: s,
                 }
@@ -48,8 +47,8 @@ mod serde_impl_segs {
             }
         }
     }
-    impl<'de> de::Deserialize<'de> for MessageSegs {
-        fn deserialize<D>(deserializer: D) -> Result<MessageSegs, D::Error>
+    impl<'de> de::Deserialize<'de> for super::MsgEventChain {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: de::Deserializer<'de>,
         {
@@ -62,10 +61,12 @@ mod serde_impl_segs {
             let helper = Helper::deserialize(deserializer)?;
             let match_closure = |typ: &str| match typ {
                 "array" => serde_json::from_value(helper.message)
-                    .map(Self::Array)
+                    .map(MessageChain::Array)
+                    .map(Self)
                     .map_err(Error::custom),
                 "string" => serde_json::from_value(helper.message)
-                    .map(Self::String)
+                    .map(MessageChain::String)
+                    .map(Self)
                     .map_err(Error::custom),
                 _ => Err(Error::custom("unknown message_format")),
             };
@@ -78,21 +79,12 @@ mod serde_impl_segs {
     }
 }
 
-impl MessageSegs {
-    pub fn into_segs(self) -> OBResult<Vec<MessageSeg>> {
-        match self {
-            MessageSegs::Array(segs) => Ok(segs),
-            MessageSegs::String(_) => unimplemented!("cq code parse"),
-        }
-    }
-}
-
 #[json]
 pub struct Message {
     pub message_id: i32,
     pub user_id: i64,
     #[cfg_attr(feature = "json", serde(flatten))]
-    pub message_segs: MessageSegs,
+    pub message_segs: MsgEventChain,
     pub raw_message: String,
     pub font: i32,
 }

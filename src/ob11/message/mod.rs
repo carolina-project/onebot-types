@@ -8,7 +8,7 @@ use std::{fmt::Display, str::FromStr};
 use types::*;
 
 #[json]
-pub struct OB11MessageSegRaw {
+pub struct MessageSegRaw {
     pub r#type: String,
     pub data: JSONValue,
 }
@@ -111,7 +111,7 @@ macro_rules! message_seg {
                 $(#[doc = $doc])?
                 $var$(($inner))?,
             )*
-            Custom(OB11MessageSegRaw),
+            Custom(MessageSegRaw),
         }
 
         #[cfg(feature = "json")]
@@ -149,7 +149,7 @@ macro_rules! message_seg {
                     $(
                         $typ_name => msg_seg_deser_impl!($var $(, helper.data, $inner $(, $field)?)?),
                     )*
-                    typ => Ok(MessageSeg::Custom(OB11MessageSegRaw {
+                    typ => Ok(MessageSeg::Custom(MessageSegRaw {
                         r#type: typ.into(),
                         data: helper.data.into(),
                     })),
@@ -182,3 +182,18 @@ message_seg!(
     XML(String = "data") "xml",
     JSON(String = "data") "json",
 );
+
+#[json]
+pub enum MessageChain {
+    Array(Vec<MessageSeg>),
+    String(String),
+}
+
+impl MessageChain {
+    fn into_messages(self) -> Vec<MessageSeg> {
+        match self {
+            Self::Array(s) => s,
+            Self::String(_) => unimplemented!("cq code string"),
+        }
+    }
+}

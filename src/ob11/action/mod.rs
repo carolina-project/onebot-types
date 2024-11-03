@@ -8,7 +8,7 @@ pub mod group;
 pub type EmptyResp = ();
 
 #[json]
-pub struct OB11ActionRaw<'a, T: OBAction> {
+pub struct ActionRaw<'a, T: OBAction> {
     pub action: &'a str,
     pub params: T,
     pub echo: Option<String>,
@@ -16,15 +16,15 @@ pub struct OB11ActionRaw<'a, T: OBAction> {
 
 #[derive(Copy)]
 #[json(serde(rename_all = "lowercase"))]
-pub enum OB11RespStatus {
+pub enum RespStatus {
     Ok,
     Async,
     Failed,
 }
 
 #[json]
-pub struct OB11RespData {
-    pub status: OB11RespStatus,
+pub struct RespData {
+    pub status: RespStatus,
     pub retcode: i64,
     pub data: JSONValue,
     pub echo: Option<String>,

@@ -37,6 +37,7 @@ pub enum ImageType {
     Normal,
 }
 impl Default for ImageType {
+    #[inline(always)]
     fn default() -> Self {
         Self::Normal
     }
@@ -67,7 +68,7 @@ mod serde_impl {
             match <&str>::deserialize(deserializer) {
                 Ok("flash") => Ok(Self::Flash),
                 Ok(_) => Err(serde::de::Error::custom("unknown image type")),
-                Err(e) => Err(e),
+                Err(_) => Ok(Self::default()),
             }
         }
     }

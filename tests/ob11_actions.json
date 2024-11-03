@@ -1,0 +1,93 @@
+[
+    {
+        "action": "send_msg",
+        "params": {
+            "message": "Hello, World!"
+        }
+    },
+    {
+        "action": "send_group_msg",
+        "params": {
+            "group_id": 123456789,
+            "message": "Hello, World!"
+        }
+    },
+    {
+        "action": "send_private_msg",
+        "params": {
+            "user_id": 123456789,
+            "message": "Hello, World!"
+        }
+    },
+    {
+        "action": "delete_msg",
+        "params": {
+            "message_id": 123456789
+        }
+    },
+    {
+        "action": "send_like",
+        "params": {
+            "user_id": 123456789,
+            "times": 1
+        }
+    },
+    {
+        "action": "set_group_kick",
+        "params": {
+            "group_id": 123456789,
+            "user_id": 123456789,
+            "reject_add_request": false
+        }
+    },
+    {
+        "action": "set_group_ban",
+        "params": {
+            "group_id": 123456789,
+            "user_id": 123456789,
+            "duration": 60
+        }
+    },
+    {
+        "action": "set_group_anonymous_ban",
+        "params": {
+            "group_id": 123456789,
+            "anonymous": {
+                "flag": "flag",
+                "id": "id",
+                "name": "name"
+            },
+            "duration": 60
+        }
+    },
+    {
+        "action": "set_group_whole_ban",
+        "params": {
+            "group_id": 123456789,
+            "enable": true
+        }
+    },
+    {
+        "action": "set_group_admin",
+        "params": {
+            "group_id": 123456789,
+            "user_id": 123456789,
+            "enable": true
+        }
+    },
+    {
+        "action": "set_group_anonymous",
+        "params": {
+            "group_id": 123456789,
+            "enable": true
+        }
+    },
+    {
+        "action": "set_group_card",
+        "params": {
+            "group_id": 123456789,
+            "user_id": 123456789,
+            "card": "card"
+        }
+    }
+]

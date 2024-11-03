@@ -3,7 +3,7 @@ use ob_types_macro::json;
 
 #[derive(Copy)]
 #[json(serde(rename_all = "lowercase"))]
-pub enum OB12EventType {
+pub enum EventType {
     Meta,
     Message,
     Notice,
@@ -11,13 +11,14 @@ pub enum OB12EventType {
 }
 
 #[json]
-pub struct OB12EventData {
+pub struct Event {
     pub id: String,
     pub time: f64,
-    #[cfg_attr(feature = "json", serde(rename = "self"))]
+    #[serde(rename = "self")]
     pub self_: super::BotSelf,
-    pub r#type: OB12EventType,
+    pub r#type: EventType,
     pub detail_type: String,
     pub sub_type: String,
+    #[serde(flatten)]
     pub extra: JSONValue,
 }

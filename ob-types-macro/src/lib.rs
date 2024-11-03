@@ -170,11 +170,23 @@ fn struct_fields_proc(
             def
         }
     };
+    let is_unit = match data.fields {
+        Fields::Unnamed(_) => true,
+        _ => false,
+    };
     let field_defs = data.fields.into_iter().map(field_proc);
 
-    quote! {
-        #vis struct #name #generics {
-            #(#field_defs),*
+    if is_unit {
+        quote! {
+            #vis struct #name #generics (
+                #( #field_defs ),*
+            );
+        }
+    } else {
+        quote! {
+            #vis struct #name #generics {
+                #( #field_defs ),*
+            }
         }
     }
 }

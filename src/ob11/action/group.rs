@@ -3,14 +3,22 @@ use std::{marker::PhantomData, time::Duration};
 use ob_types_base::{OBAction, OBRespData};
 use ob_types_macro::{json, onebot_action, OBRespData};
 
-use crate::ob11::event::{message::AnonymousSender, request::AddGroupType};
+use crate::ob11::{
+    event::{message::AnonymousSender, request::AddGroupType}, message::MessageChain
+};
 
 #[cfg(feature = "json")]
 use crate::value_to_hashmap;
 #[cfg(feature = "json")]
 use ob_types_base::tool::duration_secs_opt;
 
-use super::EmptyResp;
+use super::{bot::MessageResp, EmptyResp};
+
+#[onebot_action("send_group_msg", MessageResp)]
+pub struct SendGroupMsg {
+    pub group_id: i64,
+    pub message: MessageChain,
+}
 
 #[onebot_action("set_group_kick", EmptyResp)]
 pub struct SetGroupKick {
