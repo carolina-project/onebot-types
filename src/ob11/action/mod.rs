@@ -1,9 +1,13 @@
 use ob_types_base::{json::JSONValue, OBAction};
-use ob_types_macro::json;
+use ob_types_macro::{json, ob11_action_enum};
 
-pub mod bot;
-pub mod friend;
-pub mod group;
+mod bot;
+mod friend;
+mod group;
+
+pub use bot::*;
+pub use friend::*;
+pub use group::*;
 
 pub type EmptyResp = ();
 
@@ -29,3 +33,5 @@ pub struct RespData {
     pub data: JSONValue,
     pub echo: Option<String>,
 }
+
+ob11_action_enum!();

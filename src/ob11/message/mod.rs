@@ -190,6 +190,7 @@ pub enum MessageChain {
 }
 
 impl MessageChain {
+    #[allow(unused)]
     fn into_messages(self) -> Vec<MessageSeg> {
         match self {
             Self::Array(s) => s,
