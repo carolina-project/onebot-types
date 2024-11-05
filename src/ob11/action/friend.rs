@@ -29,7 +29,7 @@ pub struct GetStrangerInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[json(resp)]
 pub struct StrangerInfoResp {
     pub user_id: i64,
     pub nickname: String,
@@ -40,7 +40,7 @@ pub struct StrangerInfoResp {
 #[onebot_action("get_friend_list", Vec<FriendInfo>)]
 pub struct GetFriendList;
 
-#[json]
+#[json(resp)]
 pub struct FriendInfo {
     pub user_id: i64,
     pub nickname: String,

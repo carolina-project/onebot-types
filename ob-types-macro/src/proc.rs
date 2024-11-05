@@ -1,3 +1,4 @@
+use parse::Parse;
 use quote::quote;
 use syn::*;
 
@@ -139,11 +140,48 @@ pub fn struct_fields_proc(
     }
 }
 
+pub enum JsonAddition {
+    StringValue,
+    OBRespDerive,
+}
+
+pub struct JsonProcMacro {
+    pub addition: Option<JsonAddition>,
+    pub inner: proc_macro2::TokenStream,
+}
+
+impl Parse for JsonProcMacro {
+    fn parse(input: parse::ParseStream) -> Result<Self> {
+        let (addition, inner) = if input.peek(Ident) {
+            let ident: Ident = input.parse()?;
+            let peek = |add: JsonAddition| -> Result<_> {
+                if input.peek(Token![,]) {
+                    input.parse::<Token![,]>()?;
+                }
+
+                Ok((Some(add), input.parse()?))
+            };
+            match ident.to_string().as_str() {
+                "str" => peek(JsonAddition::StringValue)?,
+                "resp" => peek(JsonAddition::OBRespDerive)?,
+                _ => {
+                    let inner: proc_macro2::TokenStream = input.parse()?;
+                    (None, quote! { #ident #inner })
+                }
+            }
+        } else {
+            (None, input.parse()?)
+        };
+
+        Ok(JsonProcMacro { addition, inner })
+    }
+}
+
 pub fn derive_serde_process(
     input: DeriveInput,
     extra_attrs_getter: Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>,
 ) -> proc_macro2::TokenStream {
-    let attrs = input.attrs;
+    let attrs = attrs_proc(&input.attrs);
     let data = match input.data {
         Data::Struct(data) => struct_fields_proc(
             input.vis,

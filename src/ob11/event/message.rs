@@ -1,9 +1,6 @@
 use ob_types_macro::json;
 
-use crate::ob11::{
-    message::MessageChain,
-    Sex,
-};
+use crate::ob11::{message::MessageChain, Sex};
 
 #[json]
 pub struct MessageEvent {
@@ -14,7 +11,7 @@ pub struct MessageEvent {
 }
 
 #[derive(Clone, Debug)]
-pub struct MsgEventChain(MessageChain);
+pub struct MsgEventChain(#[allow(unused)] MessageChain);
 
 #[cfg(feature = "json")]
 mod serde_impl_segs {

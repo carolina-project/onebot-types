@@ -1,5 +1,5 @@
 use ob_types_base::{json::JSONValue, OBAction};
-use ob_types_macro::{json, ob11_action_enum};
+use ob_types_macro::json;
 
 mod bot;
 mod friend;
@@ -33,5 +33,3 @@ pub struct RespData {
     pub data: JSONValue,
     pub echo: Option<String>,
 }
-
-ob11_action_enum!();

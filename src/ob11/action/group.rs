@@ -109,7 +109,7 @@ pub struct GetGroupInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[json(resp)]
 pub struct GroupInfo {
     pub group_id: i64,
     pub group_name: String,
@@ -127,7 +127,7 @@ pub struct GetGroupMemberInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[json(resp)]
 pub struct GroupMemberInfo {
     pub group_id: i64,
     pub user_id: i64,
@@ -208,7 +208,7 @@ pub struct CurrentTalkative {
     pub day_count: u32,
 }
 
-#[json]
+#[json(resp)]
 pub struct GroupTalkative {
     pub group_id: i64,
     pub current_talkative: CurrentTalkative,
@@ -263,7 +263,7 @@ impl<T: GroupHonor> GroupHonorList<T> {
     }
 }
 
-#[json]
+#[json(resp)]
 pub struct GroupAllHonor {
     pub group_id: i64,
     pub current_talkative: CurrentTalkative,

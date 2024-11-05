@@ -86,13 +86,12 @@ mod serde_impl_send {
     }
 }
 
-#[json]
+#[json(resp)]
 pub struct MessageResp {
     pub message_id: i32,
 }
 
 #[onebot_action("delete_msg", EmptyResp)]
-#[cfg_attr(feature = "serde", serde(transparent))]
 #[allow(unused)]
 pub struct DeleteMessage {
     message_id: i32,
@@ -200,7 +199,7 @@ pub struct GetForwardMsg {
     pub id: String,
 }
 
-#[json]
+#[json(resp)]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
@@ -208,7 +207,7 @@ pub struct GetForwardMsgResp {
 #[onebot_action("get_login_info", LoginInfo)]
 pub struct GetLoginInfo;
 
-#[json]
+#[json(resp)]
 pub struct LoginInfo {
     pub user_id: i64,
     pub nickname: String,
@@ -219,15 +218,15 @@ pub struct GetCookies {
     pub domain: Option<String>,
 }
 
-#[json]
+#[json(resp)]
 pub struct Cookies {
     pub cookies: String,
 }
 
-#[onebot_action("get_csrf_token", i32)]
+#[onebot_action("get_csrf_token", CSRFToken)]
 pub struct GetCSRFToken;
 
-#[json]
+#[json(resp)]
 pub struct CSRFToken {
     pub token: i32,
 }
@@ -237,13 +236,13 @@ pub struct GetCredentials {
     pub domain: Option<String>,
 }
 
-#[json]
+#[json(resp)]
 pub struct Credentials {
     pub cookies: String,
     pub csrf_token: i32,
 }
 
-#[json]
+#[json(resp)]
 pub struct FileResp {
     pub file: String,
 }
@@ -259,7 +258,7 @@ pub struct GetImage {
     pub file: String,
 }
 
-#[json]
+#[json(resp)]
 pub struct IsAllowd {
     pub yes: bool,
 }
@@ -273,7 +272,7 @@ pub struct CanSendRecord;
 #[onebot_action("get_status", Status)]
 pub struct GetStatus;
 
-#[json]
+#[json(resp)]
 pub struct Status {
     pub online: bool,
     pub good: bool,
@@ -284,7 +283,7 @@ pub struct Status {
 #[onebot_action("get_version_info", VersionInfo)]
 pub struct GetVersion;
 
-#[json]
+#[json(resp)]
 pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,

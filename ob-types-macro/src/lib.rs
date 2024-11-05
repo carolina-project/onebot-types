@@ -1,16 +1,12 @@
-use std::{
-    fmt::Display,
-    fs::{self, OpenOptions},
-    io::Read,
-};
+use std::{fmt::Display, fs::OpenOptions};
 
 use parse::Parse;
+use proc::{JsonAddition, JsonProcMacro};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::*;
 use token::Comma;
 
-mod ob_parse;
 mod proc;
 
 struct OBActionArgs {
@@ -68,10 +64,7 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let struct_name = &input_struct.ident;
     TokenStream::from(quote! {
-        #[cfg_attr(
-            feature = "json",
-            derive(serde::Deserialize, serde::Serialize),
-        )]
+        #[ob_types_macro::json]
         #input_struct
 
         impl #struct_name {
@@ -89,57 +82,33 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn json_from_str(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let derive = parse_macro_input!(input as DeriveInput);
-    let input = proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)));
-    let attrs: proc_macro2::TokenStream = attrs.into();
-    let tokens = quote! {
-        #[cfg_attr(
-            feature = "json",
-            derive(serde::Deserialize, serde::Serialize),
-            #attrs
-        )]
-        #[derive(ob_types_macro::OBRespData, Debug, Clone)]
-        #input
-    };
-    tokens.into()
-}
-
-#[proc_macro_attribute]
 pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let attrs: proc_macro2::TokenStream = attrs.into();
+    let props: JsonProcMacro = parse_macro_input!(attrs);
+    let attrs = props.inner;
+
     let derive = parse_macro_input!(input as DeriveInput);
-    let input = proc::derive_serde_process(derive, None);
+    let input = match props.addition {
+        Some(JsonAddition::StringValue) => {
+            proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
+        }
+        Some(JsonAddition::OBRespDerive) => {
+            let inp = proc::derive_serde_process(derive, None);
+            quote! {
+                #[derive(ob_types_macro::OBRespData)]
+                #inp
+            }
+        }
+        None => proc::derive_serde_process(derive, None),
+    };
+
     let tokens = quote! {
         #[cfg_attr(
             feature = "json",
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]
-        #[derive(ob_types_macro::OBRespData, Debug, Clone)]
+        #[derive(Debug, Clone)]
         #input
     };
     tokens.into()
-}
-
-#[proc_macro]
-pub fn ob11_action_enum(_: TokenStream) -> TokenStream {
-    use ob_parse::ob11_actions::*;
-    let files = vec!["bot", "friend", "group"];
-    let files: Vec<_> = files
-        .into_iter()
-        .map(|s| {
-            (s.to_owned(), {
-                let mut buf = String::new();
-                fs::File::open(format!("src/ob11/action/{}.rs", s))
-                    .unwrap()
-                    .read_to_string(&mut buf)
-                    .unwrap();
-                parse_file(&buf).unwrap()
-            })
-        })
-        .map(|(name, file)| (name, get_ob_actions(file)))
-        .collect();
-
-    make_enum(files).into()
 }
