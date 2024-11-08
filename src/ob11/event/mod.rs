@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use meta::MetaEvent;
 use notice::NoticeEvent;
+use ob_types_base::tool::duration_secs;
 use ob_types_base::JSONValue;
 use ob_types_macro::json;
 use request::RequestEvent;
@@ -22,7 +25,8 @@ pub enum PostType {
 
 #[json]
 pub struct EventRaw {
-    pub time: u64,
+    #[serde(with = "duration_secs")]
+    pub time: Duration,
     pub self_id: i64,
     pub post_type: PostType,
     #[cfg_attr(feature = "json", serde(flatten))]
@@ -31,7 +35,8 @@ pub struct EventRaw {
 
 #[json]
 pub struct Event {
-    pub time: i64,
+    #[serde(with = "duration_secs")]
+    pub time: Duration,
     pub self_id: i64,
     #[cfg_attr(feature = "json", serde(flatten))]
     pub kind: EventKind,

@@ -4,7 +4,8 @@ use ob_types_base::{OBAction, OBRespData};
 use ob_types_macro::{json, onebot_action, OBRespData};
 
 use crate::ob11::{
-    event::{message::AnonymousSender, request::AddGroupType}, message::MessageChain
+    event::{message::AnonymousSender, request::AddGroupType},
+    message::MessageChain,
 };
 
 #[cfg(feature = "json")]
@@ -14,24 +15,24 @@ use ob_types_base::tool::duration_secs_opt;
 
 use super::{bot::MessageResp, EmptyResp};
 
-#[onebot_action("send_group_msg", MessageResp)]
-pub struct SendGroupMsg {
+#[onebot_action(MessageResp)]
+pub struct SendGroupMessage {
     pub group_id: i64,
     pub message: MessageChain,
 }
 
-#[onebot_action("set_group_kick", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupKick {
     pub group_id: i64,
     pub user_id: i64,
     pub reject_add_request: Option<bool>,
 }
 
-#[onebot_action("set_group_ban", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupBan {
     pub group_id: i64,
     pub user_id: i64,
-    #[cfg_attr(feature = "json", serde(with = "duration_secs_opt"))]
+    #[serde(with = "duration_secs_opt")]
     pub duration: Option<Duration>,
 }
 
@@ -41,52 +42,52 @@ pub enum AnonymousFlag {
     Flag(String),
 }
 
-#[onebot_action("set_group_anonymous_ban", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupAnonymousBan {
     pub group_id: i64,
     pub anonymous: AnonymousFlag,
     pub duration: Option<Duration>,
 }
 
-#[onebot_action("set_group_whole_ban", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupWholeBan {
     pub group_id: i64,
     pub enable: Option<bool>,
 }
 
-#[onebot_action("set_group_admin", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupAdmin {
     pub group_id: i64,
     pub user_id: i64,
     pub enable: Option<bool>,
 }
 
-#[onebot_action("set_group_anonymous", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupAnonymous {
     pub group_id: i64,
     pub enable: Option<bool>,
 }
 
-#[onebot_action("set_group_card", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupCard {
     pub group_id: i64,
     pub user_id: i64,
     pub card: Option<String>,
 }
 
-#[onebot_action("set_group_name", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupName {
     pub group_id: i64,
     pub group_name: String,
 }
 
-#[onebot_action("set_group_leave", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupLeave {
     pub group_id: i64,
     pub is_dismiss: Option<bool>,
 }
 
-#[onebot_action("set_group_special_title", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupSpecialTitle {
     pub group_id: i64,
     pub user_id: i64,
@@ -95,7 +96,7 @@ pub struct SetGroupSpecialTitle {
     pub duration: Option<Duration>,
 }
 
-#[onebot_action("set_group_add_request", EmptyResp)]
+#[onebot_action(EmptyResp)]
 pub struct SetGroupAddRequest {
     pub flag: String,
     pub sub_type: AddGroupType,
@@ -103,7 +104,7 @@ pub struct SetGroupAddRequest {
     pub reason: Option<String>,
 }
 
-#[onebot_action("get_group_info", GroupInfo)]
+#[onebot_action(GroupInfo)]
 pub struct GetGroupInfo {
     pub group_id: i64,
     pub no_cache: Option<bool>,
@@ -117,10 +118,10 @@ pub struct GroupInfo {
     pub max_member_count: u32,
 }
 
-#[onebot_action("get_group_list", Vec<GroupInfo>)]
+#[onebot_action(Vec<GroupInfo>)]
 pub struct GetGroupList;
 
-#[onebot_action("get_group_member_info", GroupMemberInfo)]
+#[onebot_action(GroupMemberInfo)]
 pub struct GetGroupMemberInfo {
     pub group_id: i64,
     pub user_id: i64,
@@ -146,7 +147,7 @@ pub struct GroupMemberInfo {
     pub card_changeable: bool,
 }
 
-#[onebot_action("get_group_member_list", Vec<GroupMemberInfo>)]
+#[onebot_action( Vec<GroupMemberInfo>)]
 pub struct GetGroupMemberList {
     pub group_id: i64,
 }
@@ -154,8 +155,7 @@ pub struct GetGroupMemberList {
 // get group honor
 pub trait GroupHonor {
     type Output: OBRespData;
-
-    fn type_name() -> &'static str;
+    const TYPE_NAME: &'static str;
 }
 
 /// see [get_group_honor_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF)
@@ -173,10 +173,7 @@ where
     T: GroupHonor,
 {
     type Resp = T::Output;
-
-    fn action(&self) -> &str {
-        "get_group_honor_info"
-    }
+    const ACTION: Option<&'static str> = Some("get_group_honor_info");
 }
 
 impl<Type> GetGroupHonor<Type>
@@ -229,7 +226,7 @@ impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
         D: serde::Deserializer<'de>,
     {
         let mut value = value_to_hashmap(deserializer)?;
-        let field = format!("{}_list", S::type_name());
+        let field = format!("{}_list", S::TYPE_NAME);
         Ok(Self {
             group_id: crate::hashmap_value_get::<_, D>(&mut value, "group_id")?,
             list: crate::hashmap_value_get::<_, D>(&mut value, &field)?,
@@ -248,7 +245,7 @@ impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
 
         let mut map = serializer.serialize_map(Some(2))?;
         map.serialize_entry("group_id", &self.group_id)?;
-        map.serialize_entry(&format!("{}_list", T::type_name()), &self.list)?;
+        map.serialize_entry(&format!("{}_list", T::TYPE_NAME), &self.list)?;
         map.end()
     }
 }
@@ -282,9 +279,7 @@ pub mod honor {
     impl GroupHonor for Talkative {
         type Output = super::GroupTalkative;
 
-        fn type_name() -> &'static str {
-            "talkative"
-        }
+        const TYPE_NAME: &'static str = "talkative";
     }
 
     // -performer
@@ -292,9 +287,7 @@ pub mod honor {
     impl GroupHonor for Performer {
         type Output = GroupHonorList<Self>;
 
-        fn type_name() -> &'static str {
-            "performer"
-        }
+        const TYPE_NAME: &'static str = "performer";
     }
 
     // -legend
@@ -302,9 +295,7 @@ pub mod honor {
     impl GroupHonor for Legend {
         type Output = GroupHonorList<Self>;
 
-        fn type_name() -> &'static str {
-            "legend"
-        }
+        const TYPE_NAME: &'static str = "legend";
     }
 
     // -strong_newbie
@@ -312,9 +303,7 @@ pub mod honor {
     impl GroupHonor for StrongNewbie {
         type Output = GroupHonorList<Self>;
 
-        fn type_name() -> &'static str {
-            "strong_newbie"
-        }
+        const TYPE_NAME: &'static str = "strong_newbie";
     }
 
     // -emotion
@@ -322,9 +311,7 @@ pub mod honor {
     impl GroupHonor for Emotion {
         type Output = GroupHonorList<Self>;
 
-        fn type_name() -> &'static str {
-            "emotion"
-        }
+        const TYPE_NAME: &'static str = "emotion";
     }
 
     // -all
@@ -332,8 +319,6 @@ pub mod honor {
     impl GroupHonor for All {
         type Output = GroupAllHonor;
 
-        fn type_name() -> &'static str {
-            "all"
-        }
+        const TYPE_NAME: &'static str = "all";
     }
 }

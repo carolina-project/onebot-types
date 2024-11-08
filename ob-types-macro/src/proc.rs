@@ -206,3 +206,22 @@ pub fn derive_serde_process(
         #data
     }
 }
+
+pub fn camel_to_snake(s: &str) -> String {
+    let mut result = String::new();
+    let mut first = true;
+
+    for c in s.chars() {
+        if c.is_uppercase() {
+            if !first {
+                result.push('_');
+            }
+            result.push(c.to_lowercase().next().unwrap());
+            first = false;
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
+}

@@ -1,24 +1,25 @@
-use ob_types_base::json::JSONValue;
-use ob_types_macro::json;
+use std::time::Duration;
 
-#[derive(Copy)]
-#[json(serde(rename_all = "lowercase"))]
+use meta::MetaEvent;
+use ob_types_macro::json;
+use ob_types_base::tool::duration_f64;
+
+pub mod meta;
+pub mod message;
+
+#[json(serde(rename_all = "lowercase", tag = "type"))]
 pub enum EventType {
-    Meta,
+    Meta(MetaEvent),
     Message,
     Notice,
     Request,
 }
 
-#[json]
+#[json(resp)]
 pub struct Event {
     pub id: String,
-    pub time: f64,
-    #[serde(rename = "self")]
-    pub self_: super::BotSelf,
-    pub r#type: EventType,
-    pub detail_type: String,
-    pub sub_type: String,
+    #[serde(with = "duration_f64")]
+    pub time: Duration,
     #[serde(flatten)]
-    pub extra: JSONValue,
+    pub event: EventType,
 }

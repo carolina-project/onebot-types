@@ -19,6 +19,26 @@ pub mod duration_secs {
 }
 
 #[cfg(feature = "json")]
+pub mod duration_f64 {
+    use std::time::Duration;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let seconds: f64 = serde::Deserialize::deserialize(deserializer)?;
+        Ok(Duration::from_secs_f64(seconds))
+    }
+
+    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_f64(duration.as_secs_f64())
+    }
+}
+
+#[cfg(feature = "json")]
 pub mod duration_secs_opt {
     use std::time::Duration;
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>

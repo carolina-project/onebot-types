@@ -5,20 +5,15 @@ use proc::{JsonAddition, JsonProcMacro};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::*;
-use token::Comma;
 
 mod proc;
 
 struct OBActionArgs {
-    action_name: LitStr,
-    _comma: Comma,
     response_type: Type,
 }
 impl Parse for OBActionArgs {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         Ok(Self {
-            action_name: input.parse()?,
-            _comma: input.parse()?,
             response_type: input.parse()?,
         })
     }
@@ -59,7 +54,7 @@ pub fn ob_resp_data(input: TokenStream) -> TokenStream {
 pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
     let input_struct: ItemStruct = parse_macro_input!(input);
     let args = parse_macro_input!(args as OBActionArgs);
-    let action_name = args.action_name.value();
+    let action_name = proc::camel_to_snake(&input_struct.ident.to_string());
     let resp_type = args.response_type;
 
     let struct_name = &input_struct.ident;
@@ -67,16 +62,9 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
         #[ob_types_macro::json]
         #input_struct
 
-        impl #struct_name {
-            pub const ACTION: &'static str = #action_name;
-        }
-
         impl ob_types_base::OBAction for #struct_name {
+            const ACTION: Option<&'static str> = Some(#action_name);
             type Resp = #resp_type;
-
-            fn action(&self) -> &str {
-                #struct_name::ACTION
-            }
         }
     })
 }

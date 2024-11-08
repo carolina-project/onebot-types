@@ -54,9 +54,12 @@ impl_ob_resp_data!(
 impl_ob_resp_gene!(Vec<T>);
 
 pub trait OBAction {
+    const ACTION: Option<&'static str> = None;
     type Resp: OBRespData;
 
-    fn action(&self) -> &str;
+    fn action_name(&self) -> &str {
+        Self::ACTION.expect("Action name not set")
+    }
 }
 
 #[cfg_attr(feature = "json", derive(serde::Deserialize, serde::Serialize))]
@@ -84,8 +87,5 @@ mod serde_impl {
 
     impl<'a> OBAction for ActionRaw<'a> {
         type Resp = super::RespRaw;
-        fn action(&self) -> &str {
-            self.action.as_ref()
-        }
     }
 }
