@@ -2,7 +2,8 @@ use ob_types_macro::{json, onebot_action};
 
 use crate::ob11::{MessageSeg, Sex};
 
-use super::{bot::MessageResp, EmptyResp};
+use super::bot::MessageResp;
+use super::EmptyResp;
 
 #[onebot_action(MessageResp)]
 pub struct SendPrivateMessage {

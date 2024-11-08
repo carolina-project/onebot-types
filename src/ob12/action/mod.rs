@@ -1,11 +1,21 @@
 use ob_types_base::OBRespData;
 use ob_types_macro::json;
 
-mod meta;
+mod file;
+mod group;
+mod guild;
 mod message;
+mod meta;
+mod user;
 
-pub use meta::*;
+pub use file::*;
+pub use group::*;
+pub use guild::*;
 pub use message::*;
+pub use meta::*;
+pub use user::*;
+
+use super::scalable_struct;
 
 #[json]
 pub struct Action {
@@ -27,10 +37,40 @@ macro_rules! actions {
 
 actions!(
     // Meta actions
-    GetLatestVersion,
+    GetLatestEvents,
     GetSupportedActions,
     GetStatus,
-    GetVersion
+    GetVersion,
+    // User actions
+    GetSelfInfo,
+    GetUserInfo,
+    GetFriendList,
+    // Message actions
+    SendMessage,
+    // Group actions
+    GetGroupInfo,
+    GetGroupList,
+    GetGroupMemberInfo,
+    GetGroupMemberList,
+    SetGroupName,
+    LeaveGroup,
+    // Guild actions
+    GetGuildInfo,
+    GetGuildList,
+    SetGuildName,
+    GetGuildMemberInfo,
+    GetGuildMemberList,
+    LeaveGuild,
+    GetChannelInfo,
+    GetChannelList,
+    SetChannelName,
+    GetChannelMemberInfo,
+    GetChannelMemberList,
+    LeaveChannel,
+    // File actions
+    UploadFile,
+    UploadFileFragmented,
+    GetFile
 );
 
 #[derive(Copy)]
@@ -47,6 +87,11 @@ pub struct RespData<T: OBRespData> {
     pub data: T,
     pub message: String,
     pub echo: Option<String>,
+}
+
+scalable_struct! {
+    #[json(resp)]
+    EmptyResp
 }
 
 #[derive(Debug, Clone, Copy)]

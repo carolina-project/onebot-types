@@ -13,7 +13,8 @@ use crate::value_to_hashmap;
 #[cfg(feature = "json")]
 use ob_types_base::tool::duration_secs_opt;
 
-use super::{bot::MessageResp, EmptyResp};
+use super::bot::MessageResp;
+use super::EmptyResp;
 
 #[onebot_action(MessageResp)]
 pub struct SendGroupMessage {

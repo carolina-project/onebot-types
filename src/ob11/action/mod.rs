@@ -9,7 +9,7 @@ pub use bot::*;
 pub use friend::*;
 pub use group::*;
 
-pub type EmptyResp = ();
+pub(crate) type EmptyResp = ();
 
 #[json]
 pub struct Action {

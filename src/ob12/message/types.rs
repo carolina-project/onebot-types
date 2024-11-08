@@ -1,8 +1,6 @@
-use ob_types_macro::json;
+use crate::scalable_struct;
 
-use crate::scalable_data;
-
-scalable_data! {
+scalable_struct! {
     Text = {
         text: String
     },
@@ -24,7 +22,7 @@ scalable_data! {
 
 macro_rules! file_msgs {
     ($($typ:ident),* $(,)?) => {
-        scalable_data! {$(
+        scalable_struct! {$(
             $typ = {
                 file_id: String
             },

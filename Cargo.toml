@@ -9,10 +9,11 @@ ob-types-macro = { path = "./ob-types-macro" }
 ob-types-base = { path = "./ob-types-base" }
 serde = { version = "*", features = ["derive"], optional = true }
 serde_json = { version = "*", optional = true }
+base64 =  { version = "*", optional = true }
 
 [features]
 default = ["ob11", "ob12"]
-json = ["serde", "serde_json", "ob-types-base/json"]
+json = ["serde", "serde_json", "ob-types-base/json", "base64"]
 ob11 = []
 ob12 = []
 

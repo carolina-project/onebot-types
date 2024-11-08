@@ -1,16 +1,11 @@
-use ob_types_base::JSONValue;
-use ob_types_macro::json;
+use crate::{ob12::ChatTarget, scalable_struct};
 
-#[json]
-pub struct MessageEvent {
-    pub sub_type: String,
-    #[serde(flatten)]
-    pub r#kind: MessageKind,
-    #[serde(flatten)]
-    pub extra: JSONValue,
-}
-
-#[json]
-pub enum MessageKind {
-    
+scalable_struct! {
+    MessageEvent = {
+        message_id: String,
+        sub_type: String,
+        alt_message: Option<String>,
+        #[serde(flatten)]
+        source: ChatTarget,
+    },
 }

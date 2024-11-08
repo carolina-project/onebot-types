@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 macro_rules! json_from {
     ($typ: ty, $into: ident) => {
@@ -10,11 +10,11 @@ macro_rules! json_from {
     };
 }
 
-pub type JSONMap = HashMap<String, JSONValue>;
+pub type JSONMap = BTreeMap<String, JSONValue>;
 
 #[derive(Debug, Clone)]
 pub enum JSONValue {
-    Object(HashMap<String, JSONValue>),
+    Object(JSONMap),
     Array(Vec<JSONValue>),
     Int(i64),
     Float(f64),
@@ -26,7 +26,7 @@ pub enum JSONValue {
 json_from!(String, String);
 json_from!(u16, Int);
 json_from!(i64, Int);
-json_from!(HashMap<String, JSONValue>, Object);
+json_from!(JSONMap, Object);
 json_from!(&str, String);
 
 #[cfg(feature = "json")]

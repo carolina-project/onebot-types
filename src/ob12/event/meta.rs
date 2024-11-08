@@ -1,17 +1,13 @@
-use ob_types_base::JSONValue;
 use ob_types_macro::json;
 
-use crate::ob12::{BotSelf, Status, VersionInfo};
+use crate::{ob12::{Status, VersionInfo}, scalable_struct};
 
-#[json]
-pub struct MetaEvent {
-    #[serde(rename = "self")]
-    pub self_: BotSelf,
-    pub sub_type: String,
-    #[serde(flatten)]
-    pub r#kind: MetaKind,
-    #[serde(flatten)]
-    pub extra: JSONValue,
+scalable_struct! {
+    MetaEvent = {
+        sub_type: Option<String>,
+        #[serde(flatten)]
+        kind: MetaKind,
+    },
 }
 
 #[json(serde(tag = "detail_type", rename_all = "snake_case"))]
