@@ -11,7 +11,7 @@ pub struct MessageEvent {
 }
 
 #[derive(Clone, Debug)]
-pub struct MsgEventChain(#[allow(unused)] MessageChain);
+pub struct MsgEventChain(pub MessageChain);
 
 #[cfg(feature = "json")]
 mod serde_impl_segs {

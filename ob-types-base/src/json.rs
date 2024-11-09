@@ -12,7 +12,7 @@ macro_rules! json_from {
 
 pub type JSONMap = BTreeMap<String, JSONValue>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum JSONValue {
     Object(JSONMap),
     Array(Vec<JSONValue>),
@@ -20,6 +20,7 @@ pub enum JSONValue {
     Float(f64),
     String(String),
     Boolean(bool),
+    #[default]
     Null,
 }
 

@@ -183,7 +183,7 @@ message_seg!(
     JSON(String = "data") "json",
 );
 
-#[json]
+#[json(serde(untagged))]
 pub enum MessageChain {
     Array(Vec<MessageSeg>),
     String(String),

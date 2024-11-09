@@ -17,7 +17,7 @@ use super::bot::MessageResp;
 use super::EmptyResp;
 
 #[onebot_action(MessageResp)]
-pub struct SendGroupMessage {
+pub struct SendGroupMsg {
     pub group_id: i64,
     pub message: MessageChain,
 }
@@ -37,16 +37,47 @@ pub struct SetGroupBan {
     pub duration: Option<Duration>,
 }
 
-#[json]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub enum AnonymousFlag {
     Sender(AnonymousSender),
     Flag(String),
 }
 
+#[cfg(feature = "json")]
+mod serde_impl_anon {
+    use serde::Deserialize;
+    use serde_json::Value;
+
+    use super::AnonymousFlag;
+
+    impl<'de> Deserialize<'de> for AnonymousFlag {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let value = Value::deserialize(deserializer)?;
+            match value {
+                Value::String(flag) => Ok(AnonymousFlag::Flag(flag)),
+                Value::Object(obj) => {
+                    let sender = serde_json::from_value(Value::Object(obj))
+                        .map_err(serde::de::Error::custom)?;
+                    Ok(AnonymousFlag::Sender(sender))
+                }
+                _ => Err(serde::de::Error::custom(
+                    "AnonymousFlag must be a string or an object",
+                )),
+            }
+        }
+    }
+}
+
 #[onebot_action(EmptyResp)]
 pub struct SetGroupAnonymousBan {
     pub group_id: i64,
+    #[serde(alias = "anonymous_flag", alias = "flag")]
     pub anonymous: AnonymousFlag,
+    #[serde(with = "duration_secs_opt")]
     pub duration: Option<Duration>,
 }
 

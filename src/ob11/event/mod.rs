@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use meta::MetaEvent;
 use notice::NoticeEvent;
+
+#[cfg(feature = "json")]
 use ob_types_base::tool::duration_secs;
+
 use ob_types_base::JSONValue;
 use ob_types_macro::json;
 use request::RequestEvent;

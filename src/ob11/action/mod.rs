@@ -29,10 +29,10 @@ macro_rules! actions {
 
 actions!(
     // from bot.rs
-    SendMessage,
-    DeleteMessage,
-    GetMessage,
-    GetForwardMessage,
+    SendMsg,
+    DeleteMsg,
+    GetMsg,
+    GetForwardMsg,
     GetLoginInfo,
     GetCookies,
     GetCsrfToken,
@@ -46,13 +46,13 @@ actions!(
     SetRestart,
     CleanCache,
     // from friend.rs
-    SendPrivateMessage,
+    SendPrivateMsg,
     SendLike,
     SetFriendAddRequest,
     GetStrangerInfo,
     GetFriendList,
     // from group.rs
-    SendGroupMessage,
+    SendGroupMsg,
     SetGroupKick,
     SetGroupBan,
     SetGroupAnonymousBan,

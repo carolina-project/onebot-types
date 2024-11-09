@@ -1,12 +1,11 @@
 #[cfg(all(feature = "json", feature = "ob11"))]
 mod with_json {
     use eyre::Context;
-    use onebot_types::ob11::{self, Event, MessageSeg};
+    use onebot_types::ob12::action::ActionType;
     use serde::de::DeserializeOwned;
     use serde_json::Value;
-    static MESSAGES: &str = include_str!("ob11_messages.json");
-    static EVENTS: &str = include_str!("ob11_events.json");
-    static ACTIONS: &str = include_str!("ob11_actions.json");
+
+    static ACTIONS: &str = include_str!("ob12_actions.json");
 
     fn parse<D: DeserializeOwned>(name: &str, json: &str) -> Vec<D> {
         serde_json::from_str::<Vec<Value>>(json)
@@ -23,17 +22,10 @@ mod with_json {
     }
 
     #[test]
-    fn ob11_messages() {
-        let _msgs = parse::<MessageSeg>("message", MESSAGES);
-    }
-
-    #[test]
-    fn ob11_events() {
-        let _events = parse::<Event>("event", EVENTS);
-    }
-
-    #[test]
-    fn ob11_actions() {
-        let _actions = parse::<ob11::action::ActionType>("action", ACTIONS);
+    fn ob12_actions() {
+        let _actions = parse::<ActionType>("action", ACTIONS);
+        let ActionType::GetLatestEvents(_) = _actions[0] else {
+            panic!("Expected ActionType");
+        };
     }
 }

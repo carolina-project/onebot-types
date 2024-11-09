@@ -10,7 +10,7 @@ pub struct MessageSegRaw {
     pub data: JSONValue,
 }
 
-#[json]
+#[json(serde(untagged))]
 pub enum MessageChain {
     Segs(Vec<MessageSeg>),
     String(String),

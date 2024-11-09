@@ -1,3 +1,4 @@
+use ob_types_base::JSONValue;
 use ob_types_base::OBRespData;
 use ob_types_macro::json;
 
@@ -17,9 +18,24 @@ pub use user::*;
 
 use super::scalable_struct;
 
+#[cfg(feature = "json")]
+fn optional_content<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<ActionType, D::Error> {
+    use serde::Deserialize;
+    use serde_json::Value;
+
+    let mut value = serde_json::Value::deserialize(deserializer)?;
+    if value.get("params").map(Value::is_null).unwrap_or_default() {
+        value["params"] = Value::Object(Default::default());
+    }
+
+    serde_json::from_value(value).map_err(serde::de::Error::custom)
+}
+
 #[json]
 pub struct Action {
-    #[serde(flatten)]
+    #[serde(flatten, deserialize_with = "optional_content")]
     pub action: ActionType,
     pub echo: Option<String>,
     #[serde(rename = "self")]
@@ -29,9 +45,16 @@ pub struct Action {
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
         #[json(serde(tag = "action", rename_all = "snake_case", content = "params"))]
-        pub enum ActionType {$(
-            $typ($typ),
-        )*}
+        pub enum ActionType {
+            $(
+                $typ(#[serde(default)] $typ),
+            )*
+            #[serde(untagged)]
+            Extra {
+                action: String,
+                params: JSONValue,
+            },
+        }
     };
 }
 
@@ -47,6 +70,7 @@ actions!(
     GetFriendList,
     // Message actions
     SendMessage,
+    DeleteMessage,
     // Group actions
     GetGroupInfo,
     GetGroupList,
@@ -70,7 +94,8 @@ actions!(
     // File actions
     UploadFile,
     UploadFileFragmented,
-    GetFile
+    GetFile,
+    GetFileFragmented,
 );
 
 #[derive(Copy)]
@@ -90,7 +115,6 @@ pub struct RespData<T: OBRespData> {
 }
 
 scalable_struct! {
-    #[json(resp)]
     EmptyResp
 }
 

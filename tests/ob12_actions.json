@@ -1,0 +1,233 @@
+[
+    {
+        "action": "get_latest_events",
+        "params": {
+            "limit": 100,
+            "timeout": 0
+        }
+    },
+    {
+        "action": "get_supported_actions",
+        "params": {}
+    },
+    {
+        "action": "get_status",
+        "params": {}
+    },
+    {
+        "action": "get_version",
+        "params": {}
+    },
+    {
+        "action": "send_message",
+        "params": {
+            "detail_type": "group",
+            "group_id": "12467",
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "我是文字巴拉巴拉巴拉"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "action": "delete_message",
+        "params": {
+            "message_id": "2452352435"
+        }
+    },
+    {
+        "action": "get_self_info",
+        "params": {}
+    },
+    {
+        "action": "get_user_info",
+        "params": {
+            "user_id": "123456"
+        }
+    },
+    {
+        "action": "get_friend_list",
+        "params": {}
+    },
+    {
+        "action": "get_group_info",
+        "params": {
+            "group_id": "123456"
+        }
+    },
+    {
+        "action": "get_group_list",
+        "params": {}
+    },
+    {
+        "action": "get_group_member_info",
+        "params": {
+            "group_id": "123456",
+            "user_id": "3847573"
+        }
+    },
+    {
+        "action": "get_group_member_list",
+        "params": {
+            "group_id": "123456"
+        }
+    },
+    {
+        "action": "set_group_name",
+        "params": {
+            "group_id": "2452352435",
+            "group_name": "一个非常普通的群名"
+        }
+    },
+    {
+        "action": "leave_group",
+        "params": {
+            "group_id": "2452352435"
+        }
+    },
+    {
+        "action": "get_guild_info",
+        "params": {
+            "guild_id": "123456"
+        }
+    },
+    {
+        "action": "get_guild_list",
+        "params": {}
+    },
+    {
+        "action": "set_guild_name",
+        "params": {
+            "guild_id": "12345",
+            "guild_name": "一个非常普通的群名"
+        }
+    },
+    {
+        "action": "get_guild_member_info",
+        "params": {
+            "guild_id": "12345",
+            "user_id": "3847573"
+        }
+    },
+    {
+        "action": "get_guild_member_list",
+        "params": {
+            "guild_id": "123456"
+        }
+    },
+    {
+        "action": "leave_guild",
+        "params": {
+            "guild_id": "12345"
+        }
+    },
+    {
+        "action": "get_channel_info",
+        "params": {
+            "guild_id": "123456",
+            "channel_id": "12"
+        }
+    },
+    {
+        "action": "get_channel_list",
+        "params": {
+            "guild_id": "12345"
+        }
+    },
+    {
+        "action": "set_channel_name",
+        "params": {
+            "guild_id": "12345",
+            "channel_id": "13",
+            "channel_name": "笨蛋频道2"
+        }
+    },
+    {
+        "action": "get_channel_member_info",
+        "params": {
+            "guild_id": "12345",
+            "channel_id": "12",
+            "user_id": "3847573"
+        }
+    },
+    {
+        "action": "get_channel_member_list",
+        "params": {
+            "guild_id": "123456",
+            "channel_id": "12"
+        }
+    },
+    {
+        "action": "leave_channel",
+        "params": {
+            "guild_id": "12345",
+            "channel_id": "12"
+        }
+    },
+    {
+        "action": "upload_file",
+        "params": {
+            "type": "url",
+            "name": "logo.jpg",
+            "url": "https://avatars.githubusercontent.com/u/56297293?s=200&v=4"
+        }
+    },
+    {
+        "action": "upload_file_fragmented",
+        "params": {
+            "stage": "prepare",
+            "name": "logo.jpg",
+            "total_size": 1999
+        }
+    },
+    {
+        "action": "upload_file_fragmented",
+        "params": {
+            "stage": "transfer",
+            "file_id": "sdawda",
+            "offset": 0,
+            "data": "data"
+        }
+    },
+    {
+        "action": "upload_file_fragmented",
+        "params": {
+            "stage": "finish",
+            "file_id": "sdawda",
+            "sha256": "sha256"
+        }
+    },
+    {
+        "action": "get_file",
+        "params": {
+            "file_id": "sdawda",
+            "type": "url"
+        }
+    },
+    {
+        "action": "get_file_fragmented",
+        "params": {
+            "file_id": "sdawda",
+            "stage": "prepare"
+        }
+    },
+    {
+        "action": "get_file_fragmented",
+        "params": {
+            "file_id": "sdawda",
+            "stage": "transfer",
+            "offset": 0,
+            "size": 100
+        }
+    },
+    {
+        "action": "ob11.set_group_anonymous_ban",
+        "params": {
+            "aaa": "bbb"
+        }
+    }
+]

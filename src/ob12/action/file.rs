@@ -28,7 +28,7 @@ mod data {
 }
 
 #[json(serde(transparent))]
-pub struct UploadData(#[serde(with = "data")] Vec<u8>);
+pub struct UploadData(#[serde(with = "data")] pub Vec<u8>);
 
 #[json(serde(tag = "type", rename_all = "snake_case"))]
 pub enum UploadKind {
@@ -51,26 +51,26 @@ pub enum UploadKind {
 #[json]
 pub struct FileOpt {
     #[serde(flatten)]
-    kind: UploadKind,
-    name: String,
-    sha256: Option<String>,
+    pub kind: UploadKind,
+    pub name: String,
+    pub sha256: Option<String>,
 }
 
 scalable_struct! {
-    FileUploaded = {
+    Uploaded = {
         file_id: String,
     },
-    FileFragmented = {
+    UploadFragmented = {
         file_id: Option<String>,
     },
-    FileResp = {
+    GetFileResp = {
         #[serde(flatten)]
         file: FileOpt
     },
 }
 
 #[json(serde(rename_all = "snake_case", tag = "stage"))]
-pub enum FragmentState {
+pub enum UploadFileReq {
     Prepare {
         name: String,
         total_size: i64,
@@ -87,19 +87,16 @@ pub enum FragmentState {
 }
 
 #[json(serde(rename_all = "snake_case", tag = "stage"))]
-pub enum FragRequest {
-    Prepare {
-        file_id: String,
-    },
+pub enum GetFileReq {
+    Prepare,
     Transfer {
-        file_id: String,
         offset: i64,
         size: i64,
     },
 }
 
 #[json(serde(untagged))]
-pub enum FragReqResult {
+pub enum GetFileFrag {
     Prepare {
         name: String,
         total_size: i64,
@@ -120,19 +117,25 @@ pub enum GetFileType {
 }
 
 scalable_struct! {
-    #[onebot_action(FileUploaded)]
+    #[onebot_action(Uploaded)]
     UploadFile = {
         #[serde(flatten)]
         file: FileOpt
     },
-    #[onebot_action(FileFragmented)]
+    #[onebot_action(UploadFragmented)]
     UploadFileFragmented = {
         #[serde(flatten)]
-        state: FragmentState,
+        state: UploadFileReq,
     },
-    #[onebot_action(FileResp)]
+    #[onebot_action(GetFileResp)]
     GetFile = {
         file_id: String,
         r#type: GetFileType,
-    }
+    },
+    #[onebot_action(GetFileFrag)]
+    GetFileFragmented = {
+        file_id: String,
+        #[serde(flatten)]
+        req: GetFileReq,
+    },
 }

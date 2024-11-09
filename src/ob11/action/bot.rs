@@ -15,10 +15,11 @@ pub enum ChatTarget {
     Private(i64),
     #[serde(rename = "user_id")]
     Group(i64),
+    Unknown,
 }
 
 #[onebot_action(MessageResp)]
-pub struct SendMessage {
+pub struct SendMsg {
     #[serde(flatten)]
     pub target: ChatTarget,
     pub message: MessageChain,
@@ -31,12 +32,12 @@ pub struct MessageResp {
 
 #[onebot_action(EmptyResp)]
 #[allow(unused)]
-pub struct DeleteMessage {
+pub struct DeleteMsg {
     message_id: i32,
 }
 
 #[onebot_action(GetMessageResp)]
-pub struct GetMessage {
+pub struct GetMsg {
     pub message_id: i32,
 }
 
@@ -44,6 +45,7 @@ pub struct GetMessage {
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
+    Unknown,
 }
 
 #[derive(OBRespData)]
@@ -118,6 +120,7 @@ mod serde_impl_get {
             let message_type = match &self.sender {
                 MessageSender::Private(_) => "private",
                 MessageSender::Group(_) => "group",
+                MessageSender::Unknown => Err(serde::ser::Error::custom("unknown message type"))?,
             };
             SerHelper {
                 time: self.time,
@@ -133,7 +136,7 @@ mod serde_impl_get {
 }
 
 #[onebot_action(GetForwardMsgResp)]
-pub struct GetForwardMessage {
+pub struct GetForwardMsg {
     pub id: String,
 }
 

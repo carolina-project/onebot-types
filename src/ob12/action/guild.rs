@@ -37,6 +37,7 @@ scalable_struct! {
     #[onebot_action(Vec<ChannelInfo>)]
     GetChannelList = {
         guild_id: String,
+        #[serde(default)]
         joined_only: bool,
     },
     #[onebot_action(EmptyResp)]

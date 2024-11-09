@@ -22,8 +22,7 @@ mod macros {
                     $(
                         $(#[$meta])*
                         pub $field: $f_ty,
-                    )*
-                )?
+                    )*)?
                 #[serde(flatten)]
                 pub extra: ob_types_base::JSONValue,
             }
@@ -31,7 +30,9 @@ mod macros {
             $crate::scalable_struct! {
                 $($($rest)*)?
             }
+
         };
+
         {
             $typ:ident $(= {
                 $(
@@ -40,7 +41,7 @@ mod macros {
                 ),* $(,)?
             })? $(, $($rest:tt)*)?
         } => {
-            #[ob_types_macro::json]
+            #[ob_types_macro::json(resp)]
             pub struct $typ {
                 $(
                     $(

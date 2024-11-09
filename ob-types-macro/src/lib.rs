@@ -75,19 +75,24 @@ pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let attrs = props.inner;
 
     let derive = parse_macro_input!(input as DeriveInput);
-    let input = match props.addition {
-        Some(JsonAddition::StringValue) => {
-            proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
+    let mut input = if props.additions.contains(&JsonAddition::StringValue) {
+        proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
+    } else if props.additions.contains(&JsonAddition::OBRespDerive) {
+        let inp = proc::derive_serde_process(derive, None);
+        quote! {
+            #[derive(ob_types_macro::OBRespData)]
+            #inp
         }
-        Some(JsonAddition::OBRespDerive) => {
-            let inp = proc::derive_serde_process(derive, None);
-            quote! {
-                #[derive(ob_types_macro::OBRespData)]
-                #inp
-            }
-        }
-        None => proc::derive_serde_process(derive, None),
+    } else {
+        proc::derive_serde_process(derive, None)
     };
+
+    if props.has_default {
+        input = quote! {
+            #[derive(Default)]
+            #input
+        }
+    }
 
     let tokens = quote! {
         #[cfg_attr(
@@ -95,7 +100,7 @@ pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
             derive(serde::Deserialize, serde::Serialize),
             #attrs
         )]
-        #[derive(Debug, Clone)]
+        #[derive(Clone, Debug)]
         #input
     };
     tokens.into()

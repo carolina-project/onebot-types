@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use parse::Parse;
 use quote::quote;
 use syn::*;
@@ -140,40 +142,60 @@ pub fn struct_fields_proc(
     }
 }
 
+#[derive(Hash, PartialEq, Eq)]
 pub enum JsonAddition {
     StringValue,
     OBRespDerive,
 }
 
 pub struct JsonProcMacro {
-    pub addition: Option<JsonAddition>,
+    pub additions: HashSet<JsonAddition>,
+    pub has_default: bool,
     pub inner: proc_macro2::TokenStream,
 }
 
 impl Parse for JsonProcMacro {
     fn parse(input: parse::ParseStream) -> Result<Self> {
-        let (addition, inner) = if input.peek(Ident) {
-            let ident: Ident = input.parse()?;
-            let peek = |add: JsonAddition| -> Result<_> {
-                if input.peek(Token![,]) {
-                    input.parse::<Token![,]>()?;
-                }
+        let mut additions = HashSet::new();
+        let mut has_default = false;
+        let peek = || -> Result<_> {
+            if input.peek(Token![,]) {
+                input.parse::<Token![,]>()?;
+            }
 
-                Ok((Some(add), input.parse()?))
-            };
+            Ok(())
+        };
+        let mut inner: proc_macro2::TokenStream = quote! {};
+        while input.peek(Ident) {
+            let ident: Ident = input.parse()?;
             match ident.to_string().as_str() {
-                "str" => peek(JsonAddition::StringValue)?,
-                "resp" => peek(JsonAddition::OBRespDerive)?,
+                "default" => {
+                    if input.peek(Token![,]) {
+                        input.parse::<Token![,]>()?;
+                    }
+                    has_default = true;
+                }
+                "str" => {
+                    peek()?;
+                    additions.insert(JsonAddition::StringValue);
+                }
+                "resp" => {
+                    peek()?;
+                    additions.insert(JsonAddition::OBRespDerive);
+                }
                 _ => {
-                    let inner: proc_macro2::TokenStream = input.parse()?;
-                    (None, quote! { #ident #inner })
+                    let tokens: proc_macro2::TokenStream = input.parse()?;
+                    inner = quote! { #ident #tokens };
+                    break;
                 }
             }
-        } else {
-            (None, input.parse()?)
-        };
+        }
 
-        Ok(JsonProcMacro { addition, inner })
+        Ok(JsonProcMacro {
+            additions,
+            inner,
+            has_default,
+        })
     }
 }
 
