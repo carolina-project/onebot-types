@@ -1,13 +1,14 @@
 use ob_types_macro::json;
 
-use crate::{ob12::BotSelf, scalable_struct};
+use crate::ob12::BotSelf;
+use ob_types_base::JSONValue;
 
 #[json(serde(rename_all = "snake_case"))]
 pub enum IncreaseType {
     Join,
     Invite,
     #[serde(untagged)]
-    Extra(String),
+    Other(String),
 }
 
 #[json(serde(rename_all = "snake_case"))]
@@ -15,7 +16,7 @@ pub enum DecreaseType {
     Kick,
     Leave,
     #[serde(untagged)]
-    Extra(String),
+    Other(String),
 }
 
 #[json(serde(rename_all = "snake_case"))]
@@ -23,33 +24,40 @@ pub enum MessageDeleteType {
     Delete,
     Recall,
     #[serde(untagged)]
-    Extra(String),
+    Other(String),
 }
 
-#[json]
-pub struct GroupTarget {
-    pub group_id: String,
-    pub user_id: String,
-    pub operator_id: String,
+macro_rules! notice_kinds {
+    {$(
+        $kind:ident {
+            $($field:ident: $ty:ty),* $(,)?
+        },
+    )*} => {
+        $(
+            #[json(resp)]
+            pub struct $kind {
+                $(pub $field: $ty,)*
+                #[serde(flatten)]
+                pub extra: JSONValue,
+            }
+        )*
+
+        #[json(serde(tag = "detail_type", rename_all = "snake_case"))]
+        pub enum NoticeKind {
+            $(
+            $kind($kind),
+            )*
+            //#[serde(untagged)]
+            //Other {
+            //    detail_type: String,
+            //    #[serde(flatten)]
+            //    data: JSONValue,
+            //},
+        }
+    };
 }
 
-#[json]
-pub struct GuildTarget {
-    pub guild_id: String,
-    pub user_id: String,
-    pub operator_id: String,
-}
-
-#[json]
-pub struct ChannelTarget {
-    pub guild_id: String,
-    pub channel_id: String,
-    pub user_id: String,
-    pub operator_id: String,
-}
-
-#[json(serde(tag = "detail_type", rename_all = "snake_case"))]
-pub enum NoticeKind {
+notice_kinds! {
     FriendIncrease {
         sub_type: String,
         user_id: String,
@@ -65,55 +73,75 @@ pub enum NoticeKind {
     },
     GroupIncrease {
         sub_type: IncreaseType,
-        #[serde(flatten)]
-        target: GroupTarget,
+        group_id: String,
+        user_id: String,
+        operator_id: String,
     },
     GroupDecrease {
         sub_type: DecreaseType,
-        #[serde(flatten)]
-        target: GroupTarget,
+        group_id: String,
+        user_id: String,
+        operator_id: String,
     },
     GroupMessageDelete {
         sub_type: MessageDeleteType,
         message_id: String,
-        #[serde(flatten)]
-        target: GroupTarget,
+        group_id: String,
+        user_id: String,
+        operator_id: String,
     },
     GuildMemberIncrease {
         sub_type: IncreaseType,
-        #[serde(flatten)]
-        target: GuildTarget,
+        guild_id: String,
+        user_id: String,
+        operator_id: String,
     },
     GuildMemberDecrease {
         sub_type: DecreaseType,
-        #[serde(flatten)]
-        target: GuildTarget,
+        guild_id: String,
+        user_id: String,
+        operator_id: String,
     },
     ChannelMemberIncrease {
         sub_type: IncreaseType,
-        #[serde(flatten)]
-        target: ChannelTarget,
+        guild_id: String,
+        channel_id: String,
+        user_id: String,
+        operator_id: String,
     },
     ChannelMemberDecrease {
         sub_type: DecreaseType,
-        #[serde(flatten)]
-        target: ChannelTarget,
+        guild_id: String,
+        channel_id: String,
+        user_id: String,
+        operator_id: String,
     },
     ChannelMessageDelete {
         sub_type: MessageDeleteType,
         message_id: String,
-        #[serde(flatten)]
-        target: ChannelTarget,
+        guild_id: String,
+        channel_id: String,
+        user_id: String,
+        operator_id: String,
     },
-    ChannelCreate(ChannelTarget),
-    ChannelDelete(ChannelTarget),
+    ChannelCreate {
+        guild_id: String,
+        channel_id: String,
+        user_id: String,
+        operator_id: String,
+    },
+    ChannelDelete {
+        guild_id: String,
+        channel_id: String,
+        user_id: String,
+        operator_id: String,
+    },
 }
 
-scalable_struct! {
-    NoticeEvent = {
-        #[serde(rename = "self")]
-        self_: BotSelf,
-        #[serde(flatten)]
-        kind: NoticeKind,
-    },
+#[json(resp)]
+pub struct NoticeEvent {
+    #[serde(rename = "self")]
+    self_: BotSelf,
+    #[serde(flatten)]
+    kind: NoticeKind,
 }

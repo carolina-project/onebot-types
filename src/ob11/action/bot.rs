@@ -45,7 +45,6 @@ pub struct GetMsg {
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
-    Unknown,
 }
 
 #[derive(OBRespData)]
@@ -120,7 +119,6 @@ mod serde_impl_get {
             let message_type = match &self.sender {
                 MessageSender::Private(_) => "private",
                 MessageSender::Group(_) => "group",
-                MessageSender::Unknown => Err(serde::ser::Error::custom("unknown message type"))?,
             };
             SerHelper {
                 time: self.time,

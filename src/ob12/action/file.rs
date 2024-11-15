@@ -43,7 +43,7 @@ pub enum UploadKind {
         data: UploadData,
     },
     #[serde(untagged)]
-    Extra {
+    Other {
         r#type: String,
     },
 }
@@ -113,7 +113,7 @@ pub enum GetFileType {
     Path,
     Data,
     #[serde(untagged)]
-    Extra(String),
+    Other(String),
 }
 
 scalable_struct! {

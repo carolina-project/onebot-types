@@ -17,7 +17,6 @@ pub enum EventType {
     Message(MessageEvent),
     Notice(NoticeEvent),
     Request(RequestEvent),
-    Unknown,
 }
 
 #[json(resp)]

@@ -1,17 +1,46 @@
 use ob_types_macro::json;
 
-use crate::{ob12::{Status, VersionInfo}, scalable_struct};
+use crate::ob12::{Status, VersionInfo};
+use ob_types_base::JSONValue;
 
-scalable_struct! {
-    MetaEvent = {
-        sub_type: Option<String>,
-        #[serde(flatten)]
-        kind: MetaKind,
-    },
+#[json(resp)]
+pub struct MetaEvent {
+    pub sub_type: Option<String>,
+    #[serde(flatten)]
+    pub kind: MetaKind,
 }
 
-#[json(serde(tag = "detail_type", rename_all = "snake_case"))]
-pub enum MetaKind {
+macro_rules! meta_kinds {
+    {$(
+        $kind:ident {
+            $($field:ident: $ty:ty),* $(,)?
+        },
+    )*} => {
+        $(
+            #[json(resp)]
+            pub struct $kind {
+                $(pub $field: $ty,)*
+                #[serde(flatten)]
+                pub extra: JSONValue,
+            }
+        )*
+
+        #[json(serde(tag = "detail_type", rename_all = "snake_case"))]
+        pub enum MetaKind {
+            $(
+            $kind($kind),
+            )*
+            #[serde(untagged)]
+            Other {
+                detail_type: String,
+                #[serde(flatten)]
+                data: JSONValue,
+            },
+        }
+    };
+}
+
+meta_kinds! {
     Connect {
         version: VersionInfo,
     },
@@ -20,9 +49,5 @@ pub enum MetaKind {
     },
     StatusUpdate {
         status: Status,
-    },
-    #[serde(untagged)]
-    Extra {
-        detail_type: String,
     },
 }

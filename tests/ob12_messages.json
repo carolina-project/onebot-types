@@ -1,0 +1,71 @@
+[
+    {
+        "type": "text",
+        "data": {
+            "text": "这是一个纯文本"
+        }
+    },
+    {
+        "type": "mention",
+        "data": {
+            "user_id": "1234567"
+        }
+    },
+    {
+        "type": "mention_all",
+        "data": {}
+    },
+    {
+        "type": "image",
+        "data": {
+            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+        }
+    },
+    {
+        "type": "voice",
+        "data": {
+            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+        }
+    },
+    {
+        "type": "audio",
+        "data": {
+            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+        }
+    },
+    {
+        "type": "video",
+        "data": {
+            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+        }
+    },
+    {
+        "type": "file",
+        "data": {
+            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+        }
+    },
+    {
+        "type": "location",
+        "data": {
+            "latitude": 31.032315,
+            "longitude": 121.447127,
+            "title": "上海交通大学闵行校区",
+            "content": "中国上海市闵行区东川路800号"
+        }
+    },
+    {
+        "type": "reply",
+        "data": {
+            "message_id": "6283",
+            "user_id": "1234567"
+        }
+    },
+    {
+        "type": "ob11.forward",
+        "data": {
+            "message_id": "6283",
+            "user_id": "1234567"
+        }
+    }
+]

@@ -22,10 +22,11 @@ macro_rules! message_seg {
         pub enum MessageSeg {
             $($sg($sg),)*
             #[serde(untagged)]
-            Extra {
+            /// Extra message types or messages which missing fields.
+            Other {
                 r#type: String,
                 data: JSONValue,
-            },
+            }
         }
     };
 }
