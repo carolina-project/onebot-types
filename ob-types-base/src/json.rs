@@ -13,6 +13,8 @@ macro_rules! json_from {
 pub type JSONMap = BTreeMap<String, JSONValue>;
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(from = "serde_json::Value"))]
 pub enum JSONValue {
     Object(JSONMap),
     Array(Vec<JSONValue>),
@@ -33,50 +35,7 @@ json_from!(&str, String);
 #[cfg(feature = "json")]
 mod serde_impl {
     use super::JSONValue;
-    use serde::{
-        ser::{SerializeMap, SerializeSeq},
-        Deserialize,
-    };
     use serde_json::Value;
-
-    impl<'de> Deserialize<'de> for JSONValue {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            let value = Value::deserialize(deserializer)?;
-            Ok(value.into())
-        }
-    }
-
-    impl serde::Serialize for JSONValue {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            match self {
-                JSONValue::Object(map) => {
-                    let mut obj = serializer.serialize_map(Some(map.len()))?;
-                    for (k, v) in map {
-                        obj.serialize_entry(k, v)?;
-                    }
-                    obj.end()
-                }
-                JSONValue::Array(arr) => {
-                    let mut o_arr = serializer.serialize_seq(Some(arr.len()))?;
-                    for ele in arr {
-                        o_arr.serialize_element(ele)?;
-                    }
-                    o_arr.end()
-                }
-                JSONValue::Int(i) => serializer.serialize_i64(*i),
-                JSONValue::Float(f) => serializer.serialize_f64(*f),
-                JSONValue::String(s) => serializer.serialize_str(s),
-                JSONValue::Boolean(b) => serializer.serialize_bool(*b),
-                JSONValue::Null => serializer.serialize_none(),
-            }
-        }
-    }
 
     impl From<Value> for JSONValue {
         fn from(value: Value) -> Self {

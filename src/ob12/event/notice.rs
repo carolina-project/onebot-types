@@ -71,13 +71,13 @@ notice_kinds! {
         message_id: String,
         user_id: String,
     },
-    GroupIncrease {
+    GroupMemberIncrease {
         sub_type: IncreaseType,
         group_id: String,
         user_id: String,
         operator_id: String,
     },
-    GroupDecrease {
+    GroupMemberDecrease {
         sub_type: DecreaseType,
         group_id: String,
         user_id: String,
@@ -127,13 +127,11 @@ notice_kinds! {
     ChannelCreate {
         guild_id: String,
         channel_id: String,
-        user_id: String,
         operator_id: String,
     },
     ChannelDelete {
         guild_id: String,
         channel_id: String,
-        user_id: String,
         operator_id: String,
     },
 }
