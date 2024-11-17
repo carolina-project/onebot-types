@@ -6,6 +6,9 @@ pub mod ob11;
 #[cfg(feature = "ob12")]
 pub mod ob12;
 
+#[cfg(all(feature = "ob11", feature = "ob12"))]
+pub mod compat;
+
 #[cfg(feature = "json")]
 pub(crate) fn hashmap_value_get<'de, T, D>(
     map: &mut HashMap<String, serde_json::Value>,

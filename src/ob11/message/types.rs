@@ -10,6 +10,11 @@ const fn true_value() -> bool {
 }
 
 #[json(str)]
+pub struct Text {
+    pub text: String
+}
+
+#[json(str)]
 pub struct FileSendOpt {
     #[serde(default = "true_value")]
     pub cache: bool,

@@ -10,10 +10,12 @@ ob-types-base = { path = "./ob-types-base" }
 serde = { version = "*", features = ["derive"], optional = true }
 serde_json = { version = "*", optional = true }
 base64 =  { version = "*", optional = true }
+rkyv = { version = "*", optional = true, default-features = false, features = ["std"]}
 
 [features]
 default = ["ob12"]
 json = ["serde", "serde_json", "ob-types-base/json", "base64"]
+zerocpy = ["ob-types-base/zerocpy", "rkyv"]
 ob11 = []
 ob12 = []
 

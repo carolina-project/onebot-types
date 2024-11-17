@@ -1,11 +1,11 @@
-pub mod types;
+mod types;
 
 use ob_types_base::json::JSONValue;
 use ob_types_macro::json;
 
 #[allow(unused)]
 use std::{fmt::Display, str::FromStr};
-use types::*;
+pub use types::*;
 
 #[json]
 pub struct MessageSegRaw {
@@ -160,7 +160,7 @@ macro_rules! message_seg {
 }
 
 message_seg!(
-    Text(String = "text") "text",
+    Text(Text) "text",
     Face(u16 = "id") "face"
         "see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)",
     Image(Image) "image",
