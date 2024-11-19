@@ -4,7 +4,7 @@ use ob_types_macro::{json, onebot_action};
 
 use crate::scalable_struct;
 
-#[cfg(feature = "json")]
+#[cfg(feature = "base64")]
 mod data {
     use base64::prelude::*;
     use serde::Deserialize;
@@ -27,10 +27,12 @@ mod data {
     }
 }
 
-#[json(serde(transparent))]
-pub struct UploadData(#[serde(with = "data")] pub Vec<u8>);
+#[json]
+#[serde(transparent)]
+pub struct UploadData(#[cfg_attr(feature = "base64", serde(with = "data"))] pub Vec<u8>);
 
-#[json(serde(tag = "type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum UploadKind {
     Url {
         headers: HashMap<String, String>,
@@ -69,7 +71,8 @@ scalable_struct! {
     },
 }
 
-#[json(serde(rename_all = "snake_case", tag = "stage"))]
+#[json]
+#[serde(rename_all = "snake_case", tag = "stage")]
 pub enum UploadFileReq {
     Prepare {
         name: String,
@@ -86,16 +89,15 @@ pub enum UploadFileReq {
     },
 }
 
-#[json(serde(rename_all = "snake_case", tag = "stage"))]
+#[json]
+#[serde(rename_all = "snake_case", tag = "stage")]
 pub enum GetFileReq {
     Prepare,
-    Transfer {
-        offset: i64,
-        size: i64,
-    },
+    Transfer { offset: i64, size: i64 },
 }
 
-#[json(serde(untagged))]
+#[json]
+#[serde(untagged)]
 pub enum GetFileFrag {
     Prepare {
         name: String,

@@ -42,7 +42,6 @@ pub fn ob_resp_data(input: TokenStream) -> TokenStream {
     let where_clause = &generics.where_clause;
     let lifetimes = generics.lifetimes();
     let t = quote! {
-        #[cfg(not(feature = "json"))]
         impl #generics ob_types_base::OBRespData for #struct_name < #(#lifetimes,)*
             #(#generic_types, )* #(#const_generics, )*
             > #where_clause {}
@@ -72,17 +71,10 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let props: JsonProcMacro = parse_macro_input!(attrs);
-    let attrs = props.inner;
 
     let derive = parse_macro_input!(input as DeriveInput);
     let mut input = if props.additions.contains(&JsonAddition::StringValue) {
         proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
-    } else if props.additions.contains(&JsonAddition::OBRespDerive) {
-        let inp = proc::derive_serde_process(derive, None);
-        quote! {
-            #[derive(ob_types_macro::OBRespData)]
-            #inp
-        }
     } else {
         proc::derive_serde_process(derive, None)
     };
@@ -95,12 +87,7 @@ pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let tokens = quote! {
-        #[cfg_attr(
-            feature = "json",
-            derive(serde::Deserialize, serde::Serialize),
-            #attrs
-        )]
-        #[derive(Clone, Debug)]
+        #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
         #input
     };
     tokens.into()

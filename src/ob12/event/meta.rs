@@ -1,9 +1,8 @@
 use ob_types_macro::json;
 
 use crate::ob12::{Status, VersionInfo};
-use ob_types_base::JSONValue;
 
-#[json(resp)]
+#[json]
 pub struct MetaEvent {
     pub sub_type: Option<String>,
     #[serde(flatten)]
@@ -17,15 +16,16 @@ macro_rules! meta_kinds {
         },
     )*} => {
         $(
-            #[json(resp)]
+            #[json]
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
-                pub extra: JSONValue,
+                pub extra: serde_value::Value,
             }
         )*
 
-        #[json(serde(tag = "detail_type", rename_all = "snake_case"))]
+        #[json]
+        #[serde(tag = "detail_type", rename_all = "snake_case")]
         pub enum MetaKind {
             $(
             $kind($kind),
@@ -34,7 +34,7 @@ macro_rules! meta_kinds {
             Other {
                 detail_type: String,
                 #[serde(flatten)]
-                data: JSONValue,
+                data: serde_value::Value,
             },
         }
     };

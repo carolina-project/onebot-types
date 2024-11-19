@@ -1,4 +1,3 @@
-#[cfg(feature = "json")]
 pub mod duration_secs {
     use std::time::Duration;
 
@@ -18,7 +17,6 @@ pub mod duration_secs {
     }
 }
 
-#[cfg(feature = "json")]
 pub mod duration_f64 {
     use std::time::Duration;
 
@@ -38,7 +36,6 @@ pub mod duration_f64 {
     }
 }
 
-#[cfg(feature = "json")]
 pub mod duration_secs_opt {
     use std::time::Duration;
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
@@ -59,7 +56,6 @@ pub mod duration_secs_opt {
     }
 }
 
-#[cfg(feature = "json")]
 pub mod duration_str {
     use std::time::Duration;
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
@@ -82,7 +78,6 @@ pub mod duration_str {
     }
 }
 
-#[cfg(feature = "json")]
 pub mod duration_str_opt {
     use std::time::Duration;
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
@@ -107,9 +102,10 @@ pub mod duration_str_opt {
     }
 }
 
-#[cfg(feature = "json")]
-pub mod from_json_str {
+pub mod from_str {
     use std::{fmt::Display, str::FromStr};
+
+    use serde::Deserialize;
 
     pub fn deserialize<'de, D, R>(deserializer: D) -> Result<R, D::Error>
     where
@@ -117,13 +113,12 @@ pub mod from_json_str {
         R: serde::de::DeserializeOwned + FromStr,
         <R as FromStr>::Err: Display,
     {
-        use serde::Deserialize;
-        use serde_json::Value;
+        use serde_value::Value;
 
-        let v = serde_json::Value::deserialize(deserializer)?;
+        let v = Value::deserialize(deserializer)?;
         match v {
             Value::String(s) => s.parse().map_err(serde::de::Error::custom),
-            r => serde_json::from_value(r).map_err(serde::de::Error::custom),
+            r => Ok(R::deserialize(r).map_err(serde::de::Error::custom)?),
         }
     }
 
@@ -137,16 +132,15 @@ pub mod from_json_str {
     }
 }
 
-#[cfg(feature = "json")]
 pub mod str_bool {
     pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         use serde::Deserialize;
-        use serde_json::Value;
+        use serde_value::Value;
 
-        let v = serde_json::Value::deserialize(deserializer)?;
+        let v = Value::deserialize(deserializer)?;
         match v {
             Value::String(s) => match s.as_str() {
                 "1" => Ok(true),
@@ -156,7 +150,8 @@ pub mod str_bool {
                     s
                 ))),
             },
-            r => serde_json::from_value(r).map_err(serde::de::Error::custom),
+            Value::Bool(b) => Ok(b),
+            _ => Err(serde::de::Error::custom("Invalid bool value")),
         }
     }
 

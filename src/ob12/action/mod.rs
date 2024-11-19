@@ -1,4 +1,3 @@
-use ob_types_base::JSONValue;
 use ob_types_base::OBRespData;
 use ob_types_macro::json;
 
@@ -29,7 +28,8 @@ pub struct Action {
 
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
-        #[json(serde(tag = "action", rename_all = "snake_case", content = "params"))]
+        #[json]
+        #[serde(tag = "action", rename_all = "snake_case", content = "params")]
         pub enum ActionType {
             $(
                 $typ(#[serde(default)] $typ),
@@ -37,7 +37,7 @@ macro_rules! actions {
             #[serde(untagged)]
             Other {
                 action: String,
-                params: JSONValue,
+                params: serde_value::Value,
             },
         }
     };
@@ -84,7 +84,8 @@ actions!(
 );
 
 #[derive(Copy)]
-#[json(serde(rename_all = "lowercase"))]
+#[json]
+#[serde(rename_all = "lowercase")]
 pub enum RespStatus {
     Ok,
     Failed,
@@ -200,7 +201,6 @@ impl RetCode {
     }
 }
 
-#[cfg(feature = "json")]
 impl<'de> serde::Deserialize<'de> for RetCode {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -211,7 +211,6 @@ impl<'de> serde::Deserialize<'de> for RetCode {
     }
 }
 
-#[cfg(feature = "json")]
 impl serde::Serialize for RetCode {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

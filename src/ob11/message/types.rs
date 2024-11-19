@@ -11,7 +11,17 @@ const fn true_value() -> bool {
 
 #[json(str)]
 pub struct Text {
-    pub text: String
+    pub text: String,
+}
+
+#[json(str)]
+pub struct Face {
+    pub id: u16,
+}
+
+#[json(str)]
+pub struct Reply {
+    pub id: i32,
 }
 
 #[json(str)]
@@ -108,6 +118,12 @@ pub enum AtTarget {
     QQ(i64),
 }
 
+#[json(str)]
+pub struct At {
+    pub qq: AtTarget,
+}
+
+
 impl FromStr for AtTarget {
     type Err = std::num::ParseIntError;
 
@@ -177,6 +193,33 @@ pub enum Music {
         content: Option<String>,
         image: Option<String>,
     },
+}
+
+#[json(str)]
+pub struct Rps;
+
+#[json(str)]
+pub struct Dice;
+
+#[json(str)]
+pub struct Shake;
+
+#[json(str)]
+pub struct Anonymous;
+
+#[json(str)]
+pub struct Forward {
+    pub id: String,
+}
+
+#[json(str)]
+pub struct XML {
+    pub data: String,
+}
+
+#[json(str)]
+pub struct JSON {
+    pub data: String,
 }
 
 #[json(str, serde(untagged))]

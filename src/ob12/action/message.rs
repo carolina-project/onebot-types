@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ob_types_macro::{json, onebot_action};
+use ob_types_macro::onebot_action;
 
 use crate::{
     ob12::{message::MessageChain, ChatTarget},
@@ -10,7 +10,6 @@ use crate::{
 use super::EmptyResp;
 
 scalable_struct! {
-    #[json(resp)]
     SendMessageResp = {
         message_id: String,
         #[serde(with = "ob_types_base::tool::duration_f64")]

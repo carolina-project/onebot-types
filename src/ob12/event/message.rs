@@ -1,9 +1,6 @@
-use ob_types_base::JSONValue;
-
 use crate::ob12::{message::MessageChain, BotSelf, ChatTarget};
 
-#[cfg_attr(feature = "json", derive(serde::Serialize))]
-#[derive(Debug, Clone)]
+#[derive(serde::Serialize, Debug, Clone)]
 pub struct MessageEvent {
     #[serde(rename = "self")]
     pub self_: BotSelf,
@@ -14,16 +11,15 @@ pub struct MessageEvent {
     #[serde(flatten)]
     pub source: ChatTarget,
     #[serde(flatten, deserialize_with = "de_extra")]
-    pub extra: JSONValue,
+    pub extra: serde_value::Value,
 }
 
-#[cfg(feature = "json")]
 mod serde_impl {
     use std::collections::BTreeMap;
 
     use crate::ob12::{message::MessageChain, BotSelf, ChatTarget, CHAT_TARGET_FIELDS};
-    use ob_types_base::JSONValue;
     use serde::Deserialize;
+    use serde_value::Value;
 
     #[derive(Deserialize)]
     pub struct DeHelper {
@@ -36,7 +32,7 @@ mod serde_impl {
         #[serde(flatten)]
         pub source: ChatTarget,
         #[serde(flatten)]
-        pub extra: BTreeMap<String, JSONValue>,
+        pub extra: BTreeMap<Value, Value>,
     }
 
     use super::MessageEvent;
@@ -44,16 +40,18 @@ mod serde_impl {
         fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let mut helper = DeHelper::deserialize(deserializer)?;
 
-            let extra: JSONValue = match helper.source {
+            let extra: Value = match helper.source {
                 ChatTarget::Other { detail_type: _ } => {
-                    helper.extra.remove_entry("detail_type");
-                    JSONValue::Object(helper.extra)
-                },
+                    helper
+                        .extra
+                        .remove_entry(&Value::String("detail_type".into()));
+                    Value::Map(helper.extra)
+                }
                 _ => {
                     for ele in CHAT_TARGET_FIELDS {
-                        helper.extra.remove(*ele);
+                        helper.extra.remove(&Value::String((*ele).to_owned()));
                     }
-                    JSONValue::Object(helper.extra)
+                    Value::Map(helper.extra)
                 }
             };
             Ok(Self {

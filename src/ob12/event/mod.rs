@@ -11,7 +11,8 @@ pub mod meta;
 pub mod notice;
 pub mod request;
 
-#[json(serde(rename_all = "lowercase", tag = "type"))]
+#[json]
+#[serde(rename_all = "lowercase", tag = "type")]
 pub enum EventType {
     Meta(MetaEvent),
     Message(MessageEvent),
@@ -19,7 +20,7 @@ pub enum EventType {
     Request(RequestEvent),
 }
 
-#[json(resp)]
+#[json]
 pub struct Event {
     pub id: String,
     #[serde(with = "ob_types_base::tool::duration_f64")]

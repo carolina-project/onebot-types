@@ -9,8 +9,8 @@ use crate::ob11::{
 };
 
 #[cfg(feature = "json")]
-use crate::value_to_hashmap;
-#[cfg(feature = "json")]
+use crate::de_to_hashmap;
+#[cfg(feature = "serde")]
 use ob_types_base::tool::duration_secs_opt;
 
 use super::bot::MessageResp;
@@ -38,36 +38,49 @@ pub struct SetGroupBan {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "json", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum AnonymousFlag {
     Sender(AnonymousSender),
     Flag(String),
 }
 
-#[cfg(feature = "json")]
+#[cfg(feature = "serde")]
 mod serde_impl_anon {
     use serde::Deserialize;
-    use serde_json::Value;
 
     use super::AnonymousFlag;
+
+    struct AnonymousFlagVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for AnonymousFlagVisitor {
+        type Value = AnonymousFlag;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("AnonymousFlag must be a string or an object")
+        }
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            Ok(AnonymousFlag::Flag(v.to_string()))
+        }
+
+        fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::MapAccess<'de>,
+        {
+            let sender =
+                serde::Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))
+                    .map_err(serde::de::Error::custom)?;
+            Ok(AnonymousFlag::Sender(sender))
+        }
+    }
 
     impl<'de> Deserialize<'de> for AnonymousFlag {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: serde::Deserializer<'de>,
         {
-            let value = Value::deserialize(deserializer)?;
-            match value {
-                Value::String(flag) => Ok(AnonymousFlag::Flag(flag)),
-                Value::Object(obj) => {
-                    let sender = serde_json::from_value(Value::Object(obj))
-                        .map_err(serde::de::Error::custom)?;
-                    Ok(AnonymousFlag::Sender(sender))
-                }
-                _ => Err(serde::de::Error::custom(
-                    "AnonymousFlag must be a string or an object",
-                )),
-            }
+            deserializer.deserialize_any(AnonymousFlagVisitor)
         }
     }
 }
@@ -124,7 +137,7 @@ pub struct SetGroupSpecialTitle {
     pub group_id: i64,
     pub user_id: i64,
     pub special_title: Option<String>,
-    #[cfg_attr(feature = "json", serde(with = "duration_secs_opt"))]
+    #[cfg_attr(feature = "serde", serde(with = "duration_secs_opt"))]
     pub duration: Option<Duration>,
 }
 
@@ -257,7 +270,7 @@ impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
     where
         D: serde::Deserializer<'de>,
     {
-        let mut value = value_to_hashmap(deserializer)?;
+        let mut value = de_to_hashmap(deserializer)?;
         let field = format!("{}_list", S::TYPE_NAME);
         Ok(Self {
             group_id: crate::hashmap_value_get::<_, D>(&mut value, "group_id")?,
@@ -267,7 +280,7 @@ impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
     }
 }
 
-#[cfg(feature = "json")]
+#[cfg(feature = "serde")]
 impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

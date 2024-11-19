@@ -6,13 +6,12 @@ edition = "2021"
 
 [dependencies]
 thiserror = "*"
-serde = { version = "*", features = ["derive"], optional = true }
-serde_json = { version = "*", optional = true }
-rkyv = { version = "*", optional = true, default-features = false, features = ["std"]}
+serde = { version = "*", features = ["derive"] }
+serde-value = { version = "*" }
+bitcode = { version = "*", optional = true}
 
 [features]
-json = ["serde", "serde_json"]
-zerocpy = ["rkyv"]
+bitcode = ["dep:bitcode"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 

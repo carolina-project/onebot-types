@@ -8,30 +8,6 @@ static FROMSTR_TYPES: [&str; 10] = [
     "u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64", "f32", "f64",
 ];
 
-/// Process enum fields with serde attributes, wrap fields with `serde` attribute in `cfg_attr` attribute, make sure attribute only enabled with `json` feature.
-pub fn attrs_proc(attrs: &[Attribute]) -> Vec<Attribute> {
-    attrs
-        .into_iter()
-        .map(|a| {
-            if a.path()
-                .get_ident()
-                .map(|i| i == "serde")
-                .unwrap_or_default()
-            {
-                let meta = &a.meta;
-                parse_quote! {
-                    #[cfg_attr(
-                        feature = "json",
-                        #meta
-                    )]
-                }
-            } else {
-                a.clone()
-            }
-        })
-        .collect()
-}
-
 /// Append serde attributes to enum fields, making a field can be converted from a string.
 pub fn str_field_append(field: &Field) -> Vec<Attribute> {
     let field_type = &field.ty;
@@ -39,7 +15,7 @@ pub fn str_field_append(field: &Field) -> Vec<Attribute> {
     if let Type::Path(typ) = field_type {
         if FROMSTR_TYPES.iter().any(|r| typ.path.is_ident(r)) {
             attrs.push(parse_quote! {
-                #[serde(with = "ob_types_base::tool::from_json_str")]
+                #[serde(with = "ob_types_base::tool::from_str")]
             });
         } else if typ.path.is_ident("bool") {
             attrs.push(parse_quote! {
@@ -61,13 +37,12 @@ pub fn enum_fields_process(
 ) -> proc_macro2::TokenStream {
     let vars = data.variants.into_iter().map(|v| {
         let v_name = v.ident;
-        let attrs = attrs_proc(&v.attrs);
+        let attrs = v.attrs;
 
         let field_proc = |mut def: Field| {
             if let Some(f) = extra_attrs_getter.as_ref() {
                 def.attrs.extend(f(&def));
             }
-            def.attrs = attrs_proc(&def.attrs);
             if let Some(f) = proc_fn.as_ref() {
                 f(&def)
             } else {
@@ -114,7 +89,6 @@ pub fn struct_fields_proc(
         if let Some(f) = extra_attrs_getter.as_ref() {
             def.attrs.extend(f(&def));
         }
-        def.attrs = attrs_proc(&def.attrs);
         if let Some(f) = proc_fn.as_ref() {
             f(&def)
         } else {
@@ -145,13 +119,11 @@ pub fn struct_fields_proc(
 #[derive(Hash, PartialEq, Eq)]
 pub enum JsonAddition {
     StringValue,
-    OBRespDerive,
 }
 
 pub struct JsonProcMacro {
     pub additions: HashSet<JsonAddition>,
     pub has_default: bool,
-    pub inner: proc_macro2::TokenStream,
 }
 
 impl Parse for JsonProcMacro {
@@ -165,35 +137,23 @@ impl Parse for JsonProcMacro {
 
             Ok(())
         };
-        let mut inner: proc_macro2::TokenStream = quote! {};
         while input.peek(Ident) {
             let ident: Ident = input.parse()?;
             match ident.to_string().as_str() {
                 "default" => {
-                    if input.peek(Token![,]) {
-                        input.parse::<Token![,]>()?;
-                    }
+                    peek()?;
                     has_default = true;
                 }
                 "str" => {
                     peek()?;
                     additions.insert(JsonAddition::StringValue);
                 }
-                "resp" => {
-                    peek()?;
-                    additions.insert(JsonAddition::OBRespDerive);
-                }
-                _ => {
-                    let tokens: proc_macro2::TokenStream = input.parse()?;
-                    inner = quote! { #ident #tokens };
-                    break;
-                }
+                _ => return Err(Error::new(ident.span(), "Unknown attribute")),
             }
         }
 
         Ok(JsonProcMacro {
             additions,
-            inner,
             has_default,
         })
     }
@@ -203,7 +163,7 @@ pub fn derive_serde_process(
     input: DeriveInput,
     extra_attrs_getter: Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>,
 ) -> proc_macro2::TokenStream {
-    let attrs = attrs_proc(&input.attrs);
+    let attrs = &input.attrs;
     let data = match input.data {
         Data::Struct(data) => struct_fields_proc(
             input.vis,

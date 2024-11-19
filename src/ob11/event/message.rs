@@ -13,10 +13,8 @@ pub struct MessageEvent {
 #[derive(Clone, Debug)]
 pub struct MsgEventChain(pub MessageChain);
 
-#[cfg(feature = "json")]
+#[cfg(feature = "serde")]
 mod serde_impl_segs {
-    use std::borrow::Cow;
-
     use super::MessageChain;
     use serde::{de, ser, Serialize};
     impl ser::Serialize for super::MsgEventChain {
@@ -44,34 +42,18 @@ mod serde_impl_segs {
             }
         }
     }
+    #[cfg(feature = "serde")]
     impl<'de> de::Deserialize<'de> for super::MsgEventChain {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: de::Deserializer<'de>,
         {
-            use serde::de::Error;
             #[derive(serde::Deserialize)]
-            struct Helper<'a> {
-                message_format: Option<Cow<'a, str>>,
-                message: serde_json::Value,
+            struct Helper {
+                message: MessageChain,
             }
             let helper = Helper::deserialize(deserializer)?;
-            let match_closure = |typ: &str| match typ {
-                "array" => serde_json::from_value(helper.message)
-                    .map(MessageChain::Array)
-                    .map(Self)
-                    .map_err(Error::custom),
-                "string" => serde_json::from_value(helper.message)
-                    .map(MessageChain::String)
-                    .map(Self)
-                    .map_err(Error::custom),
-                _ => Err(Error::custom("unknown message_format")),
-            };
-            if let Some(r) = helper.message_format {
-                match_closure(r.as_ref())
-            } else {
-                match_closure("string")
-            }
+            Ok(Self(helper.message))
         }
     }
 }
@@ -80,7 +62,7 @@ mod serde_impl_segs {
 pub struct Message {
     pub message_id: i32,
     pub user_id: i64,
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub message_segs: MsgEventChain,
     pub raw_message: String,
     pub font: i32,

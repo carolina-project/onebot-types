@@ -1,4 +1,3 @@
-use ob_types_base::JSONValue;
 use ob_types_macro::json;
 
 macro_rules! compat_struct {
@@ -70,7 +69,8 @@ macro_rules! define_compat_types {
         }
 
         /// OneBot 11 compatible segments in OneBot 12, **only used in OneBot 12 protocol**!
-        #[json(serde(tag = "type"))]
+        #[json]
+        #[serde(tag = "type")]
         pub enum OB12CompatSeg {
             $(
             #[serde(rename = $ob11_name)]
@@ -78,13 +78,14 @@ macro_rules! define_compat_types {
             )*
         }
 
-        #[cfg(feature = "json")]
         impl OB12CompatSeg {
-            pub fn from_data(ty_name: &str, data: JSONValue) -> Option<serde_json::Result<Self>> {
-                let value: serde_json::Value = data.into();
+            pub fn from_data(
+                ty_name: &str, data: serde_value::Value
+            ) -> Option<Result<Self, Box<dyn std::error::Error>>> {
+                use serde::Deserialize;
                 match ty_name {
                     $(
-                    types::$name::TYPE => Some(serde_json::from_value(value)),
+                    types::$name::TYPE => Some(types::$name::deserialize(data).map_err(|e| Box::new(e) as _).map(Self::$name)),
                     )*
                     _ => None,
                 }
@@ -122,7 +123,8 @@ define_compat_types! (
 
 pub mod ob11to12 {
     use super::*;
-    use ob_types_base::JSONValue;
+
+    use serde_value::Value;
 
     use crate::ob11::message as ob11message;
     use crate::ob12::message as ob12message;
@@ -156,9 +158,9 @@ pub mod ob11to12 {
         MentionAll,
     }
 
-    #[inline]
-    fn default_obj() -> JSONValue {
-        JSONValue::Object(Default::default())
+    #[inline(always)]
+    fn default_obj() -> Value {
+        Value::Map(Default::default())
     }
 
     impl ob11message::Text {
@@ -204,7 +206,7 @@ pub mod ob11to12 {
             match self {
                 ob11message::AtTarget::QQ(id) => OB12Mention::Mention(ob12message::Mention {
                     user_id: id.to_string(),
-                    extra: JSONValue::Object(Default::default()),
+                    extra: default_obj(),
                 }),
                 ob11message::AtTarget::All => OB12Mention::MentionAll,
             }
@@ -215,6 +217,7 @@ pub mod ob11to12 {
     single_field_wrap!(Poke);
     no_field_wrap!(Anonymous);
     single_field_wrap!(Share, Contact, Location);
+    single_field_wrap!(Music);
 
     impl ob11message::Reply {
         pub fn to_ob12(self, user_id: Option<String>) -> ob12message::Reply {
@@ -226,5 +229,5 @@ pub mod ob11to12 {
         }
     }
 
-    single_field_wrap!(Music, Forward, ForwardNode, XML, JSON);
+    single_field_wrap!(Forward, ForwardNode, XML, JSON);
 }

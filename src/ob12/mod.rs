@@ -24,7 +24,7 @@ mod macros {
                         pub $field: $f_ty,
                     )*)?
                 #[serde(flatten)]
-                pub extra: ob_types_base::JSONValue,
+                pub extra: serde_value::Value,
             }
 
             $crate::scalable_struct! {
@@ -41,7 +41,7 @@ mod macros {
                 ),* $(,)?
             })? $(, $($rest:tt)*)?
         } => {
-            #[ob_types_macro::json(resp)]
+            #[ob_types_macro::json]
             pub struct $typ {
                 $(
                     $(
@@ -50,7 +50,7 @@ mod macros {
                     )*
                 )?
                 #[serde(flatten)]
-                pub extra: ob_types_base::JSONValue,
+                pub extra: serde_value::Value,
             }
 
             $crate::scalable_struct! {
@@ -118,7 +118,8 @@ pub(crate) static CHAT_TARGET_FIELDS: &[&str] = &[
     "detail_type",
 ];
 
-#[json(serde(tag = "detail_type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "detail_type", rename_all = "snake_case")]
 pub enum ChatTarget {
     Private {
         user_id: String,
