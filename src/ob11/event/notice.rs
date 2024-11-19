@@ -1,24 +1,21 @@
 use std::time::Duration;
 
-#[cfg(feature = "serde")]
 use ob_types_base::tool::duration_secs;
 use ob_types_macro::json;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[derive(Clone, Debug)]
+#[derive(serde::Serialize, Clone, Debug)]
 pub enum NoticeEvent {
     GroupNotice(GroupNotice),
     FriendNotice(FriendNotice),
 }
 
-#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for NoticeEvent {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        use serde_json::Value;
+        use serde_value::Value;
         let v = Value::deserialize(deserializer)?;
         let Value::String(s) = v
             .get("notice_type")
@@ -39,38 +36,39 @@ impl<'de> serde::Deserialize<'de> for NoticeEvent {
 pub struct GroupNotice {
     pub group_id: i64,
     pub user_id: i64,
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub kind: GroupNoticeKind,
 }
 
-#[json(serde(tag = "notice_type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "notice_type", rename_all = "snake_case")]
 pub enum GroupNoticeKind {
-    #[cfg_attr(feature = "serde", serde(rename = "group_upload"))]
+    #[serde(rename = "group_upload")]
     Upload {
         file: GroupUpload,
     },
-    #[cfg_attr(feature = "serde", serde(rename = "group_admin"))]
+    #[serde(rename = "group_admin")]
     Admin {
         sub_type: AdminChange,
     },
-    #[cfg_attr(feature = "serde", serde(rename = "group_increase"))]
+    #[serde(rename = "group_increase")]
     MemberIncrease {
         sub_type: IncreaseType,
         operator_id: i64,
     },
-    #[cfg_attr(feature = "serde", serde(rename = "group_decrease"))]
+    #[serde(rename = "group_decrease")]
     MemberDecrease {
         sub_type: DecreaseType,
         operator_id: i64,
     },
-    #[cfg_attr(feature = "serde", serde(rename = "group_ban"))]
+    #[serde(rename = "group_ban")]
     Mute {
         sub_type: MuteType,
         operator_id: i64,
-        #[cfg_attr(feature = "serde", serde(with = "duration_secs"))]
+        #[serde(with = "duration_secs")]
         duration: Duration,
     },
-    #[cfg_attr(feature = "serde", serde(rename = "group_recall"))]
+    #[serde(rename = "group_recall")]
     Recall {
         operator_id: i64,
         message_id: i32,
@@ -96,32 +94,37 @@ pub struct GroupUpload {
     pub busid: i64,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum AdminChange {
     Set,
     Unset,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum IncreaseType {
     Approve,
     Invite,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum DecreaseType {
     Leave,
     Kick,
     KickMe,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum MuteType {
     Ban,
     LiftBan,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum GroupHonor {
     Talkative,
     Performer,
@@ -131,14 +134,15 @@ pub enum GroupHonor {
 #[json]
 pub struct FriendNotice {
     pub user_id: i64,
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub kind: FriendNoticeKind,
 }
 
-#[json(serde(tag = "notice_type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "notice_type", rename_all = "snake_case")]
 pub enum FriendNoticeKind {
     FriendAdd,
-    #[cfg_attr(feature = "serde", serde(rename = "friend_recall"))]
+    #[serde(rename = "friend_recall")]
     /// recalled message's id
     Recall {
         message_id: i32,

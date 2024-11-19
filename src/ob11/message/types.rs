@@ -4,7 +4,6 @@ use ob_types_macro::json;
 
 use super::MessageSeg;
 
-#[cfg(feature = "json")]
 const fn true_value() -> bool {
     true
 }
@@ -58,7 +57,6 @@ impl Default for ImageType {
     }
 }
 
-#[cfg(feature = "json")]
 mod serde_impl {
     use serde::{Deserialize, Serialize};
 
@@ -92,23 +90,23 @@ mod serde_impl {
 #[json(str)]
 pub struct Image {
     pub file: String,
-    #[cfg_attr(feature = "json", serde(default))]
+    #[serde(default)]
     pub r#type: ImageType,
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[serde(flatten)]
     pub option: Option<FileOption>,
 }
 #[json(str)]
 pub struct Record {
     pub file: String,
-    #[cfg_attr(feature = "json", serde(default))]
+    #[serde(default)]
     pub magic: bool,
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[serde(flatten)]
     pub option: Option<FileOption>,
 }
 #[json(str)]
 pub struct Video {
     pub file: String,
-    #[cfg_attr(feature = "json", serde(flatten))]
+    #[serde(flatten)]
     pub option: Option<FileOption>,
 }
 
@@ -174,7 +172,8 @@ pub struct Location {
     pub content: Option<String>,
 }
 
-#[json(str, serde(tag = "type", rename_all = "lowercase"))]
+#[json(str)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum Music {
     #[serde(rename = "163")]
     NCM {
@@ -222,7 +221,8 @@ pub struct JSON {
     pub data: String,
 }
 
-#[json(str, serde(untagged))]
+#[json(str)]
+#[serde(untagged)]
 pub enum ForwardNode {
     Message {
         id: i32,

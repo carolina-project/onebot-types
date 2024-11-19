@@ -81,21 +81,23 @@ macro_rules! define_compat_types {
         impl OB12CompatSeg {
             pub fn from_data(
                 ty_name: &str, data: serde_value::Value
-            ) -> Option<Result<Self, Box<dyn std::error::Error>>> {
+            ) -> Option<Result<Self, serde_value::DeserializerError>> {
                 use serde::Deserialize;
                 match ty_name {
                     $(
-                    types::$name::TYPE => Some(types::$name::deserialize(data).map_err(|e| Box::new(e) as _).map(Self::$name)),
+                    types::$name::TYPE => Some(types::$name::deserialize(data).map(OB12CompatSeg::$name)),
                     )*
                     _ => None,
                 }
             }
 
-            pub fn to_data(&self) -> serde_json::Result<(&str, JSONValue)> {
+            pub fn to_data(
+                &self
+            ) -> Result<(&str, serde_value::Value), serde_value::SerializerError> {
                 match self {
                     $(
                         OB12CompatSeg::$name(seg) => Ok(
-                            (types::$name::TYPE, serde_json::to_value(seg)?.into())
+                            (types::$name::TYPE, serde_value::to_value(seg)?)
                         ),
                     )*
                 }

@@ -1,6 +1,6 @@
 mod types;
 
-use ob_types_base::json::JSONValue;
+use serde_value::Value;
 use ob_types_macro::json;
 
 #[allow(unused)]
@@ -10,7 +10,7 @@ pub use types::*;
 #[json]
 pub struct MessageSegRaw {
     pub r#type: String,
-    pub data: JSONValue,
+    pub data: Value,
 }
 
 #[json]
@@ -30,8 +30,8 @@ pub enum MessageSeg {
     Share(Share) ,
     Contact(Contact) ,
     Location(Location) ,
-    Music(Music) ,
-    Reply(Reply) ,
+    Music(Music),
+    Reply(Reply),
     Forward(Forward) ,
     ForwardNode(ForwardNode) ,
     XML(XML) ,
@@ -40,7 +40,8 @@ pub enum MessageSeg {
     Custom(MessageSegRaw),
 }
 
-#[json(serde(untagged))]
+#[json]
+#[serde(untagged)]
 pub enum MessageChain {
     Array(Vec<MessageSeg>),
     String(String),

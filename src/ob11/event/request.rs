@@ -9,7 +9,8 @@ pub struct RequestEvent {
     pub flag: String,
 }
 
-#[json(serde(tag = "request_type"))]
+#[json]
+#[serde(tag = "request_type")]
 pub enum RequestKind {
     #[serde(rename = "friend")]
     AddFriend,
@@ -23,7 +24,8 @@ pub struct AddGroup {
     pub group_id: i64,
 }
 
-#[json(serde(rename_all = "lowercase"))]
+#[json]
+#[serde(rename_all = "lowercase")]
 pub enum AddGroupType {
     Add,
     Invite,
