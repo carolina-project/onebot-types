@@ -1,130 +1,48 @@
-use ob_types_macro::json;
+use crate::ob11::message as ob11message;
 
-macro_rules! compat_struct {
-    ($name:ident {
-        $(
-        $field:ident: $field_ty:ty,
-        )*
-    } $typ_name:literal) => {
-        #[super::json(str)]
-        pub struct $name {
-            $(
-            pub $field: $field_ty,
-            )*
-        }
-
-        impl $name {
-            pub const TYPE: &'static str = $typ_name;
-        }
-    };
-    ($name:ident  $typ_name:literal) => {
-        #[super::json(str)]
-        pub struct $name;
-
-        impl $name {
-            pub const TYPE: &'static str = $typ_name;
-        }
-    };
-    ($name:ident($en:ty)  $typ_name:literal) => {
-        #[super::json(str)]
-        pub struct $name(pub $en);
-
-        impl std::ops::Deref for $name {
-            type Target = $en;
-
-            fn deref(&self) -> &Self::Target {
-                &self.0
-            }
-        }
-
-        impl $name {
-            pub const TYPE: &'static str = $typ_name;
-        }
-    };
-}
+use serde::Deserialize;
 
 macro_rules! define_compat_types {
-    ($(
-        $name:ident $({
-            $(
-            $field:ident: $field_ty:ty
-            ),*
-        })? $(($en:ty))? $ob11_name:literal
-    ),* $(,)?) => {
-        pub mod types {
-            use crate::ob11::message as ob11message;
-        $(
-            compat_struct!($name $({
-                $(
-                    $field: $field_ty,
-                )*
-            })? $(($en))? $ob11_name);
-
-            impl From<$name> for super::OB12CompatSeg {
-                fn from(seg: $name) -> Self {
-                    Self::$name(seg)
-                }
-            }
-        )*
+    ($($typ:ident $name:literal),* $(,)?) => {
+        pub enum OB12CompatSegment {
+            $($typ(ob11message::$typ),)*
         }
 
-        /// OneBot 11 compatible segments in OneBot 12, **only used in OneBot 12 protocol**!
-        #[json]
-        #[serde(tag = "type")]
-        pub enum OB12CompatSeg {
-            $(
-            #[serde(rename = $ob11_name)]
-            $name(types::$name),
-            )*
-        }
-
-        impl OB12CompatSeg {
-            pub fn from_data(
-                ty_name: &str, data: serde_value::Value
+        impl OB12CompatSegment {
+            pub fn parse_data(
+                name: &str, data: serde_value::Value
             ) -> Option<Result<Self, serde_value::DeserializerError>> {
-                use serde::Deserialize;
-                match ty_name {
-                    $(
-                    types::$name::TYPE => Some(types::$name::deserialize(data).map(OB12CompatSeg::$name)),
-                    )*
+                match name {
+                    $(concat!("ob11.", $name) => {
+                        Some(ob11message::$typ::deserialize(data).map(OB12CompatSegment::$typ))
+                    })*
                     _ => None,
                 }
             }
-
-            pub fn to_data(
-                &self
-            ) -> Result<(&str, serde_value::Value), serde_value::SerializerError> {
-                match self {
-                    $(
-                        OB12CompatSeg::$name(seg) => Ok(
-                            (types::$name::TYPE, serde_value::to_value(seg)?)
-                        ),
-                    )*
-                }
-            }
         }
+
+
     };
 }
 
 define_compat_types! (
-    Face(ob11message::Face) "ob11.face",
-    Dice "ob11.dice",
-    Rps "ob11.rps",
-    Shake "ob11.shake",
-    Poke(ob11message::Poke) "ob11.poke",
-    Anonymous "ob11.anonymous",
-    Share(ob11message::Share) "ob11.share",
-    Contact(ob11message::Contact) "ob11.contact",
-    Location(ob11message::Location) "ob11.location",
-    Music(ob11message::Music) "ob11.music",
-    Forward(ob11message::Forward) "ob11.forward",
-    ForwardNode(ob11message::ForwardNode) "ob11.node",
-    XML(ob11message::XML) "ob11.xml",
-    JSON(ob11message::JSON) "ob11.json",
+    Face "face",
+    Dice "dice",
+    Rps "rps",
+    Shake "shake",
+    Poke "poke",
+    Anonymous "anonymous",
+    Share "share",
+    Contact "contact",
+    Location "location",
+    Music "music",
+    Forward "forward",
+    ForwardNode "node",
+    XML "xml",
+    JSON "json",
 );
 
 pub mod ob11to12 {
-    use super::*;
 
     use serde_value::Value;
 
