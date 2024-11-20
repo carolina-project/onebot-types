@@ -1,16 +1,13 @@
-use std::{marker::PhantomData, time::Duration};
+use std::time::Duration;
 
-use ob_types_base::{OBAction, OBRespData};
-use ob_types_macro::{json, onebot_action, OBRespData};
+use ob_types_macro::{json, onebot_action};
+use serde::{Deserialize, Serialize};
 
 use crate::ob11::{
     event::{message::AnonymousSender, request::AddGroupType},
     message::MessageChain,
 };
 
-#[cfg(feature = "json")]
-use crate::de_to_hashmap;
-#[cfg(feature = "serde")]
 use ob_types_base::tool::duration_secs_opt;
 
 use super::bot::MessageResp;
@@ -37,52 +34,11 @@ pub struct SetGroupBan {
     pub duration: Option<Duration>,
 }
 
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum AnonymousFlag {
     Sender(AnonymousSender),
     Flag(String),
-}
-
-#[cfg(feature = "serde")]
-mod serde_impl_anon {
-    use serde::Deserialize;
-
-    use super::AnonymousFlag;
-
-    struct AnonymousFlagVisitor;
-
-    impl<'de> serde::de::Visitor<'de> for AnonymousFlagVisitor {
-        type Value = AnonymousFlag;
-        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-            formatter.write_str("AnonymousFlag must be a string or an object")
-        }
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: serde::de::Error,
-        {
-            Ok(AnonymousFlag::Flag(v.to_string()))
-        }
-
-        fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>,
-        {
-            let sender =
-                serde::Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))
-                    .map_err(serde::de::Error::custom)?;
-            Ok(AnonymousFlag::Sender(sender))
-        }
-    }
-
-    impl<'de> Deserialize<'de> for AnonymousFlag {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            deserializer.deserialize_any(AnonymousFlagVisitor)
-        }
-    }
 }
 
 #[onebot_action(EmptyResp)]
@@ -137,7 +93,7 @@ pub struct SetGroupSpecialTitle {
     pub group_id: i64,
     pub user_id: i64,
     pub special_title: Option<String>,
-    #[cfg_attr(feature = "serde", serde(with = "duration_secs_opt"))]
+    #[serde(with = "duration_secs_opt")]
     pub duration: Option<Duration>,
 }
 
@@ -155,7 +111,7 @@ pub struct GetGroupInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json(resp)]
+#[json]
 pub struct GroupInfo {
     pub group_id: i64,
     pub group_name: String,
@@ -173,7 +129,7 @@ pub struct GetGroupMemberInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json(resp)]
+#[json]
 pub struct GroupMemberInfo {
     pub group_id: i64,
     pub user_id: i64,
@@ -192,45 +148,27 @@ pub struct GroupMemberInfo {
     pub card_changeable: bool,
 }
 
-#[onebot_action( Vec<GroupMemberInfo>)]
+#[onebot_action(Vec<GroupMemberInfo>)]
 pub struct GetGroupMemberList {
     pub group_id: i64,
 }
 
-// get group honor
-pub trait GroupHonor {
-    type Output: OBRespData;
-    const TYPE_NAME: &'static str;
+#[json]
+#[serde(rename_all = "snake_case")]
+pub enum GroupHonor {
+    Talkative,
+    Performer,
+    Legend,
+    StrongNewbie,
+    Emotion,
+    All,
 }
 
 /// see [get_group_honor_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF)
-#[json]
-pub struct GetGroupHonor<Type>
-where
-    Type: GroupHonor,
-{
+#[onebot_action(GroupHonorResp)]
+pub struct GetGroupHonorInfo {
     pub group_id: i64,
-    _marker: PhantomData<Type>,
-}
-
-impl<T> OBAction for GetGroupHonor<T>
-where
-    T: GroupHonor,
-{
-    type Resp = T::Output;
-    const ACTION: Option<&'static str> = Some("get_group_honor_info");
-}
-
-impl<Type> GetGroupHonor<Type>
-where
-    Type: GroupHonor,
-{
-    pub fn new(group_id: i64) -> Self {
-        Self {
-            group_id,
-            _marker: PhantomData,
-        }
-    }
+    pub r#type: GroupHonor,
 }
 
 #[json]
@@ -250,120 +188,13 @@ pub struct CurrentTalkative {
     pub day_count: u32,
 }
 
-#[json(resp)]
-pub struct GroupTalkative {
+#[json]
+pub struct GroupHonorResp {
     pub group_id: i64,
-    pub current_talkative: CurrentTalkative,
-    pub talkative_list: Vec<GroupHonorUser>,
-}
-
-#[derive(OBRespData)]
-pub struct GroupHonorList<S: GroupHonor> {
-    pub group_id: i64,
-    pub list: Vec<GroupHonorUser>,
-    _marker: PhantomData<S>,
-}
-
-#[cfg(feature = "json")]
-impl<'de, S: GroupHonor> serde::Deserialize<'de> for GroupHonorList<S> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let mut value = de_to_hashmap(deserializer)?;
-        let field = format!("{}_list", S::TYPE_NAME);
-        Ok(Self {
-            group_id: crate::hashmap_value_get::<_, D>(&mut value, "group_id")?,
-            list: crate::hashmap_value_get::<_, D>(&mut value, &field)?,
-            _marker: PhantomData,
-        })
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<T: GroupHonor> serde::Serialize for GroupHonorList<T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeMap;
-
-        let mut map = serializer.serialize_map(Some(2))?;
-        map.serialize_entry("group_id", &self.group_id)?;
-        map.serialize_entry(&format!("{}_list", T::TYPE_NAME), &self.list)?;
-        map.end()
-    }
-}
-
-impl<T: GroupHonor> GroupHonorList<T> {
-    pub fn new(group_id: i64, list: Vec<GroupHonorUser>) -> Self {
-        Self {
-            group_id,
-            list,
-            _marker: PhantomData,
-        }
-    }
-}
-
-#[json(resp)]
-pub struct GroupAllHonor {
-    pub group_id: i64,
-    pub current_talkative: CurrentTalkative,
-    pub talkative_list: Vec<GroupHonorUser>,
-    pub performer_list: Vec<GroupHonorUser>,
-    pub legend_list: Vec<GroupHonorUser>,
-    pub strong_newbie_list: Vec<GroupHonorUser>,
-    pub emotion_list: Vec<GroupHonorUser>,
-}
-
-pub mod honor {
-    use super::{GroupAllHonor, GroupHonor, GroupHonorList};
-
-    // -talkative
-    pub struct Talkative;
-    impl GroupHonor for Talkative {
-        type Output = super::GroupTalkative;
-
-        const TYPE_NAME: &'static str = "talkative";
-    }
-
-    // -performer
-    pub struct Performer;
-    impl GroupHonor for Performer {
-        type Output = GroupHonorList<Self>;
-
-        const TYPE_NAME: &'static str = "performer";
-    }
-
-    // -legend
-    pub struct Legend;
-    impl GroupHonor for Legend {
-        type Output = GroupHonorList<Self>;
-
-        const TYPE_NAME: &'static str = "legend";
-    }
-
-    // -strong_newbie
-    pub struct StrongNewbie;
-    impl GroupHonor for StrongNewbie {
-        type Output = GroupHonorList<Self>;
-
-        const TYPE_NAME: &'static str = "strong_newbie";
-    }
-
-    // -emotion
-    pub struct Emotion;
-    impl GroupHonor for Emotion {
-        type Output = GroupHonorList<Self>;
-
-        const TYPE_NAME: &'static str = "emotion";
-    }
-
-    // -all
-    pub struct All;
-    impl GroupHonor for All {
-        type Output = GroupAllHonor;
-
-        const TYPE_NAME: &'static str = "all";
-    }
+    pub current_talkative: Option<CurrentTalkative>,
+    pub talkative_list: Option<Vec<GroupHonorUser>>,
+    pub performer_list: Option<Vec<GroupHonorUser>>,
+    pub legend_list: Option<Vec<GroupHonorUser>>,
+    pub strong_newbie_list: Option<Vec<GroupHonorUser>>,
+    pub emotion_list: Option<Vec<GroupHonorUser>>,
 }

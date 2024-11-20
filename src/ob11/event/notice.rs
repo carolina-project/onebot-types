@@ -3,6 +3,8 @@ use std::time::Duration;
 use ob_types_base::tool::duration_secs;
 use ob_types_macro::json;
 
+use crate::ValueMap;
+
 #[derive(serde::Serialize, Clone, Debug)]
 pub enum NoticeEvent {
     GroupNotice(GroupNotice),
@@ -16,17 +18,30 @@ impl<'de> serde::Deserialize<'de> for NoticeEvent {
     {
         use serde::de::Error;
         use serde_value::Value;
-        let v = Value::deserialize(deserializer)?;
-        let Value::String(s) = v
-            .get("notice_type")
-            .ok_or_else(|| serde::de::Error::custom("missing field `notice_type`"))?
-        else {
-            return Err(serde::de::Error::custom("invalid type: not a string"));
-        };
-        if s.starts_with("group") {
-            GroupNotice::deserialize(v).map(NoticeEvent::GroupNotice)
+
+        #[derive(serde::Deserialize)]
+        struct Helper {
+            notice_type: String,
+            #[serde(flatten)]
+            extra: ValueMap,
+        }
+        let Helper {
+            notice_type,
+            mut extra,
+        } = Helper::deserialize(deserializer)?;
+
+        if notice_type.starts_with("group") {
+            extra.insert(
+                Value::String("notice_type".into()),
+                Value::String(notice_type),
+            );
+            GroupNotice::deserialize(Value::Map(extra)).map(NoticeEvent::GroupNotice)
         } else {
-            FriendNotice::deserialize(v).map(NoticeEvent::FriendNotice)
+            extra.insert(
+                Value::String("notice_type".into()),
+                Value::String(notice_type),
+            );
+            FriendNotice::deserialize(Value::Map(extra)).map(NoticeEvent::FriendNotice)
         }
         .map_err(Error::custom)
     }

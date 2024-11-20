@@ -11,6 +11,7 @@ serde = { version = "*", features = ["derive"] }
 serde-value = { version = "*" }
 base64 =  { version = "*", optional = true }
 bitcode = { version = "*", optional = true }
+const_format = { version = "*" }
 
 [features]
 default = ["ob12"]
@@ -21,3 +22,4 @@ ob12 = []
 
 [dev-dependencies]
 eyre = "*"
+serde_json = "*"

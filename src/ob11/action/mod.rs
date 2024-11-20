@@ -20,7 +20,8 @@ pub struct Action {
 
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
-        #[json(serde(tag = "action", rename_all = "snake_case", content = "params"))]
+        #[json]
+        #[serde(tag = "action", rename_all = "snake_case", content = "params")]
         pub enum ActionType {$(
             $typ($typ),
         )*}
@@ -71,7 +72,8 @@ actions!(
 );
 
 #[derive(Copy)]
-#[json(serde(rename_all = "lowercase"))]
+#[json]
+#[serde(rename_all = "lowercase")]
 pub enum RespStatus {
     Ok,
     Async,

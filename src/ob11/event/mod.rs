@@ -3,12 +3,11 @@ use std::time::Duration;
 use meta::MetaEvent;
 use notice::NoticeEvent;
 
-#[cfg(feature = "serde")]
 use ob_types_base::tool::duration_secs;
 
-use ob_types_base::JSONValue;
 use ob_types_macro::json;
 use request::RequestEvent;
+use serde_value::Value;
 
 use self::message::MessageEvent;
 
@@ -18,7 +17,8 @@ pub mod notice;
 pub mod request;
 
 #[derive(Copy)]
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum PostType {
     MetaEvent,
     Message,
@@ -32,8 +32,8 @@ pub struct EventRaw {
     pub time: Duration,
     pub self_id: i64,
     pub post_type: PostType,
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub extra: JSONValue,
+    #[serde(flatten)]
+    pub extra: Value,
 }
 
 #[json]
@@ -41,14 +41,15 @@ pub struct Event {
     #[serde(with = "duration_secs")]
     pub time: Duration,
     pub self_id: i64,
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub kind: EventKind,
 }
 
-#[json(serde(tag = "post_type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "post_type", rename_all = "snake_case")]
 pub enum EventKind {
     Message(MessageEvent),
-    #[cfg_attr(feature = "serde", serde(rename = "meta_event"))]
+    #[serde(rename = "meta_event")]
     Meta(MetaEvent),
     Request(RequestEvent),
     Notice(NoticeEvent),

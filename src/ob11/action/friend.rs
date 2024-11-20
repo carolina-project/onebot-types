@@ -31,7 +31,7 @@ pub struct GetStrangerInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json(resp)]
+#[json]
 pub struct StrangerInfoResp {
     pub user_id: i64,
     pub nickname: String,
@@ -39,10 +39,10 @@ pub struct StrangerInfoResp {
     pub age: u32,
 }
 
-#[onebot_action( Vec<FriendInfo>)]
+#[onebot_action(Vec<FriendInfo>)]
 pub struct GetFriendList;
 
-#[json(resp)]
+#[json]
 pub struct FriendInfo {
     pub user_id: i64,
     pub nickname: String,

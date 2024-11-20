@@ -13,7 +13,6 @@ pub struct MessageEvent {
 #[derive(Clone, Debug)]
 pub struct MsgEventChain(pub MessageChain);
 
-#[cfg(feature = "serde")]
 mod serde_impl_segs {
     use super::MessageChain;
     use serde::{de, ser, Serialize};
@@ -42,7 +41,6 @@ mod serde_impl_segs {
             }
         }
     }
-    #[cfg(feature = "serde")]
     impl<'de> de::Deserialize<'de> for super::MsgEventChain {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
@@ -62,7 +60,7 @@ mod serde_impl_segs {
 pub struct Message {
     pub message_id: i32,
     pub user_id: i64,
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub message_segs: MsgEventChain,
     pub raw_message: String,
     pub font: i32,
@@ -81,13 +79,15 @@ pub struct GroupMessageKind {
     sender: GroupSender,
     anonymous: Option<AnonymousSender>,
 }
-#[json(serde(tag = "message_type", rename_all = "snake_case"))]
+#[json]
+#[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum MessageKind {
     Private(PrivateMessageKind),
     Group(GroupMessageKind),
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum PrivateSubType {
     Friend,
     Group,
@@ -102,14 +102,16 @@ pub struct PrivateSender {
     pub age: Option<u32>,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub enum GroupSubType {
     Normal,
     Anonymous,
     Notice,
 }
 
-#[json(serde(rename_all = "snake_case"))]
+#[json]
+#[serde(rename_all = "snake_case")]
 pub struct GroupSender {
     pub user_id: Option<i64>,
     pub nickname: Option<String>,

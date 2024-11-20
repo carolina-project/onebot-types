@@ -2,10 +2,10 @@ use crate::ob11::{
     event::message::{GroupSender, PrivateSender},
     message::{MessageChain, MessageSeg},
 };
-use ob_types_base::json::JSONValue;
 #[allow(unused)]
 use ob_types_base::OBRespData;
-use ob_types_macro::{json, onebot_action, OBRespData};
+use ob_types_macro::{json, onebot_action};
+use serde_value::Value;
 
 use super::EmptyResp;
 
@@ -25,7 +25,7 @@ pub struct SendMsg {
     pub message: MessageChain,
 }
 
-#[json(resp)]
+#[json]
 pub struct MessageResp {
     pub message_id: i32,
 }
@@ -47,7 +47,6 @@ pub enum MessageSender {
     Group(GroupSender),
 }
 
-#[derive(OBRespData)]
 pub struct GetMessageResp {
     pub time: u32,
     pub message_id: i32,
@@ -56,10 +55,9 @@ pub struct GetMessageResp {
     pub message: Vec<MessageSeg>,
 }
 
-#[cfg(feature = "json")]
 mod serde_impl_get {
     use serde::{Deserialize, Serialize};
-    use serde_json::Value;
+    use serde_value::Value;
 
     use crate::ob11::{action::bot::MessageSender, MessageSeg};
 
@@ -90,12 +88,12 @@ mod serde_impl_get {
             let value = DeHelper::deserialize(deserializer)?;
 
             let sender: MessageSender = match value.message_type {
-                "private" => serde_json::from_value(value.sender)
-                    .map_err(serde::de::Error::custom)
-                    .map(MessageSender::Private)?,
-                "group" => serde_json::from_value(value.sender)
-                    .map_err(serde::de::Error::custom)
-                    .map(MessageSender::Group)?,
+                "private" => Deserialize::deserialize(value.sender)
+                    .map(MessageSender::Private)
+                    .map_err(serde::de::Error::custom)?,
+                "group" => Deserialize::deserialize(value.sender)
+                    .map(MessageSender::Group)
+                    .map_err(serde::de::Error::custom)?,
                 t => Err(serde::de::Error::custom(format!(
                     "unkown message type: {}",
                     t
@@ -138,7 +136,7 @@ pub struct GetForwardMsg {
     pub id: String,
 }
 
-#[json(resp)]
+#[json]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
@@ -146,7 +144,7 @@ pub struct GetForwardMsgResp {
 #[onebot_action(LoginInfo)]
 pub struct GetLoginInfo;
 
-#[json(resp)]
+#[json]
 pub struct LoginInfo {
     pub user_id: i64,
     pub nickname: String,
@@ -157,7 +155,7 @@ pub struct GetCookies {
     pub domain: Option<String>,
 }
 
-#[json(resp)]
+#[json]
 pub struct Cookies {
     pub cookies: String,
 }
@@ -165,7 +163,7 @@ pub struct Cookies {
 #[onebot_action(CSRFToken)]
 pub struct GetCsrfToken;
 
-#[json(resp)]
+#[json]
 pub struct CSRFToken {
     pub token: i32,
 }
@@ -175,13 +173,13 @@ pub struct GetCredentials {
     pub domain: Option<String>,
 }
 
-#[json(resp)]
+#[json]
 pub struct Credentials {
     pub cookies: String,
     pub csrf_token: i32,
 }
 
-#[json(resp)]
+#[json]
 pub struct FileResp {
     pub file: String,
 }
@@ -197,7 +195,7 @@ pub struct GetImage {
     pub file: String,
 }
 
-#[json(resp)]
+#[json]
 pub struct IsAllowd {
     pub yes: bool,
 }
@@ -211,24 +209,24 @@ pub struct CanSendRecord;
 #[onebot_action(Status)]
 pub struct GetStatus;
 
-#[json(resp)]
+#[json]
 pub struct Status {
     pub online: bool,
     pub good: bool,
     #[serde(flatten)]
-    pub extra: JSONValue,
+    pub extra: Value,
 }
 
 #[onebot_action(VersionInfo)]
 pub struct GetVersion;
 
-#[json(resp)]
+#[json]
 pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,
     pub protocol_version: String,
     #[serde(flatten)]
-    pub extra: JSONValue,
+    pub extra: Value,
 }
 
 #[onebot_action(EmptyResp)]
