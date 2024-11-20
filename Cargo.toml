@@ -10,13 +10,11 @@ ob-types-base = { path = "./ob-types-base" }
 serde = { version = "*", features = ["derive"] }
 serde-value = { version = "*" }
 base64 =  { version = "*", optional = true }
-bitcode = { version = "*", optional = true }
 const_format = { version = "*" }
 
 [features]
 default = ["ob12"]
 base64 = ["dep:base64"]
-bitcode = ["dep:bitcode", "ob-types-base/bitcode"]
 ob11 = []
 ob12 = []
 

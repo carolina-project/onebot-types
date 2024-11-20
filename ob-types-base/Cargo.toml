@@ -8,10 +8,8 @@ edition = "2021"
 thiserror = "*"
 serde = { version = "*", features = ["derive"] }
 serde-value = { version = "*" }
-bitcode = { version = "*", optional = true}
 
 [features]
-bitcode = ["dep:bitcode"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 
