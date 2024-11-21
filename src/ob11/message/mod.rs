@@ -1,7 +1,7 @@
 mod types;
 
-use serde_value::Value;
 use ob_types_macro::json;
+use serde_value::Value;
 
 #[allow(unused)]
 use std::{fmt::Display, str::FromStr};
@@ -13,31 +13,47 @@ pub struct MessageSegRaw {
     pub data: Value,
 }
 
-#[json]
-pub enum MessageSeg {
-    Text(Text),
-    /// see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)
-    Face(Face),
-    Image(Image) ,
-    Record(Record) ,
-    Video(Video) ,
-    At(At),
-    Rps(Rps) ,
-    Dice(Dice) ,
-    Shake(Shake) ,
-    Poke(Poke) ,
-    Anonymous(Anonymous) ,
-    Share(Share) ,
-    Contact(Contact) ,
-    Location(Location) ,
-    Music(Music),
-    Reply(Reply),
-    Forward(Forward) ,
-    ForwardNode(ForwardNode) ,
-    XML(XML) ,
-    JSON(JSON),
-    #[serde(untagged)]
-    Custom(MessageSegRaw),
+macro_rules! message_segs {
+    ($($typ:ident $($doc:literal)?),* $(,)?) => {
+        #[json]
+        pub enum MessageSeg {
+            $(
+            $(#[doc = $doc])?
+            $typ($typ),
+            )*
+            #[serde(untagged)]
+            Other(MessageSegRaw),
+        }
+
+        $(impl From<$typ> for MessageSeg {
+            fn from(sg: $typ) -> Self {
+                Self::$typ(sg)
+            }
+        })*
+    };
+}
+
+message_segs! {
+    Text,
+    Face "see [表情 CQ 码 ID 表](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)",
+    Image,
+    Record,
+    Video,
+    At,
+    Rps,
+    Dice,
+    Shake,
+    Poke,
+    Anonymous,
+    Share,
+    Contact,
+    Location,
+    Music,
+    Reply,
+    Forward,
+    ForwardNode,
+    XML,
+    JSON,
 }
 
 #[json]

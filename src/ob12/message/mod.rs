@@ -29,6 +29,14 @@ macro_rules! message_seg {
                 data: serde_value::Value,
             }
         }
+
+        $(
+            impl From<$sg> for MessageSeg {
+                fn from(sg: $sg) -> Self {
+                    Self::$sg(sg)
+                }
+            }
+        )*
     };
 }
 
