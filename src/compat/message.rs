@@ -242,8 +242,8 @@ pub mod ob11to12 {
             Ok(Location {
                 latitude: self.lat,
                 longitude: self.lon,
-                title: self.title.unwrap_or_else(|| "OneBot 11 Location".into()),
-                content: self.content.unwrap_or_else(|| "OneBot 11 content".into()),
+                title: self.title.unwrap_or_else(|| "OneBot 11 Title".into()),
+                content: self.content.unwrap_or_else(|| "OneBot 11 Content".into()),
                 extra: default_obj(),
             })
         }
@@ -360,19 +360,6 @@ pub mod ob12to11 {
     }
 
     impl IntoOB11Seg for ob12message::Voice {
-        type Output = Record;
-        fn into_ob11(self) -> DesResult<Self::Output> {
-            let mut extra = rename_ob12_extra(self.extra)?;
-
-            Ok(Record {
-                file: self.file_id,
-                magic: remove_field_or_default(&mut extra, "magic")?,
-                option: Deserialize::deserialize(extra.into_value())?,
-            })
-        }
-    }
-
-    impl IntoOB11Seg for ob12message::Audio {
         type Output = Record;
         fn into_ob11(self) -> DesResult<Self::Output> {
             let mut extra = rename_ob12_extra(self.extra)?;
