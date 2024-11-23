@@ -69,7 +69,7 @@ pub mod duration_str {
             .map_err(serde::de::Error::custom)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -122,7 +122,7 @@ pub mod from_str {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn serialize<'de, V, S>(value: V, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -155,7 +155,7 @@ pub mod str_bool {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

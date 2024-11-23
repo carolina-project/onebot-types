@@ -1,20 +1,21 @@
 pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
+use crate::ValueMap;
 use serde::Deserialize;
+pub(self) use serde_value::*;
 
-type SerResult<T> = Result<T, serde_value::SerializerError>;
-type DesResult<T> = Result<T, serde_value::DeserializerError>;
+pub(self) use crate::{DesResult, SerResult};
 
-pub trait IntoOB12<P = ()> {
+pub trait IntoOB12Seg<P = ()> {
     type Output: Into<ob12message::MessageSeg>;
 
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
-pub trait IntoOB11 {
+pub trait IntoOB11Seg {
     type Output: Into<ob11message::MessageSeg>;
 
-    fn into_ob12(self) -> SerResult<Self::Output>;
+    fn into_ob11(self) -> DesResult<Self::Output>;
 }
 
 macro_rules! define_compat_types {
@@ -24,7 +25,7 @@ macro_rules! define_compat_types {
         }
 
         $(
-            impl IntoOB12 for ob11message::$typ {
+            impl IntoOB12Seg for ob11message::$typ {
                 type Output = OB12CompatSegment;
                 fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
                     Ok(OB12CompatSegment::$typ(self))
@@ -32,7 +33,13 @@ macro_rules! define_compat_types {
             }
         )*
 
-
+        impl From<OB12CompatSegment> for ob11message::MessageSeg {
+            fn from(value: OB12CompatSegment) -> Self {
+                match value {
+                    $(OB12CompatSegment::$typ(data) => data.into(),)*
+                }
+            }
+        }
 
         impl OB12CompatSegment {
             /// parse from name and data(ob11 messages that transformed into ob12)
@@ -84,7 +91,6 @@ define_compat_types! (
     Anonymous "anonymous",
     Share "share",
     Contact "contact",
-    Location "location",
     Music "music",
     Forward "forward",
     ForwardNode "node",
@@ -103,44 +109,42 @@ impl From<OB12CompatSegment> for ob12message::MessageSeg {
 }
 
 pub mod ob11to12 {
-
-    use crate::ValueMap;
+    use crate::{compat::default_obj, ValueMap};
     use serde::{ser::Error, Serialize};
-    use serde_value::Value;
 
     use super::*;
+    use ob12message::*;
 
     pub enum OB12Mention {
-        Mention(ob12message::Mention),
+        Mention(Mention),
         MentionAll,
     }
 
     impl From<OB12Mention> for ob12message::MessageSeg {
         fn from(value: OB12Mention) -> Self {
             match value {
-                OB12Mention::Mention(m) => ob12message::MessageSeg::Mention(m),
-                OB12Mention::MentionAll => {
-                    ob12message::MessageSeg::MentionAll(ob12message::MentionAll {
-                        extra: default_obj(),
-                    })
-                }
+                OB12Mention::Mention(m) => MessageSeg::Mention(m),
+                OB12Mention::MentionAll => MessageSeg::MentionAll(MentionAll {
+                    extra: default_obj(),
+                }),
             }
         }
     }
 
-    #[inline(always)]
-    fn default_obj() -> Value {
-        Value::Map(Default::default())
-    }
 
     #[inline]
-    fn to_map<T: Serialize>(value: T) -> SerResult<ValueMap> {
-        match serde_value::to_value(value)? {
-            Value::Map(map) => Ok(map),
+    fn unwrap_value_map(value: Value) -> SerResult<ValueMap> {
+        match value {
+            serde_value::Value::Map(map) => Ok(map),
             _ => Err(serde_value::SerializerError::custom(
                 "invalid value, expected map",
             )),
         }
+    }
+
+    #[inline]
+    fn to_map<T: Serialize>(value: T) -> SerResult<ValueMap> {
+        serde_value::to_value(value).and_then(unwrap_value_map)
     }
 
     #[inline]
@@ -164,19 +168,19 @@ pub mod ob11to12 {
         )
     }
 
-    impl IntoOB12 for ob11message::Text {
-        type Output = ob12message::Text;
+    impl IntoOB12Seg for ob11message::Text {
+        type Output = Text;
 
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
-            Ok(ob12message::Text {
+            Ok(Text {
                 text: self.text,
                 extra: default_obj(),
             })
         }
     }
 
-    impl IntoOB12 for ob11message::Image {
-        type Output = ob12message::Image;
+    impl IntoOB12Seg for ob11message::Image {
+        type Output = Image;
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
             let Value::String(file_id) = remove_field(&mut value, "file")? else {
@@ -189,8 +193,8 @@ pub mod ob11to12 {
         }
     }
 
-    impl IntoOB12 for ob11message::Record {
-        type Output = ob12message::Voice;
+    impl IntoOB12Seg for ob11message::Record {
+        type Output = Voice;
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
             let Value::String(file_id) = remove_field(&mut value, "file")? else {
@@ -203,21 +207,21 @@ pub mod ob11to12 {
         }
     }
 
-    impl IntoOB12 for ob11message::Video {
-        type Output = ob12message::Video;
+    impl IntoOB12Seg for ob11message::Video {
+        type Output = Video;
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
             let Value::String(file_id) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
-            Ok(ob12message::Video {
+            Ok(Video {
                 file_id,
                 extra: rename_ob11_field(value),
             })
         }
     }
 
-    impl IntoOB12 for ob11message::AtTarget {
+    impl IntoOB12Seg for ob11message::AtTarget {
         type Output = OB12Mention;
 
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
@@ -231,8 +235,22 @@ pub mod ob11to12 {
         }
     }
 
-    impl IntoOB12<Option<String>> for ob11message::Reply {
-        type Output = ob12message::Reply;
+    impl IntoOB12Seg for ob11message::Location {
+        type Output = Location;
+
+        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+            Ok(Location {
+                latitude: self.lat,
+                longitude: self.lon,
+                title: self.title.unwrap_or_else(|| "OneBot 11 Location".into()),
+                content: self.content.unwrap_or_else(|| "OneBot 11 content".into()),
+                extra: default_obj(),
+            })
+        }
+    }
+
+    impl IntoOB12Seg<Option<String>> for ob11message::Reply {
+        type Output = Reply;
 
         fn into_ob12(self, param: Option<String>) -> SerResult<Self::Output> {
             Ok(ob12message::Reply {
@@ -245,15 +263,161 @@ pub mod ob11to12 {
 }
 
 pub mod ob12to11 {
-    use crate::ob11::message as ob11message;
-    use crate::ob12::message as ob12message;
-
     use super::*;
+    use ob11message::*;
+    use ob_types_base::ext::IntoValue;
+    use serde::de::Error;
 
-    impl IntoOB11 for ob12message::Audio {
-        type Output = ob11message::Record;
-        fn into_ob12(self) -> SerResult<Self::Output> {
-            
+    #[inline]
+    #[allow(unused)]
+    fn remove_field<'a, T: Deserialize<'a>>(map: &mut ValueMap, key: &str) -> DesResult<T> {
+        map.remove(&Value::String(key.into()))
+            .ok_or_else(|| serde_value::DeserializerError::custom(format!("missing field {}", key)))
+            .and_then(|r| T::deserialize(r))
+    }
+
+    #[inline]
+    fn remove_field_or_default<'a, T: Deserialize<'a> + Default>(
+        map: &mut ValueMap,
+        key: &str,
+    ) -> DesResult<T> {
+        if let Some(r) = map.remove(&Value::String(key.into())) {
+            T::deserialize(r)
+        } else {
+            Ok(T::default())
+        }
+    }
+
+    #[inline]
+    fn unwrap_value_map(value: Value) -> DesResult<ValueMap> {
+        match value {
+            serde_value::Value::Map(map) => Ok(map),
+            _ => Err(serde_value::DeserializerError::custom(
+                "invalid value, expected map",
+            )),
+        }
+    }
+
+    #[inline]
+    fn rename_ob12_extra(extra: Value) -> DesResult<ValueMap> {
+        unwrap_value_map(extra).map(rename_ob12_field)
+    }
+
+    fn rename_ob12_field(map: ValueMap) -> ValueMap {
+        map.into_iter()
+            .filter_map(|(k, v)| {
+                if let Value::String(k) = k {
+                    if k.starts_with("ob11.") {
+                        Some((Value::String(k[5..].to_owned()), v))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect::<ValueMap>()
+    }
+
+    impl IntoOB11Seg for ob12message::Text {
+        type Output = Text;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            Ok(Text { text: self.text })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Mention {
+        type Output = At;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            Ok(At {
+                qq: AtTarget::QQ(self.user_id.parse().map_err(DeserializerError::custom)?),
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::MentionAll {
+        type Output = At;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            Ok(At { qq: AtTarget::All })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Image {
+        type Output = Image;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            let mut extra = rename_ob12_extra(self.extra)?;
+            let r#type: ImageType = remove_field_or_default(&mut extra, "type")?;
+            Ok(Image {
+                file: self.file_id,
+                r#type,
+                option: Deserialize::deserialize(extra.into_value())?,
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Voice {
+        type Output = Record;
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            let mut extra = rename_ob12_extra(self.extra)?;
+
+            Ok(Record {
+                file: self.file_id,
+                magic: remove_field_or_default(&mut extra, "magic")?,
+                option: Deserialize::deserialize(extra.into_value())?,
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Audio {
+        type Output = Record;
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            let mut extra = rename_ob12_extra(self.extra)?;
+
+            Ok(Record {
+                file: self.file_id,
+                magic: remove_field_or_default(&mut extra, "magic")?,
+                option: Deserialize::deserialize(extra.into_value())?,
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Video {
+        type Output = Video;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            let extra = rename_ob12_extra(self.extra)?;
+
+            Ok(Video {
+                file: self.file_id,
+                option: Deserialize::deserialize(extra.into_value())?,
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Location {
+        type Output = Location;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            Ok(Location {
+                lat: self.latitude,
+                lon: self.longitude,
+                title: Some(self.title),
+                content: Some(self.content),
+            })
+        }
+    }
+
+    impl IntoOB11Seg for ob12message::Reply {
+        type Output = Reply;
+
+        fn into_ob11(self) -> DesResult<Self::Output> {
+            Ok(Reply {
+                id: self.message_id.parse().map_err(DeserializerError::custom)?,
+            })
         }
     }
 }

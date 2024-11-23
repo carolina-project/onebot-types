@@ -1,15 +1,16 @@
 use std::time::Duration;
 
-use message::MessageEvent;
-use meta::MetaEvent;
-use notice::NoticeEvent;
 use ob_types_macro::json;
-use request::RequestEvent;
 
 pub mod message;
 pub mod meta;
 pub mod notice;
 pub mod request;
+
+pub use message::MessageEvent;
+pub use meta::MetaEvent;
+pub use notice::NoticeEvent;
+pub use request::RequestEvent;
 
 #[json]
 #[serde(rename_all = "lowercase", tag = "type")]

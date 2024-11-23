@@ -51,7 +51,7 @@ pub enum ImageType {
     Normal,
 }
 impl Default for ImageType {
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::Normal
     }

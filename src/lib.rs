@@ -11,3 +11,5 @@ pub mod ob12;
 pub mod compat;
 
 pub(crate) type ValueMap = BTreeMap<serde_value::Value, serde_value::Value>;
+pub(crate) type SerResult<T> = Result<T, serde_value::SerializerError>;
+pub(crate) type DesResult<T> = Result<T, serde_value::DeserializerError>;
