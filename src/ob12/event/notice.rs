@@ -50,12 +50,12 @@ macro_rules! notice_kinds {
             $(
             $kind($kind),
             )*
-            //#[serde(untagged)]
-            //Other {
-            //    detail_type: String,
-            //    #[serde(flatten)]
-            //    data: JSONValue,
-            //},
+            #[serde(untagged)]
+            Other {
+                detail_type: String,
+                #[serde(flatten)]
+                data: serde_value::Value,
+            },
         }
     };
 }
@@ -128,11 +128,13 @@ notice_kinds! {
         operator_id: String,
     },
     ChannelCreate {
+        sub_type: String,
         guild_id: String,
         channel_id: String,
         operator_id: String,
     },
     ChannelDelete {
+        sub_type: String,
         guild_id: String,
         channel_id: String,
         operator_id: String,

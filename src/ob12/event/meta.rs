@@ -1,10 +1,11 @@
 use ob_types_macro::json;
 
+use super::EventType;
 use crate::ob12::{Status, VersionInfo};
 
 #[json]
 pub struct MetaEvent {
-    pub sub_type: Option<String>,
+    pub sub_type: String,
     #[serde(flatten)]
     pub kind: MetaKind,
 }
@@ -21,6 +22,17 @@ macro_rules! meta_kinds {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
                 pub extra: serde_value::Value,
+            }
+        )*
+
+        $(
+            impl From<$kind> for EventType {
+                fn from(value: $kind) -> Self {
+                    Self::Meta(MetaEvent {
+                        sub_type: Default::default(),
+                        kind: MetaKind::$kind(value),
+                    })
+                }
             }
         )*
 
@@ -45,7 +57,7 @@ meta_kinds! {
         version: VersionInfo,
     },
     Heartbeat {
-        interval: i64,
+        interval: u64,
     },
     StatusUpdate {
         status: Status,
