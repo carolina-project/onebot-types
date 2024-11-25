@@ -13,8 +13,12 @@ pub trait ValueExt {
     fn try_into_string(self) -> Option<String>;
     fn get_by_str(&self, key: impl AsRef<str>) -> Option<&Value>;
 
-    fn from_map(map: BTreeMap<String, Value>) -> Value {
-        Value::Map(map.into_iter().map(|(k, v)| (k.into_value(), v)).collect())
+    fn from_map<K: Into<String>>(map: BTreeMap<K, Value>) -> Value {
+        Value::Map(
+            map.into_iter()
+                .map(|(k, v)| (k.into().into_value(), v))
+                .collect(),
+        )
     }
 }
 

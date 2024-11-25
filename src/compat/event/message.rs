@@ -1,16 +1,17 @@
 use super::*;
 
 pub mod ob11to12 {
-    use std::error::Error;
+
+    use std::collections::BTreeMap;
 
     use crate::compat::compat_self;
 
     use super::*;
     use crate::ob11::{message::MessageChain, MessageSeg};
-    use crate::ob12;
-    use eyre::Result;
+    use crate::ob12::{self, message};
     use ob11event::message::*;
     use ob_types_base::ext::{IntoValue, ValueExt};
+    use ob_types_base::tool;
     use serde_value::{SerializerError, Value};
 
     impl<F> IntoOB12Event<(String, F)> for ob11event::MessageEvent
@@ -20,7 +21,7 @@ pub mod ob11to12 {
         type Output = ob12event::MessageEvent;
 
         fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
-            let (user_id, trans_fn) = param;
+            let (self_id, trans_fn) = param;
             let Message {
                 message_id,
                 user_id,
@@ -35,15 +36,38 @@ pub mod ob11to12 {
                     .collect::<Result<Vec<_>, SerializerError>>()?,
                 MessageChain::String(_) => unimplemented!("cq code string"),
             };
-            ob12event::MessageEvent {
-                self_: compat_self(param),
-                message_id: message_id.into(),
-                sub_type: Default::default(),
-                message,
-                alt_message: Some(raw_message),
-                source: todo!(),
-                extra: Value::from_map([("ob11.font".into(), user_id.into_value())].into()),
+
+            let mut extra_map = BTreeMap::from([("ob11.font", font.into_value())]);
+            let (sub_type, source);
+            match self.kind {
+                MessageKind::Private(private) => {
+                    sub_type = tool::serde_to_string(private.sub_type)?;
+                    source = ob12::ChatTarget::Private {
+                        user_id: user_id.to_string(),
+                    };
+                    extra_map.insert("ob11.sender", serde_value::to_value(private.sender)?);
+                }
+                MessageKind::Group(group) => {
+                    sub_type = tool::serde_to_string(group.sub_type)?;
+                    source = ob12::ChatTarget::Group {
+                        group_id: group.group_id.to_string(),
+                        user_id: Some(user_id.to_string()),
+                    };
+                    extra_map.insert("ob11.sender", serde_value::to_value(group.sender)?);
+                    if let Some(anonymous) = group.anonymous {
+                        extra_map.insert("ob11.anonymous", serde_value::to_value(anonymous)?);
+                    }
+                }
             }
+            Ok(ob12event::MessageEvent {
+                self_: compat_self(self_id.to_string()),
+                message_id: message_id.to_string(),
+                sub_type,
+                message: message::MessageChain::Array(message),
+                alt_message: Some(raw_message),
+                source,
+                extra: Value::from_map(extra_map),
+            })
         }
     }
 }

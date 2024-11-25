@@ -12,7 +12,7 @@ pub struct MessageSegRaw {
 #[json]
 #[serde(untagged)]
 pub enum MessageChain {
-    Segs(Vec<MessageSeg>),
+    Array(Vec<MessageSeg>),
     String(String),
 }
 

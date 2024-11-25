@@ -68,16 +68,16 @@ pub struct Message {
 #[json]
 #[allow(unused)]
 pub struct PrivateMessageKind {
-    sub_type: PrivateSubType,
-    sender: PrivateSender,
+    pub sub_type: PrivateSubType,
+    pub sender: PrivateSender,
 }
 #[json]
 #[allow(unused)]
 pub struct GroupMessageKind {
-    sub_type: GroupSubType,
-    group_id: i64,
-    sender: GroupSender,
-    anonymous: Option<AnonymousSender>,
+    pub sub_type: GroupSubType,
+    pub group_id: i64,
+    pub sender: GroupSender,
+    pub anonymous: Option<AnonymousSender>,
 }
 #[json]
 #[serde(tag = "message_type", rename_all = "snake_case")]
