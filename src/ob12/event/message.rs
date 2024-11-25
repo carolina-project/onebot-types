@@ -14,6 +14,12 @@ pub struct MessageEvent {
     pub extra: serde_value::Value,
 }
 
+impl From<MessageEvent> for super::EventType {
+    fn from(value: MessageEvent) -> Self {
+        super::EventType::Message(value)
+    }
+}
+
 mod serde_impl {
     use std::collections::BTreeMap;
 

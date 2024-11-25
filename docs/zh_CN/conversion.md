@@ -118,3 +118,25 @@ OneBot11协议未提供文件消息段，需调用文件API进行上传来发送
 | `status`                  | 无            | 见下方 | 无     |
 
 如果`status`字段包含的状态信息与当前状态信息不同，OneBot实现应同时产生`meta.status_update`事件。
+
+### 2.2 消息事件 转换规则(ob11 - ob12)
+
+**共用字段转换规则**
+
+| OneBot11 字段 | OneBot12 字段 | 备注 | 默认值 |
+| ------------- | ------------- | ---- | ------ |
+| `raw_message` | `alt_message` | 无   | 无     |
+
+#### `message` -> `message.private`
+
+| OneBot11 字段               | OneBot12 字段 | 备注 | 默认值          |
+| --------------------------- | ------------- | ---- | --------------- |
+| `message_type == 'private'` | 无            | 无   | 无              |
+| 无                          | `detail_type` | 无   | OB12: `private` |
+
+#### `message` -> `message.group`
+
+| OneBot11 字段         | OneBot12 字段 | 备注 | 默认值        |
+| --------------------- | ------------- | ---- | ------------- |
+| `sub_type == 'group'` | 无            | 无   | 无            |
+| 无                    | `detail_type` | 无   | OB12: `group` |

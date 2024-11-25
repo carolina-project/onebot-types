@@ -17,6 +17,7 @@ default = ["ob12"]
 base64 = ["dep:base64"]
 ob11 = []
 ob12 = []
+compat = ["ob11", "ob12"]
 
 [dev-dependencies]
 eyre = "*"

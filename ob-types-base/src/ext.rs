@@ -12,6 +12,10 @@ pub trait ValueExt {
     fn as_bool(&self) -> Option<bool>;
     fn try_into_string(self) -> Option<String>;
     fn get_by_str(&self, key: impl AsRef<str>) -> Option<&Value>;
+
+    fn from_map(map: BTreeMap<String, Value>) -> Value {
+        Value::Map(map.into_iter().map(|(k, v)| (k.into_value(), v)).collect())
+    }
 }
 
 pub trait IntoValue {

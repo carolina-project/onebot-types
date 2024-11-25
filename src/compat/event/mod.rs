@@ -1,6 +1,7 @@
+pub mod message;
 pub mod meta;
-pub(self) use crate::ob12::event as ob12event;
 pub(self) use crate::ob11::event as ob11event;
+pub(self) use crate::ob12::event as ob12event;
 use crate::SerResult;
 
 /// Trait to convert an OB11 event to an OB12 event.

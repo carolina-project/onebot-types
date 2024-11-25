@@ -1,15 +1,22 @@
-use crate::compat::default_obj;
+use crate::{compat::default_obj, DesResult};
 
 use super::*;
 use ob12event::meta::*;
 use ob_types_base::ext::ValueExt;
 use ob_types_macro::json;
+use serde::Deserialize;
+use serde_value::Value;
 
 #[json]
-#[serde(rename_all = "lowercase")]
 pub enum LifeCycle {
+    #[serde(rename = "ob11.enable")]
     Enable,
+    #[serde(rename = "ob11.disable")]
     Disable,
+}
+
+impl LifeCycle {
+    pub const TYPE: &str = "ob11.lifecycle";
 }
 
 pub enum CompatLifecycle {
@@ -30,7 +37,7 @@ impl From<CompatLifecycle> for ob12event::EventType {
                     .try_into_string()
                     .expect("invalid type"),
                 kind: MetaKind::Other {
-                    detail_type: "ob11.lifecycle".into(),
+                    detail_type: LifeCycle::TYPE.into(),
                     data: default_obj(),
                 },
             },
@@ -38,10 +45,16 @@ impl From<CompatLifecycle> for ob12event::EventType {
     }
 }
 
+impl LifeCycle {
+    #[inline]
+    pub fn lifecycle_from(sub_type: impl Into<String>) -> DesResult<Self> {
+        LifeCycle::deserialize(Value::String(sub_type.into()))
+    }
+}
+
 pub mod ob11to12 {
     use crate::ob12;
 
-    use super::IntoOB12Event;
     use super::*;
     use ob11event::meta;
     use serde_value::Value;
@@ -64,6 +77,7 @@ pub mod ob11to12 {
     impl IntoOB12Event for meta::Heartbeat {
         type Output = (Heartbeat, Value);
 
+        #[inline]
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
             Ok((
                 Heartbeat {
@@ -76,6 +90,7 @@ pub mod ob11to12 {
     }
 
     impl From<(Heartbeat, Value)> for ob12event::EventType {
+        #[inline]
         fn from(value: (Heartbeat, Value)) -> Self {
             ob12event::EventType::Meta(MetaEvent {
                 sub_type: Default::default(),

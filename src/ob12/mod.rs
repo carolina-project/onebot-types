@@ -4,6 +4,8 @@ pub mod action;
 pub mod event;
 pub mod message;
 
+pub use message::MessageSeg;
+
 mod macros {
     #[macro_export]
     macro_rules! scalable_struct {

@@ -27,6 +27,8 @@ macro_rules! define_compat_types {
         $(
             impl IntoOB12Seg for ob11message::$typ {
                 type Output = OB12CompatSegment;
+
+                #[inline]
                 fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
                     Ok(OB12CompatSegment::$typ(self))
                 }
@@ -130,7 +132,6 @@ pub mod ob11to12 {
             }
         }
     }
-
 
     #[inline]
     fn unwrap_value_map(value: Value) -> SerResult<ValueMap> {
@@ -330,6 +331,7 @@ pub mod ob12to11 {
     impl IntoOB11Seg for ob12message::Mention {
         type Output = At;
 
+        #[inline]
         fn into_ob11(self) -> DesResult<Self::Output> {
             Ok(At {
                 qq: AtTarget::QQ(self.user_id.parse().map_err(DeserializerError::custom)?),
@@ -340,6 +342,7 @@ pub mod ob12to11 {
     impl IntoOB11Seg for ob12message::MentionAll {
         type Output = At;
 
+        #[inline]
         fn into_ob11(self) -> DesResult<Self::Output> {
             Ok(At { qq: AtTarget::All })
         }
@@ -388,6 +391,7 @@ pub mod ob12to11 {
     impl IntoOB11Seg for ob12message::Location {
         type Output = Location;
 
+        #[inline]
         fn into_ob11(self) -> DesResult<Self::Output> {
             Ok(Location {
                 lat: self.latitude,
@@ -401,6 +405,7 @@ pub mod ob12to11 {
     impl IntoOB11Seg for ob12message::Reply {
         type Output = Reply;
 
+        #[inline]
         fn into_ob11(self) -> DesResult<Self::Output> {
             Ok(Reply {
                 id: self.message_id.parse().map_err(DeserializerError::custom)?,
