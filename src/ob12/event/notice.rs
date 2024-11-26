@@ -2,6 +2,8 @@ use ob_types_macro::json;
 
 use crate::ob12::BotSelf;
 
+use super::EventType;
+
 #[json]
 #[serde(rename_all = "snake_case")]
 pub enum IncreaseType {
@@ -147,4 +149,10 @@ pub struct NoticeEvent {
     self_: BotSelf,
     #[serde(flatten)]
     kind: NoticeKind,
+}
+
+impl From<NoticeEvent> for EventType {
+    fn from(value: NoticeEvent) -> Self {
+        Self::Notice(value)
+    }
 }

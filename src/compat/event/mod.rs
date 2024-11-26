@@ -1,5 +1,6 @@
 pub mod message;
 pub mod meta;
+pub mod notice;
 pub(self) use crate::ob11::event as ob11event;
 pub(self) use crate::ob12::event as ob12event;
 use crate::SerResult;
