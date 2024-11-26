@@ -55,36 +55,59 @@ pub struct GroupNotice {
     pub kind: GroupNoticeKind,
 }
 
-#[json]
-#[serde(tag = "notice_type", rename_all = "snake_case")]
-pub enum GroupNoticeKind {
-    #[serde(rename = "group_upload")]
-    Upload {
-        file: GroupUpload,
+macro_rules! group_notice {
+    {
+        $(
+            $(#[$meta:meta])*
+            $name:ident {
+                $(
+                    $(#[$f_meta:meta])*
+                    $field_name:ident: $field_type:ty
+                ),* $(,)?
+            }
+        ),* $(,)?
+    } => {
+        $(
+            $(#[$meta])*
+            #[json]
+            pub struct $name {
+                $(
+                    $(#[$f_meta])*
+                    pub $field_name: $field_type
+                ),*
+            }
+        )*
+
+        #[json]
+        #[serde(tag = "notice_type", rename_all = "snake_case")]
+        pub enum GroupNoticeKind {$(
+            $name($name)
+        ),*}
+    };
+}
+
+group_notice! {
+    GroupUpload {
+        file: GroupUploadFile,
     },
-    #[serde(rename = "group_admin")]
-    Admin {
+    GroupAdmin {
         sub_type: AdminChange,
     },
-    #[serde(rename = "group_increase")]
-    MemberIncrease {
+    GroupIncrease {
         sub_type: IncreaseType,
         operator_id: i64,
     },
-    #[serde(rename = "group_decrease")]
-    MemberDecrease {
+    GroupDecrease {
         sub_type: DecreaseType,
         operator_id: i64,
     },
-    #[serde(rename = "group_ban")]
-    Mute {
+    GroupBan {
         sub_type: MuteType,
         operator_id: i64,
         #[serde(with = "duration_secs")]
         duration: Duration,
     },
-    #[serde(rename = "group_recall")]
-    Recall {
+    GroupRecall {
         operator_id: i64,
         message_id: i32,
     },
@@ -102,7 +125,7 @@ pub enum GroupNoticeKind {
 }
 
 #[json]
-pub struct GroupUpload {
+pub struct GroupUploadFile {
     pub id: String,
     pub name: String,
     pub size: u64,
