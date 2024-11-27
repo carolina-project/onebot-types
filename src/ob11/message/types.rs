@@ -1,6 +1,8 @@
-use std::{fmt::Display, str::FromStr, time::Duration};
+use std::{collections::BTreeMap, fmt::Display, str::FromStr, time::Duration};
 
+use ob_types_base::ext::ValueExt;
 use ob_types_macro::data;
+use serde::{Deserialize, Serialize};
 
 use super::MessageSeg;
 
@@ -29,7 +31,7 @@ pub struct FileSendOpt {
     pub cache: bool,
     #[serde(default = "true_value")]
     pub proxy: bool,
-    #[serde(with = "ob_types_base::tool::duration_str_opt")]
+    #[serde(with = "ob_types_base::tool::duration_str_opt", default)]
     pub timeout: Option<Duration>,
 }
 
@@ -39,10 +41,42 @@ pub struct FileRecvOpt {
     url: String,
 }
 
-#[data(str)]
+#[derive(Debug, Clone)]
 pub enum FileOption {
     Send(FileSendOpt),
     Receive(FileRecvOpt),
+}
+
+impl serde::Serialize for FileOption {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer {
+        match self {
+            FileOption::Send(s) => s.serialize(serializer),
+            FileOption::Receive(r) => r.serialize(serializer),
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for FileOption {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde_value::Value;
+        let value = BTreeMap::<String, Value>::deserialize(deserializer)?;
+        if value.contains_key("url") {
+            Ok(FileOption::Receive(
+                Deserialize::deserialize(Value::from_map(value))
+                    .map_err(serde::de::Error::custom)?,
+            ))
+        } else {
+            Ok(FileOption::Send(
+                Deserialize::deserialize(Value::from_map(value))
+                    .map_err(serde::de::Error::custom)?,
+            ))
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -110,17 +144,41 @@ pub struct Video {
     pub option: Option<FileOption>,
 }
 
-#[data(str)]
+#[derive(Clone, Debug)]
 pub enum AtTarget {
     All,
     QQ(i64),
+}
+
+impl Serialize for AtTarget {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::All => serializer.serialize_str("all"),
+            Self::QQ(qq) => serializer.serialize_str(&qq.to_string()),
+        }
+    }
+}
+impl<'de> Deserialize<'de> for AtTarget {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let qq = String::deserialize(deserializer)?;
+        if qq == "all" {
+            Ok(Self::All)
+        } else {
+            qq.parse().map_err(serde::de::Error::custom).map(Self::QQ)
+        }
+    }
 }
 
 #[data(str)]
 pub struct At {
     pub qq: AtTarget,
 }
-
 
 impl FromStr for AtTarget {
     type Err = std::num::ParseIntError;
@@ -212,18 +270,18 @@ pub struct Forward {
 }
 
 #[data(str)]
-pub struct XML {
+pub struct Xml {
     pub data: String,
 }
 
 #[data(str)]
-pub struct JSON {
+pub struct Json {
     pub data: String,
 }
 
 #[data(str)]
 #[serde(untagged)]
-pub enum ForwardNode {
+pub enum Node {
     Message {
         id: i32,
     },

@@ -8,6 +8,7 @@ pub struct RequestEvent {
     #[serde(rename = "self")]
     pub self_: BotSelf,
     pub sub_type: String,
+    #[serde(flatten)]
     pub kind: RequestKind,
 }
 

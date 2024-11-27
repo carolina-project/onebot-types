@@ -2,70 +2,158 @@
     {
         "type": "text",
         "data": {
-            "text": "这是一个纯文本"
+            "text": "Hello, world!"
         }
     },
     {
-        "type": "mention",
+        "type": "ob11.face",
         "data": {
-            "user_id": "1234567"
+            "id": "123"
         }
-    },
-    {
-        "type": "mention_all",
-        "data": {}
     },
     {
         "type": "image",
         "data": {
-            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+            "file_id": "http://baidu.com/1.jpg",
+            "ob11.cache": "1",
+            "ob11.proxy": "1",
+            "ob11.timeout": null,
+            "ob11.type": null
         }
     },
     {
         "type": "voice",
         "data": {
-            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+            "file_id": "http://baidu.com/1.mp3",
+            "ob11.cache": "1",
+            "ob11.magic": "0",
+            "ob11.proxy": "1",
+            "ob11.timeout": null
         }
     },
     {
-        "type": "audio",
+        "type": "mention",
         "data": {
-            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+            "user_id": "10001000"
         }
     },
     {
-        "type": "video",
+        "type": "ob11.rps",
+        "data": {}
+    },
+    {
+        "type": "ob11.dice",
+        "data": {}
+    },
+    {
+        "type": "ob11.shake",
+        "data": {}
+    },
+    {
+        "type": "ob11.poke",
         "data": {
-            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+            "id": "2003",
+            "name": null,
+            "type": "126"
         }
     },
     {
-        "type": "file",
+        "type": "ob11.anonymous",
+        "data": {}
+    },
+    {
+        "type": "ob11.share",
         "data": {
-            "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+            "content": null,
+            "image": null,
+            "title": "百度",
+            "url": "http://baidu.com"
+        }
+    },
+    {
+        "type": "ob11.contact",
+        "data": {
+            "id": "10001000",
+            "type": "qq"
         }
     },
     {
         "type": "location",
         "data": {
-            "latitude": 31.032315,
-            "longitude": 121.447127,
-            "title": "上海交通大学闵行校区",
-            "content": "中国上海市闵行区东川路800号"
+            "latitude": 39.8969426,
+            "longitude": 116.3109099,
+            "title": "OneBot 11 Title",
+            "content": "OneBot 11 Content"
+        }
+    },
+    {
+        "type": "ob11.music",
+        "data": {
+            "id": "28949129",
+            "type": "163"
+        }
+    },
+    {
+        "type": "ob11.music",
+        "data": {
+            "audio": "http://baidu.com/1.mp3",
+            "content": null,
+            "image": null,
+            "title": "音乐标题",
+            "type": "custom",
+            "url": "http://baidu.com"
         }
     },
     {
         "type": "reply",
         "data": {
-            "message_id": "6283",
-            "user_id": "1234567"
+            "message_id": "123456",
+            "user_id": null
         }
     },
     {
         "type": "ob11.forward",
         "data": {
-            "message_id": "6283",
-            "user_id": "1234567"
+            "id": "123456"
+        }
+    },
+    {
+        "type": "ob11.node",
+        "data": {
+            "id": "123456"
+        }
+    },
+    {
+        "type": "ob11.node",
+        "data": {
+            "content": [
+                {
+                    "data": {
+                        "id": "123"
+                    },
+                    "type": "face"
+                },
+                {
+                    "data": {
+                        "text": "哈喽～"
+                    },
+                    "type": "text"
+                }
+            ],
+            "nickname": "某人",
+            "user_id": "10001000"
+        }
+    },
+    {
+        "type": "ob11.xml",
+        "data": {
+            "data": "<?xml ..."
+        }
+    },
+    {
+        "type": "ob11.json",
+        "data": {
+            "data": "{\"app\": ..."
         }
     }
 ]

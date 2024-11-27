@@ -14,11 +14,13 @@ pub struct MessageSegRaw {
 }
 
 macro_rules! message_segs {
-    ($($typ:ident $($doc:literal)?),* $(,)?) => {
+    ($($(#[$meta:meta])* $typ:ident $($doc:literal)?),* $(,)?) => {
         #[data]
+        #[serde(tag = "type", content = "data", rename_all = "snake_case")]
         pub enum MessageSeg {
             $(
             $(#[doc = $doc])?
+            $(#[$meta])*
             $typ($typ),
             )*
             #[serde(untagged)]
@@ -51,9 +53,9 @@ message_segs! {
     Music,
     Reply,
     Forward,
-    ForwardNode,
-    XML,
-    JSON,
+    Node,
+    Xml,
+    Json,
 }
 
 #[data]

@@ -6,6 +6,16 @@ pub(self) use serde_value::*;
 
 pub(self) use crate::{DesResult, SerResult};
 
+#[derive(thiserror::Error, Debug)]
+pub enum CompatError {
+    #[error(transparent)]
+    Serializer(#[from] serde_value::SerializerError),
+    #[error(transparent)]
+    Deserializer(#[from] serde_value::DeserializerError),
+    #[error("unknown compat type: {0}")]
+    UnknownCompat(String),
+}
+
 pub trait IntoOB12Seg<P = ()> {
     type Output: Into<ob12message::MessageSeg>;
 
@@ -46,17 +56,17 @@ macro_rules! define_compat_types {
         impl CompatSegment {
             /// parse from name and data(ob11 messages that transformed into ob12)
             pub fn parse_data(
-                name: &str, data: serde_value::Value
-            ) -> Option<Result<Self, serde_value::DeserializerError>> {
-                match name {
+                name: impl AsRef<str>, data: serde_value::Value
+            ) -> Result<Self, CompatError> {
+                match name.as_ref() {
                     $(concat!("ob11.", $name) => {
-                        Some(ob11message::$typ::deserialize(data).map(CompatSegment::$typ))
+                        Ok(CompatSegment::$typ(ob11message::$typ::deserialize(data)?))
                     })*
-                    _ => None,
+                    _ => Err(CompatError::UnknownCompat(name.as_ref().to_string())),
                 }
             }
 
-            pub fn into_data(self) -> Result<(&'static str, serde_value::Value), serde_value::SerializerError> {
+            pub fn into_data(self) -> Result<(&'static str, serde_value::Value), CompatError> {
                 match self {
                     $(
                         CompatSegment::$typ(data)
@@ -95,9 +105,9 @@ define_compat_types! (
     Contact "contact",
     Music "music",
     Forward "forward",
-    ForwardNode "node",
-    XML "xml",
-    JSON "json",
+    Node "node",
+    Xml "xml",
+    Json "json",
 );
 
 impl From<CompatSegment> for ob12message::MessageSeg {
@@ -296,6 +306,14 @@ pub mod ob12to11 {
         }
     }
 
+    fn remove_field_bool(map: &mut ValueMap, key: &str) -> DesResult<bool> {
+        if let Some(r) = map.remove(&Value::String(key.into())) {
+            ob_types_base::tool::str_bool::deserialize(r)
+        } else {
+            Ok(bool::default())
+        }
+    }
+
     #[inline]
     fn unwrap_value_map(value: Value) -> DesResult<ValueMap> {
         match value {
@@ -376,7 +394,7 @@ pub mod ob12to11 {
 
             Ok(Record {
                 file: self.file_id,
-                magic: remove_field_or_default(&mut extra, "magic")?,
+                magic: remove_field_bool(&mut extra, "magic")?,
                 option: Deserialize::deserialize(extra.into_value())?,
             })
         }

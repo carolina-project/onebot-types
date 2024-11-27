@@ -21,9 +21,7 @@ pub struct CompatRequestEvent {
     pub user_id: String,
     #[serde(flatten)]
     pub kind: CompatRequestKind,
-    #[serde(rename = "ob11.comment")]
     pub comment: Option<String>,
-    #[serde(rename = "ob11.flag")]
     pub flag: Option<String>,
 }
 
