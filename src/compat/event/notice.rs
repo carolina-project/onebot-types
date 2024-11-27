@@ -9,6 +9,12 @@ pub enum CompatGNoticeKind {
     GroupAdmin(ob11event::notice::GroupAdmin),
     #[serde(rename = "ob11.group_ban")]
     GroupBan(ob11event::notice::GroupBan),
+    #[serde(rename = "ob11.poke")]
+    Poke(ob11event::notice::Poke),
+    #[serde(rename = "ob11.lucky_king")]
+    LuckyKing(ob11event::notice::LuckyKing),
+    #[serde(rename = "ob11.honor")]
+    Honor(ob11event::notice::Honor),
 }
 
 #[data]
@@ -142,6 +148,7 @@ pub mod ob11to12 {
 
         fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             use ob11event::notice::*;
+            use ob12event::notice;
             let (self_id, msg_id_provider) = param;
             match self {
                 NoticeEvent::GroupNotice(group) => {
@@ -203,14 +210,65 @@ pub mod ob11to12 {
                             message_id,
                         }) => Ok(O12EventType::Notice(O12Notice {
                             self_: compat_self(self_id),
-                            kind: ,
+                            kind: ob12event::notice::GroupMessageDelete {
+                                sub_type: if operator_id == user_id {
+                                    notice::MessageDeleteType::Recall
+                                } else {
+                                    notice::MessageDeleteType::Delete
+                                },
+                                message_id: message_id.to_string(),
+                                group_id: group_id.to_string(),
+                                user_id: user_id.to_string(),
+                                operator_id: operator_id.to_string(),
+                                extra: default_obj(),
+                            }
+                            .into(),
                         })),
-                        GroupNoticeKind::Poke(_) => todo!(),
-                        GroupNoticeKind::LuckyKing(_) => todo!(),
-                        GroupNoticeKind::Honor(_) => todo!(),
+                        GroupNoticeKind::Poke(poke) => other_group_notice_event(
+                            self_id.to_string(),
+                            group_id.to_string(),
+                            user_id.to_string(),
+                            CompatGNoticeKind::Poke(poke),
+                        ),
+                        GroupNoticeKind::LuckyKing(luck) => other_group_notice_event(
+                            self_id.to_string(),
+                            group_id.to_string(),
+                            user_id.to_string(),
+                            CompatGNoticeKind::LuckyKing(luck),
+                        ),
+                        GroupNoticeKind::Honor(honor) => other_group_notice_event(
+                            self_id.to_string(),
+                            group_id.to_string(),
+                            user_id.to_string(),
+                            CompatGNoticeKind::Honor(honor),
+                        ),
                     }
                 }
-                NoticeEvent::FriendNotice(_) => todo!(),
+                NoticeEvent::FriendNotice(friend) => {
+                    let FriendNotice { user_id, kind } = friend;
+                    match kind {
+                        FriendNoticeKind::FriendAdd(_) => Ok(O12EventType::Notice(O12Notice {
+                            self_: compat_self(self_id),
+                            kind: notice::FriendIncrease {
+                                sub_type: Default::default(),
+                                user_id: user_id.to_string(),
+                                extra: default_obj(),
+                            }
+                            .into(),
+                        })),
+                        FriendNoticeKind::FriendRecall(FriendRecall { message_id }) => {
+                            Ok(O12EventType::Notice(O12Notice {
+                                self_: compat_self(self_id),
+                                kind: notice::PrivateMessageDelete {
+                                    sub_type: Default::default(),
+                                    message_id: message_id.to_string(),
+                                    user_id: user_id.to_string(),
+                                    extra: default_obj(),
+                                }.into(),
+                            }))
+                        }
+                    }
+                }
             }
         }
     }

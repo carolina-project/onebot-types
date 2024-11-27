@@ -176,13 +176,41 @@ pub struct FriendNotice {
     pub kind: FriendNoticeKind,
 }
 
-#[data]
-#[serde(tag = "notice_type", rename_all = "snake_case")]
-pub enum FriendNoticeKind {
-    FriendAdd,
-    #[serde(rename = "friend_recall")]
+macro_rules! friend_notice {
+    {
+        $(
+            $(#[$meta:meta])*
+            $name:ident {
+                $(
+                    $(#[$f_meta:meta])*
+                    $field_name:ident: $field_type:ty
+                ),* $(,)?
+            }
+        ),* $(,)?
+    } => {
+        $(
+            $(#[$meta])*
+            #[data]
+            pub struct $name {
+                $(
+                    $(#[$f_meta])*
+                    pub $field_name: $field_type
+                ),*
+            }
+        )*
+
+        #[data]
+        #[serde(tag = "notice_type", rename_all = "snake_case")]
+        pub enum FriendNoticeKind {$(
+            $name($name)
+        ),*}
+    };
+}
+
+friend_notice! {
+    FriendAdd {},
     /// recalled message's id
-    Recall {
+    FriendRecall {
         message_id: i32,
     },
 }
