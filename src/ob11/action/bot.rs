@@ -4,12 +4,12 @@ use crate::ob11::{
 };
 #[allow(unused)]
 use ob_types_base::OBRespData;
-use ob_types_macro::{json, onebot_action};
+use ob_types_macro::{data, onebot_action};
 use serde_value::Value;
 
 use super::EmptyResp;
 
-#[json]
+#[data]
 pub enum ChatTarget {
     #[serde(rename = "group_id")]
     Private(i64),
@@ -25,7 +25,7 @@ pub struct SendMsg {
     pub message: MessageChain,
 }
 
-#[json]
+#[data]
 pub struct MessageResp {
     pub message_id: i32,
 }
@@ -41,7 +41,7 @@ pub struct GetMsg {
     pub message_id: i32,
 }
 
-#[json]
+#[data]
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
@@ -136,7 +136,7 @@ pub struct GetForwardMsg {
     pub id: String,
 }
 
-#[json]
+#[data]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
@@ -144,7 +144,7 @@ pub struct GetForwardMsgResp {
 #[onebot_action(LoginInfo)]
 pub struct GetLoginInfo;
 
-#[json]
+#[data]
 pub struct LoginInfo {
     pub user_id: i64,
     pub nickname: String,
@@ -155,7 +155,7 @@ pub struct GetCookies {
     pub domain: Option<String>,
 }
 
-#[json]
+#[data]
 pub struct Cookies {
     pub cookies: String,
 }
@@ -163,7 +163,7 @@ pub struct Cookies {
 #[onebot_action(CSRFToken)]
 pub struct GetCsrfToken;
 
-#[json]
+#[data]
 pub struct CSRFToken {
     pub token: i32,
 }
@@ -173,13 +173,13 @@ pub struct GetCredentials {
     pub domain: Option<String>,
 }
 
-#[json]
+#[data]
 pub struct Credentials {
     pub cookies: String,
     pub csrf_token: i32,
 }
 
-#[json]
+#[data]
 pub struct FileResp {
     pub file: String,
 }
@@ -195,7 +195,7 @@ pub struct GetImage {
     pub file: String,
 }
 
-#[json]
+#[data]
 pub struct IsAllowd {
     pub yes: bool,
 }
@@ -209,7 +209,7 @@ pub struct CanSendRecord;
 #[onebot_action(Status)]
 pub struct GetStatus;
 
-#[json]
+#[data]
 pub struct Status {
     pub online: bool,
     pub good: bool,
@@ -220,7 +220,7 @@ pub struct Status {
 #[onebot_action(VersionInfo)]
 pub struct GetVersion;
 
-#[json]
+#[data]
 pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,

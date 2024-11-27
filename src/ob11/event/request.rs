@@ -1,6 +1,6 @@
-use ob_types_macro::json;
+use ob_types_macro::data;
 
-#[json]
+#[data]
 pub struct RequestEvent {
     pub user_id: i64,
     #[serde(flatten)]
@@ -9,7 +9,7 @@ pub struct RequestEvent {
     pub flag: String,
 }
 
-#[json]
+#[data]
 #[serde(tag = "request_type")]
 pub enum RequestKind {
     #[serde(rename = "friend")]
@@ -18,13 +18,13 @@ pub enum RequestKind {
     AddGroup(AddGroup),
 }
 
-#[json]
+#[data]
 pub struct AddGroup {
     pub sub_type: AddGroupType,
     pub group_id: i64,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "lowercase")]
 pub enum AddGroupType {
     Add,

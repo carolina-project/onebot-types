@@ -5,9 +5,9 @@ pub mod message;
 
 pub use message::MessageSeg;
 pub use event::Event;
-use ob_types_macro::json;
+use ob_types_macro::data;
 
-#[json]
+#[data]
 #[serde(rename_all = "lowercase")]
 pub enum Sex {
     Male,

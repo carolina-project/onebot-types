@@ -1,10 +1,10 @@
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 use crate::ob12::BotSelf;
 
 use super::EventType;
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum IncreaseType {
     Join,
@@ -13,7 +13,7 @@ pub enum IncreaseType {
     Other(String),
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum DecreaseType {
     Kick,
@@ -22,7 +22,7 @@ pub enum DecreaseType {
     Other(String),
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum MessageDeleteType {
     Delete,
@@ -38,7 +38,7 @@ macro_rules! notice_kinds {
         },
     )*} => {
         $(
-            #[json]
+            #[data]
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
@@ -46,7 +46,7 @@ macro_rules! notice_kinds {
             }
         )*
 
-        #[json]
+        #[data]
         #[serde(tag = "detail_type", rename_all = "snake_case")]
         pub enum NoticeKind {
             $(
@@ -143,7 +143,7 @@ notice_kinds! {
     },
 }
 
-#[json]
+#[data]
 pub struct NoticeEvent {
     #[serde(rename = "self")]
     self_: BotSelf,

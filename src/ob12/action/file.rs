@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ob_types_macro::{json, onebot_action};
+use ob_types_macro::{data, onebot_action};
 
 use crate::scalable_struct;
 
@@ -27,11 +27,11 @@ mod data {
     }
 }
 
-#[json]
+#[data]
 #[serde(transparent)]
 pub struct UploadData(#[cfg_attr(feature = "base64", serde(with = "data"))] pub Vec<u8>);
 
-#[json]
+#[data]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UploadKind {
     Url {
@@ -50,7 +50,7 @@ pub enum UploadKind {
     },
 }
 
-#[json]
+#[data]
 pub struct FileOpt {
     #[serde(flatten)]
     pub kind: UploadKind,
@@ -71,7 +71,7 @@ scalable_struct! {
     },
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum UploadFileReq {
     Prepare {
@@ -89,14 +89,14 @@ pub enum UploadFileReq {
     },
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum GetFileReq {
     Prepare,
     Transfer { offset: i64, size: i64 },
 }
 
-#[json]
+#[data]
 #[serde(untagged)]
 pub enum GetFileFrag {
     Prepare {
@@ -109,7 +109,7 @@ pub enum GetFileFrag {
     },
 }
 
-#[json]
+#[data]
 pub enum GetFileType {
     Url,
     Path,

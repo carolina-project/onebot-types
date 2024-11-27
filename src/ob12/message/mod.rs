@@ -1,15 +1,15 @@
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 mod types;
 pub use types::*;
 
-#[json]
+#[data]
 pub struct MessageSegRaw {
     pub r#type: String,
     pub data: serde_value::Value,
 }
 
-#[json]
+#[data]
 #[serde(untagged)]
 pub enum MessageChain {
     Array(Vec<MessageSeg>),
@@ -18,7 +18,7 @@ pub enum MessageChain {
 
 macro_rules! message_seg {
     ($($sg:ident),* $(,)?) => {
-        #[json]
+        #[data]
         #[serde(rename_all = "snake_case", tag = "type", content = "data")]
         pub enum MessageSeg {
             $($sg($sg),)*

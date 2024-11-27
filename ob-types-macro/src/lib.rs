@@ -58,7 +58,7 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let struct_name = &input_struct.ident;
     TokenStream::from(quote! {
-        #[ob_types_macro::json]
+        #[ob_types_macro::data]
         #input_struct
 
         impl ob_types_base::OBAction for #struct_name {
@@ -69,7 +69,7 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn json(attrs: TokenStream, input: TokenStream) -> TokenStream {
+pub fn data(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let props: JsonProcMacro = parse_macro_input!(attrs);
 
     let derive = parse_macro_input!(input as DeriveInput);

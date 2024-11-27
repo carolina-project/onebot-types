@@ -1,13 +1,13 @@
 mod types;
 
-use ob_types_macro::json;
+use ob_types_macro::data;
 use serde_value::Value;
 
 #[allow(unused)]
 use std::{fmt::Display, str::FromStr};
 pub use types::*;
 
-#[json]
+#[data]
 pub struct MessageSegRaw {
     pub r#type: String,
     pub data: Value,
@@ -15,7 +15,7 @@ pub struct MessageSegRaw {
 
 macro_rules! message_segs {
     ($($typ:ident $($doc:literal)?),* $(,)?) => {
-        #[json]
+        #[data]
         pub enum MessageSeg {
             $(
             $(#[doc = $doc])?
@@ -56,7 +56,7 @@ message_segs! {
     JSON,
 }
 
-#[json]
+#[data]
 #[serde(untagged)]
 pub enum MessageChain {
     Array(Vec<MessageSeg>),

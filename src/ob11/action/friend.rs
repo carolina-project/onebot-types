@@ -1,4 +1,4 @@
-use ob_types_macro::{json, onebot_action};
+use ob_types_macro::{data, onebot_action};
 
 use crate::ob11::message::MessageChain;
 use crate::ob11::Sex;
@@ -31,7 +31,7 @@ pub struct GetStrangerInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[data]
 pub struct StrangerInfoResp {
     pub user_id: i64,
     pub nickname: String,
@@ -42,7 +42,7 @@ pub struct StrangerInfoResp {
 #[onebot_action(Vec<FriendInfo>)]
 pub struct GetFriendList;
 
-#[json]
+#[data]
 pub struct FriendInfo {
     pub user_id: i64,
     pub nickname: String,

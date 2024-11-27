@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use ob_types_base::tool::duration_secs;
 
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 pub mod message;
 pub mod meta;
@@ -15,7 +15,7 @@ pub use notice::NoticeEvent;
 pub use request::RequestEvent;
 
 #[derive(Copy)]
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum PostType {
     MetaEvent,
@@ -24,7 +24,7 @@ pub enum PostType {
     Request,
 }
 
-#[json]
+#[data]
 pub struct Event {
     #[serde(with = "duration_secs")]
     pub time: Duration,
@@ -33,7 +33,7 @@ pub struct Event {
     pub kind: EventKind,
 }
 
-#[json]
+#[data]
 #[serde(tag = "post_type", rename_all = "snake_case")]
 pub enum EventKind {
     Message(MessageEvent),

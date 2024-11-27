@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ob_types_macro::{json, onebot_action};
+use ob_types_macro::{data, onebot_action};
 use serde::{Deserialize, Serialize};
 
 use crate::ob11::{
@@ -111,7 +111,7 @@ pub struct GetGroupInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[data]
 pub struct GroupInfo {
     pub group_id: i64,
     pub group_name: String,
@@ -129,7 +129,7 @@ pub struct GetGroupMemberInfo {
     pub no_cache: Option<bool>,
 }
 
-#[json]
+#[data]
 pub struct GroupMemberInfo {
     pub group_id: i64,
     pub user_id: i64,
@@ -153,7 +153,7 @@ pub struct GetGroupMemberList {
     pub group_id: i64,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum GroupHonor {
     Talkative,
@@ -171,7 +171,7 @@ pub struct GetGroupHonorInfo {
     pub r#type: GroupHonor,
 }
 
-#[json]
+#[data]
 pub struct GroupHonorUser {
     pub user_id: i64,
     pub nickname: String,
@@ -180,7 +180,7 @@ pub struct GroupHonorUser {
 }
 
 // -talkative
-#[json]
+#[data]
 pub struct CurrentTalkative {
     pub user_id: i64,
     pub nickname: String,
@@ -188,7 +188,7 @@ pub struct CurrentTalkative {
     pub day_count: u32,
 }
 
-#[json]
+#[data]
 pub struct GroupHonorResp {
     pub group_id: i64,
     pub current_talkative: Option<CurrentTalkative>,

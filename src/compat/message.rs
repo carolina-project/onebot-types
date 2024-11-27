@@ -20,37 +20,37 @@ pub trait IntoOB11Seg {
 
 macro_rules! define_compat_types {
     ($($typ:ident $name:literal),* $(,)?) => {
-        pub enum OB12CompatSegment {
+        pub enum CompatSegment {
             $($typ(ob11message::$typ),)*
         }
 
         $(
             impl IntoOB12Seg for ob11message::$typ {
-                type Output = OB12CompatSegment;
+                type Output = CompatSegment;
 
                 #[inline]
                 fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
-                    Ok(OB12CompatSegment::$typ(self))
+                    Ok(CompatSegment::$typ(self))
                 }
             }
         )*
 
-        impl From<OB12CompatSegment> for ob11message::MessageSeg {
-            fn from(value: OB12CompatSegment) -> Self {
+        impl From<CompatSegment> for ob11message::MessageSeg {
+            fn from(value: CompatSegment) -> Self {
                 match value {
-                    $(OB12CompatSegment::$typ(data) => data.into(),)*
+                    $(CompatSegment::$typ(data) => data.into(),)*
                 }
             }
         }
 
-        impl OB12CompatSegment {
+        impl CompatSegment {
             /// parse from name and data(ob11 messages that transformed into ob12)
             pub fn parse_data(
                 name: &str, data: serde_value::Value
             ) -> Option<Result<Self, serde_value::DeserializerError>> {
                 match name {
                     $(concat!("ob11.", $name) => {
-                        Some(ob11message::$typ::deserialize(data).map(OB12CompatSegment::$typ))
+                        Some(ob11message::$typ::deserialize(data).map(CompatSegment::$typ))
                     })*
                     _ => None,
                 }
@@ -59,7 +59,7 @@ macro_rules! define_compat_types {
             pub fn into_data(self) -> Result<(&'static str, serde_value::Value), serde_value::SerializerError> {
                 match self {
                     $(
-                        OB12CompatSegment::$typ(data)
+                        CompatSegment::$typ(data)
                             => Ok((concat!("ob11.", $name), serde_value::to_value(data)?)),
                     )*
                 }
@@ -100,8 +100,8 @@ define_compat_types! (
     JSON "json",
 );
 
-impl From<OB12CompatSegment> for ob12message::MessageSeg {
-    fn from(value: OB12CompatSegment) -> Self {
+impl From<CompatSegment> for ob12message::MessageSeg {
+    fn from(value: CompatSegment) -> Self {
         let (r#type, data) = value.into_data().unwrap();
         Self::Other {
             r#type: r#type.into(),

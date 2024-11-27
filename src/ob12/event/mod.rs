@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 pub mod message;
 pub mod meta;
@@ -12,7 +12,7 @@ pub use meta::MetaEvent;
 pub use notice::NoticeEvent;
 pub use request::RequestEvent;
 
-#[json]
+#[data]
 #[serde(rename_all = "lowercase", tag = "type")]
 pub enum EventType {
     Meta(MetaEvent),
@@ -21,7 +21,7 @@ pub enum EventType {
     Request(RequestEvent),
 }
 
-#[json]
+#[data]
 pub struct Event {
     pub id: String,
     #[serde(with = "ob_types_base::tool::duration_f64")]

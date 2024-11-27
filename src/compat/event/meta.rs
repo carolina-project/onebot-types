@@ -3,11 +3,11 @@ use crate::{compat::default_obj, DesResult};
 use super::*;
 use ob12event::meta::*;
 use ob_types_base::ext::ValueExt;
-use ob_types_macro::json;
+use ob_types_macro::data;
 use serde::Deserialize;
 use serde_value::Value;
 
-#[json]
+#[data]
 pub enum LifeCycle {
     #[serde(rename = "ob11.enable")]
     Enable,

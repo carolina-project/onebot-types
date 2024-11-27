@@ -1,40 +1,16 @@
+use ob_types_macro::data;
+
 use super::*;
 
-macro_rules! define_compat_types {
-    ($($typ:ident $name:literal),*) => {
-        pub enum OB12CompatNotice {
-            $($typ {
-                data: ob11event::notice::$typ 
-            }),*
-        }
+#[data]
+pub enum CompatGNoticeKind {}
 
-        impl OB12CompatNotice {
-            pub fn parse_data(
-                name: &str, data: serde_value::Value
-            ) -> Option<Result<Self, serde_value::DeserializerError>> {
-                match name {
-                    $(concat!("ob11.", $name) => {
-                        Some(ob11message::$typ::deserialize(data).map(OB12CompatNotice::$typ))
-                    })*
-                    _ => None,
-                }
-            }
-
-            pub fn into_data(self) -> Result<(&'static str, serde_value::Value), serde_value::SerializerError> {
-                match self {
-                    $(
-                        OB12CompatNotice::$typ(data)
-                            => Ok((concat!("ob11.", $name), serde_value::to_value(data)?)),
-                    )*
-                }
-            }
-        }
-    };
+#[data]
+pub struct CompatGroupNotice {
+    pub group_id: String,
+    pub user_id: String,
+    pub kind: CompatGNoticeKind,
 }
-
-define_compat_types!(
-    
-);
 
 pub mod ob11to12 {
     use ob11event::notice::*;
@@ -47,8 +23,8 @@ pub mod ob11to12 {
     use super::IntoOB12Event;
     use super::*;
 
-    impl From<GroupUpload> for ob12::message::File {
-        fn from(value: GroupUpload) -> Self {
+    impl From<GroupUploadFile> for ob12::message::File {
+        fn from(value: GroupUploadFile) -> Self {
             Self {
                 file_id: value.id,
                 extra: Value::from_map(
@@ -69,7 +45,7 @@ pub mod ob11to12 {
         group_id: String,
         user_id: String,
         message_id: String,
-        upload: GroupUpload,
+        upload: GroupUploadFile,
     ) -> SerResult<ob12event::MessageEvent> {
         Ok(ob12event::MessageEvent {
             self_: compat_self(self_id),
@@ -105,16 +81,14 @@ pub mod ob11to12 {
                         kind,
                     } = group;
                     match kind {
-                        GroupNoticeKind::Upload { file } => group_upload_convert(
+                        GroupNoticeKind::GroupUpload(GroupUpload { file }) => group_upload_convert(
                             self_id,
                             group_id.to_string(),
                             user_id.to_string(),
                             msg_id_provider(file),
                             file,
                         ),
-                        GroupNoticeKind::Admin { sub_type } => {
-                            ob12event::notice::
-                        }
+                        GroupNoticeKind::GroupAdmin(GroupAdmin { sub_type }) => {}
                         GroupNoticeKind::MemberIncrease {
                             sub_type,
                             operator_id,

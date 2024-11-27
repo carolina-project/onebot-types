@@ -1,5 +1,5 @@
 use ob_types_base::OBRespData;
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 mod bot;
 mod friend;
@@ -11,7 +11,7 @@ pub use group::*;
 
 pub(crate) type EmptyResp = ();
 
-#[json]
+#[data]
 pub struct Action {
     #[serde(flatten)]
     pub action: ActionType,
@@ -20,7 +20,7 @@ pub struct Action {
 
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
-        #[json]
+        #[data]
         #[serde(tag = "action", rename_all = "snake_case", content = "params")]
         pub enum ActionType {$(
             $typ($typ),
@@ -72,7 +72,7 @@ actions!(
 );
 
 #[derive(Copy)]
-#[json]
+#[data]
 #[serde(rename_all = "lowercase")]
 pub enum RespStatus {
     Ok,
@@ -80,7 +80,7 @@ pub enum RespStatus {
     Failed,
 }
 
-#[json]
+#[data]
 pub struct RespData<T: OBRespData> {
     pub status: RespStatus,
     pub retcode: i64,

@@ -1,20 +1,20 @@
-use ob_types_macro::json;
+use ob_types_macro::data;
 use serde_value::Value;
 
-#[json]
+#[data]
 #[serde(tag = "meta_event_type", rename_all = "lowercase")]
 pub enum MetaEvent {
     LifeCycle(LifeCycle),
     Heartbeat(Heartbeat),
 }
 
-#[json]
+#[data]
 pub struct Heartbeat {
     pub status: Value,
     pub interval: u64,
 }
 
-#[json]
+#[data]
 #[serde(tag = "sub_type", rename_all = "lowercase")]
 pub enum LifeCycle {
     Enable,

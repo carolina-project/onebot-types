@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use ob_types_base::tool::duration_secs;
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 use crate::ValueMap;
 
@@ -47,7 +47,7 @@ impl<'de> serde::Deserialize<'de> for NoticeEvent {
     }
 }
 
-#[json]
+#[data]
 pub struct GroupNotice {
     pub group_id: i64,
     pub user_id: i64,
@@ -69,7 +69,7 @@ macro_rules! group_notice {
     } => {
         $(
             $(#[$meta])*
-            #[json]
+            #[data]
             pub struct $name {
                 $(
                     $(#[$f_meta])*
@@ -78,7 +78,7 @@ macro_rules! group_notice {
             }
         )*
 
-        #[json]
+        #[data]
         #[serde(tag = "notice_type", rename_all = "snake_case")]
         pub enum GroupNoticeKind {$(
             $name($name)
@@ -124,7 +124,7 @@ group_notice! {
     },
 }
 
-#[json]
+#[data]
 pub struct GroupUploadFile {
     pub id: String,
     pub name: String,
@@ -132,21 +132,21 @@ pub struct GroupUploadFile {
     pub busid: i64,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum AdminChange {
     Set,
     Unset,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum IncreaseType {
     Approve,
     Invite,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum DecreaseType {
     Leave,
@@ -154,14 +154,14 @@ pub enum DecreaseType {
     KickMe,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum MuteType {
     Ban,
     LiftBan,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum GroupHonor {
     Talkative,
@@ -169,14 +169,14 @@ pub enum GroupHonor {
     Emotion,
 }
 
-#[json]
+#[data]
 pub struct FriendNotice {
     pub user_id: i64,
     #[serde(flatten)]
     pub kind: FriendNoticeKind,
 }
 
-#[json]
+#[data]
 #[serde(tag = "notice_type", rename_all = "snake_case")]
 pub enum FriendNoticeKind {
     FriendAdd,

@@ -1,8 +1,8 @@
-use ob_types_macro::json;
+use ob_types_macro::data;
 
 use crate::ob11::{message::MessageChain, Sex};
 
-#[json]
+#[data]
 pub struct MessageEvent {
     #[serde(flatten)]
     pub message: Message,
@@ -56,7 +56,7 @@ mod serde_impl_segs {
     }
 }
 
-#[json]
+#[data]
 pub struct Message {
     pub message_id: i32,
     pub user_id: i64,
@@ -65,13 +65,13 @@ pub struct Message {
     pub raw_message: String,
     pub font: i32,
 }
-#[json]
+#[data]
 #[allow(unused)]
 pub struct PrivateMessageKind {
     pub sub_type: PrivateSubType,
     pub sender: PrivateSender,
 }
-#[json]
+#[data]
 #[allow(unused)]
 pub struct GroupMessageKind {
     pub sub_type: GroupSubType,
@@ -79,14 +79,14 @@ pub struct GroupMessageKind {
     pub sender: GroupSender,
     pub anonymous: Option<AnonymousSender>,
 }
-#[json]
+#[data]
 #[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum MessageKind {
     Private(PrivateMessageKind),
     Group(GroupMessageKind),
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum PrivateSubType {
     Friend,
@@ -94,7 +94,7 @@ pub enum PrivateSubType {
     Other,
 }
 
-#[json]
+#[data]
 pub struct PrivateSender {
     pub user_id: Option<i64>,
     pub nickname: Option<String>,
@@ -102,7 +102,7 @@ pub struct PrivateSender {
     pub age: Option<u32>,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub enum GroupSubType {
     Normal,
@@ -110,7 +110,7 @@ pub enum GroupSubType {
     Notice,
 }
 
-#[json]
+#[data]
 #[serde(rename_all = "snake_case")]
 pub struct GroupSender {
     pub user_id: Option<i64>,
@@ -123,7 +123,7 @@ pub struct GroupSender {
     pub role: Option<String>,
     pub title: Option<String>,
 }
-#[json]
+#[data]
 pub struct AnonymousSender {
     pub id: i64,
     pub name: String,
