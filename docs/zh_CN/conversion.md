@@ -170,7 +170,9 @@ OneBot11协议未提供文件消息段，需调用文件API进行上传来发送
 
 #### `group_decrease` -> `notice.group_member_decrease`
 
-字段均保持不变。
+| OneBot11 字段 | OneBot12 字段 | 备注                    | 默认值 |
+| ------------- | ------------- | ----------------------- | ------ |
+| `sub_type`    | `sub_type`    | `kick_me`会转换成`kick` | 无     |
 
 #### `friend_add` -> `notice.friend_increase`
 

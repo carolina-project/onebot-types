@@ -44,6 +44,12 @@ macro_rules! notice_kinds {
                 #[serde(flatten)]
                 pub extra: serde_value::Value,
             }
+
+            impl From<$kind> for NoticeKind {
+                fn from(kind: $kind) -> Self {
+                    Self::$kind(kind)
+                }
+            }
         )*
 
         #[data]
@@ -146,9 +152,9 @@ notice_kinds! {
 #[data]
 pub struct NoticeEvent {
     #[serde(rename = "self")]
-    self_: BotSelf,
+    pub self_: BotSelf,
     #[serde(flatten)]
-    kind: NoticeKind,
+    pub kind: NoticeKind,
 }
 
 impl From<NoticeEvent> for EventType {

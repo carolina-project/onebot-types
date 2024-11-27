@@ -91,6 +91,12 @@ into_value!(
     BTreeMap<Value, Value>: Map
 );
 
+impl IntoValue for &str {
+    fn into_value(self) -> Value {
+        Value::String(self.into())
+    }
+}
+
 macro_rules! as_type {
     ($self:ident, $into:ty | $($typ:ident),* |) => {
         match $self {
