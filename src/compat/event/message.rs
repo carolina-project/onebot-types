@@ -14,11 +14,12 @@ pub mod ob11to12 {
     use ob_types_base::tool;
     use serde_value::{SerializerError, Value};
 
+    /// Converts an OB11 MessageEvent into an OB12 MessageEvent using the provided transformation function(transform message segment).
     impl<F> IntoOB12Event<(String, F)> for ob11event::MessageEvent
     where
         F: Fn(MessageSeg) -> Result<ob12::MessageSeg, SerializerError>,
     {
-        type Output = ob12event::MessageEvent;
+        type Output = ob12event::EventType;
 
         fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             let (self_id, trans_fn) = param;
@@ -59,7 +60,7 @@ pub mod ob11to12 {
                     }
                 }
             }
-            Ok(ob12event::MessageEvent {
+            Ok(ob12event::EventType::Message(ob12event::MessageEvent {
                 self_: compat_self(self_id.to_string()),
                 message_id: message_id.to_string(),
                 sub_type,
@@ -67,7 +68,7 @@ pub mod ob11to12 {
                 alt_message: Some(raw_message),
                 source,
                 extra: Value::from_map(extra_map),
-            })
+            }))
         }
     }
 }

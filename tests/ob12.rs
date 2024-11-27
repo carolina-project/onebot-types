@@ -1,5 +1,3 @@
-use std::fs;
-
 use eyre::Context;
 use onebot_types::ob12::{action::ActionType, event::Event, message::MessageSeg};
 use serde::de::DeserializeOwned;
@@ -35,5 +33,4 @@ fn ob12_messages() {
 #[test]
 fn ob12_events() {
     let _events = parse::<Event>("event", EVENTS);
-    fs::write("/tmp/test1.json", serde_json::to_string(&_events).unwrap()).unwrap();
 }

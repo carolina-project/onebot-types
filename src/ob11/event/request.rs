@@ -10,12 +10,10 @@ pub struct RequestEvent {
 }
 
 #[data]
-#[serde(tag = "request_type")]
+#[serde(tag = "request_type", rename_all = "snake_case")]
 pub enum RequestKind {
-    #[serde(rename = "friend")]
-    AddFriend,
-    #[serde(rename = "group")]
-    AddGroup(AddGroup),
+    Friend,
+    Group(AddGroup),
 }
 
 #[data]

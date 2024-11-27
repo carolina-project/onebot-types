@@ -10,7 +10,7 @@ pub struct MessageEvent {
     pub alt_message: Option<String>,
     #[serde(flatten)]
     pub source: ChatTarget,
-    #[serde(flatten, deserialize_with = "de_extra")]
+    #[serde(flatten)]
     pub extra: serde_value::Value,
 }
 

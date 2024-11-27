@@ -222,6 +222,13 @@ pub mod ob11to12 {
         }
     }
 
+    impl IntoOB12Seg for ob11message::At {
+        type Output = OB12Mention;
+        fn into_ob12(self, param: ()) -> SerResult<Self::Output> {
+            self.qq.into_ob12(param)
+        }
+    }
+
     impl IntoOB12Seg for ob11message::AtTarget {
         type Output = OB12Mention;
 

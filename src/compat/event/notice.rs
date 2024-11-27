@@ -1,4 +1,9 @@
+use ob_types_base::ext::IntoValue;
 use ob_types_macro::data;
+use serde::Deserialize;
+use serde_value::Value;
+
+use crate::DesResult;
 
 use super::*;
 
@@ -23,6 +28,17 @@ pub struct CompatGroupNotice {
     pub user_id: String,
     #[serde(flatten)]
     pub kind: CompatGNoticeKind,
+}
+
+impl CompatGroupNotice {
+    pub fn parse_data(type_name: impl AsRef<str>, data: Value) -> DesResult<Self> {
+        if let Value::Map(mut data) = data {
+            data.insert("type".into_value(), type_name.as_ref().into_value());
+            CompatGroupNotice::deserialize(Value::Map(data))
+        } else {
+            Err(serde::de::Error::custom("Invalid data format"))
+        }
+    }
 }
 
 pub mod ob11to12 {
@@ -264,7 +280,8 @@ pub mod ob11to12 {
                                     message_id: message_id.to_string(),
                                     user_id: user_id.to_string(),
                                     extra: default_obj(),
-                                }.into(),
+                                }
+                                .into(),
                             }))
                         }
                     }
