@@ -39,6 +39,8 @@
 | ------------- | ------------- | ---- |
 | `file`        | `file_id`     | 无   |
 
+OneBot11有获取语音API，OneBot实现在获取文件时需要区分获取文件目标是语音还是普通文件再进行获取。
+
 ### 无 <- `audio`
 
 OneBot11协议未提供音频消息段，将OneBot12音频消息段视为文件，并调用相关API进行上传发送。
@@ -197,3 +199,279 @@ OneBot11协议未提供文件消息段，需调用文件API进行上传来发送
 | `request_type` | 无            | 以下转换规则中的OneBot11事件类型 | 无     |
 
 OneBot11中的请求事件全部转换为拓展事件。
+
+## 3. 动作
+
+-   `echo`字段OneBot11和12均存在，不变
+-   OneBot 12的`self`字段的`user_id`用于根据ID确定使用的OneBot11实现端（当`self`的`platform`字段为`ob11`）
+-   可转换的OneBot11 API都会在下方列出，部分OneBot11 API因为重复会被丢弃或是合并
+-   未提及的相同名称动作/响应/API字段或相同值保持**不变**。
+-   如果某个OneBot11 API的**字段或值**对应的OneBot12动作**不存在**且**以下内容未提及如何转换**，则会被加上`ob11.`前缀作为拓展字段/值。
+-   -> / <- / <-> 代表转换方向，`->`表示OneBot11转OneBot12，`<-`表示OneBot12转OneBot11，`<->`表示双向转换，OneBot11 消息段名称在前，OneBot12 事件名称在后。
+
+以下的转换规则内容为参数的转换规则。
+
+### 3.1 转换规则
+
+以下的响应转换规则转换方向与动作转换规则相反。
+
+#### `send_msg` <- `send_message`
+
+| OneBot11 字段  | OneBot12 字段 | 备注 | 默认值 |
+| -------------- | ------------- | ---- | ------ |
+| `message_type` | `detail_type` | 无   | 无     |
+
+**响应**
+
+字段均不变。
+
+#### `delete_msg` <- `delete_message`
+
+字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_msg` <- `ob11.get_msg`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_forward_msg` <- `ob11.get_forward_msg`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `send_like` <- `ob11.send_like`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_kick` <- `ob11.set_group_kick`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_ban` <- `ob11.set_group_ban`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_anonymous_ban` <- `ob11.set_group_anonymous_ban`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_whole_ban` <- `ob11.set_group_whole_ban`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_admin` <- `ob11.set_group_admin`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_anonymous` <- `ob11.set_group_anonymous`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_card` <- `ob11.set_group_card`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_name` <- `set_group_name`
+
+字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_leave` <- `leave_group`
+
+| OneBot11 字段 | OneBot12 字段     | 备注 | 默认值  |
+| ------------- | ----------------- | ---- | ------- |
+| `group_id`    | `group_id`        | 无   | 无      |
+| `is_dismiss`  | `ob11.is_dismiss` |      | `false` |
+
+**响应**
+
+字段均不变。
+
+#### `set_group_special_title` <- `ob11.set_group_special_title`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_friend_add_request` <- `ob11.set_friend_add_request`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `set_group_add_request` <- `ob11.set_group_add_request`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_login_info` <- `get_self_info`
+
+字段均不变。
+
+**响应**
+
+| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
+| ------------- | ------------------ | ---- | -------- |
+| `nickname`    | `user_name`        | 无   | 无       |
+| 无            | `user_displayname` | 无   | 空字符串 |
+
+#### `get_stranger_info` <- `get_user_info`
+
+| OneBot11 字段 | OneBot12 字段   | 备注 | 默认值  |
+| ------------- | --------------- | ---- | ------- |
+| `no_cache`    | `ob11.no_cache` | 无   | `false` |
+
+**响应**
+
+| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
+| ------------- | ------------------ | ---- | -------- |
+| `nickname`    | `user_name`        | 无   | 无       |
+| 无            | `user_displayname` | 无   | 空字符串 |
+| 无            | `user_remark`      | 无   | 空字符串 |
+| `sex`         | `ob11.sex`         | 无   | 无       |
+| `age`         | `ob11.age`         | 无   | 无       |
+
+#### `get_friend_list` <- `get_friend_list`
+
+字段均不变。
+
+**响应**
+
+由以下元素组成的数组
+
+| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
+| ------------- | ------------------ | ---- | -------- |
+| `nickname`    | `user_name`        | 无   | 无       |
+| 无            | `user_displayname` | 无   | 空字符串 |
+| `remark`      | `user_remark`      | 无   | 无       |
+
+#### `get_group_info` <- `get_group_info`
+
+| OneBot11 字段 | OneBot12 字段   | 备注 | 默认值  |
+| ------------- | --------------- | ---- | ------- |
+| `no_cache`    | `ob11.no_cache` | 无   | `false` |
+
+**响应**
+
+| OneBot11 字段      | OneBot12 字段           | 备注 | 默认值 |
+| ------------------ | ----------------------- | ---- | ------ |
+| `member_count`     | `ob11.member_count`     | 无   | 无     |
+| `max_member_count` | `ob11.max_member_count` | 无   | 无     |
+
+#### `get_group_list` <- `get_group_list`
+
+字段均不变。
+
+**响应**
+
+由[`get_group_info`](#getgroupinfo-getgroupinfo)动作响应作为元素组成的列表
+
+#### `get_group_member_info` <- `get_group_member_info`
+
+| OneBot11 字段 | OneBot12 字段   | 备注 | 默认值  |
+| ------------- | --------------- | ---- | ------- |
+| `no_cache`    | `ob11.no_cache` | 无   | `false` |
+
+**响应**
+
+| OneBot11 字段       | OneBot12 字段            | 备注 | 默认值   |
+| ------------------- | ------------------------ | ---- | -------- |
+| `nickname`          | `user_name`              | 无   | 无       |
+| 无                  | `user_displayname`       | 无   | 空字符串 |
+| 无                  | `user_remark`            | 无   | 空字符串 |
+| `sex`               | `ob11.sex`               | 无   | 无       |
+| `age`               | `ob11.age`               | 无   | 无       |
+| `card`              | `ob11.card`              | 无   | 无       |
+| `area`              | `ob11.area`              | 无   | 无       |
+| `join_time`         | `ob11.join_time`         | 无   | 无       |
+| `last_sent_time`    | `ob11.last_sent_time`    | 无   | 无       |
+| `level`             | `ob11.level`             | 无   | 无       |
+| `role`              | `ob11.role`              | 无   | 无       |
+| `unfriendly`        | `ob11.unfriendly`        | 无   | 无       |
+| `title`             | `ob11.title`             | 无   | 无       |
+| `title_expire_time` | `ob11.title_expire_time` | 无   | 无       |
+| `card_changeable`   | `ob11.card_changeable`   | 无   | 无       |
+
+#### `get_group_member_list` <- `get_group_member_list`
+
+**响应**
+
+由[`get_group_member_info`](#getgroupmemberinfo-getgroupmemberinfo)动作响应作为元素构成的列表
+
+#### `get_group_honor_info` <- `ob11.get_group_honor_info`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_cookies` <- `ob11.get_cookies`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_csrf_token` <- `ob11.get_csrf_token`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
+#### `get_record`, `get_image`, ``
