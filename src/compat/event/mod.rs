@@ -2,6 +2,8 @@ pub mod message;
 pub mod meta;
 pub mod notice;
 pub mod request;
+use std::future::Future;
+
 pub(self) use crate::ob11::event as ob11event;
 pub(self) use crate::ob12::event as ob12event;
 use crate::SerResult;
@@ -13,4 +15,10 @@ pub trait IntoOB12Event<P = ()> {
     type Output: Into<ob12event::EventType>;
 
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
+}
+
+pub trait IntoOB12EventAsync<P = ()> {
+    type Output: Into<ob12event::EventType>;
+
+    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
 }

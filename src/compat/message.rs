@@ -1,3 +1,5 @@
+use std::future::Future;
+
 pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
 use crate::ValueMap;
@@ -22,10 +24,22 @@ pub trait IntoOB12Seg<P = ()> {
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
+pub trait IntoOB12SegAsync<P = ()> {
+    type Output: Into<ob12message::MessageSeg>;
+
+    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
+}
+
 pub trait IntoOB11Seg {
     type Output: Into<ob11message::MessageSeg>;
 
     fn into_ob11(self) -> DesResult<Self::Output>;
+}
+
+pub trait IntoOB11SegAsync<P> {
+    type Output: Into<ob11message::MessageSeg>;
+
+    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>>;
 }
 
 macro_rules! define_compat_types {
@@ -121,6 +135,8 @@ impl From<CompatSegment> for ob12message::MessageSeg {
 }
 
 pub mod ob11to12 {
+    use std::future::Future;
+
     use crate::{compat::default_obj, ValueMap};
     use serde::{ser::Error, Serialize};
 
@@ -190,43 +206,55 @@ pub mod ob11to12 {
         }
     }
 
-    impl IntoOB12Seg for ob11message::Image {
+    impl<F, R> IntoOB12SegAsync<F> for ob11message::Image
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = SerResult<String>>,
+    {
         type Output = Image;
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
-            let Value::String(file_id) = remove_field(&mut value, "file")? else {
+            let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
             Ok(ob12message::Image {
-                file_id,
+                file_id: trans_fn(file).await?,
                 extra: rename_ob11_field(value),
             })
         }
     }
 
-    impl IntoOB12Seg for ob11message::Record {
+    impl<F, R> IntoOB12SegAsync<F> for ob11message::Record
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = SerResult<String>>,
+    {
         type Output = Voice;
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
-            let Value::String(file_id) = remove_field(&mut value, "file")? else {
+            let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
             Ok(ob12message::Voice {
-                file_id,
+                file_id: trans_fn(file).await?,
                 extra: rename_ob11_field(value),
             })
         }
     }
 
-    impl IntoOB12Seg for ob11message::Video {
+    impl<F, R> IntoOB12SegAsync<F> for ob11message::Video
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = SerResult<String>>,
+    {
         type Output = Video;
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
             let mut value = to_map(self)?;
-            let Value::String(file_id) = remove_field(&mut value, "file")? else {
+            let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
-            Ok(Video {
-                file_id,
+            Ok(ob12message::Video {
+                file_id: trans_fn(file).await?,
                 extra: rename_ob11_field(value),
             })
         }
@@ -373,41 +401,54 @@ pub mod ob12to11 {
         }
     }
 
-    impl IntoOB11Seg for ob12message::Image {
+    impl<F, R> IntoOB11SegAsync<F> for ob12message::Image
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = DesResult<String>>,
+    {
         type Output = Image;
 
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
             let mut extra = rename_ob12_extra(self.extra)?;
             let r#type: ImageType = remove_field_or_default(&mut extra, "type")?;
             Ok(Image {
-                file: self.file_id,
+                file: trans_fn(self.file_id).await?,
                 r#type,
                 option: Deserialize::deserialize(extra.into_value())?,
             })
         }
     }
 
-    impl IntoOB11Seg for ob12message::Voice {
+    impl<F, R> IntoOB11SegAsync<F> for ob12message::Voice
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = DesResult<String>>,
+    {
         type Output = Record;
-        fn into_ob11(self) -> DesResult<Self::Output> {
-            let mut extra = rename_ob12_extra(self.extra)?;
 
+        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+            let mut extra = rename_ob12_extra(self.extra)?;
+            let file = trans_fn(self.file_id).await?;
             Ok(Record {
-                file: self.file_id,
+                file,
                 magic: remove_field_bool(&mut extra, "magic")?,
                 option: Deserialize::deserialize(extra.into_value())?,
             })
         }
     }
 
-    impl IntoOB11Seg for ob12message::Video {
+    impl<F, R> IntoOB11SegAsync<F> for ob12message::Video
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = DesResult<String>>,
+    {
         type Output = Video;
 
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
             let extra = rename_ob12_extra(self.extra)?;
-
+            let file = trans_fn(self.file_id).await?;
             Ok(Video {
-                file: self.file_id,
+                file,
                 option: Deserialize::deserialize(extra.into_value())?,
             })
         }

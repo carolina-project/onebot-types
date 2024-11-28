@@ -1,5 +1,8 @@
+use std::fs;
+
 use onebot_types::compat;
-use onebot_types::compat::message::{IntoOB11Seg, IntoOB12Seg};
+use onebot_types::compat::event::IntoOB12EventAsync;
+use onebot_types::compat::message::{IntoOB11Seg, IntoOB11SegAsync, IntoOB12Seg, IntoOB12SegAsync};
 use onebot_types::ob11::{self, event as ob11event};
 use onebot_types::ob12::event as ob12event;
 use onebot_types::{compat::event::IntoOB12Event, ob11::event::EventKind as O11EventKind, ob12};
@@ -11,13 +14,14 @@ static OB11_EVENTS: &str = include_str!("ob11_events.json");
 
 static OB12_MESSAGES: &str = include_str!("ob12_messages.json");
 
-fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
+async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
+    let id_provider = |_| async { Ok("sadwl".into()) };
     match seg {
         ob11::MessageSeg::Text(text) => text.into_ob12(()).unwrap().into(),
         ob11::MessageSeg::Face(face) => face.into_ob12(()).unwrap().into(),
-        ob11::MessageSeg::Image(image) => image.into_ob12(()).unwrap().into(),
-        ob11::MessageSeg::Record(record) => record.into_ob12(()).unwrap().into(),
-        ob11::MessageSeg::Video(video) => video.into_ob12(()).unwrap().into(),
+        ob11::MessageSeg::Image(image) => image.into_ob12(id_provider).await.unwrap().into(),
+        ob11::MessageSeg::Record(record) => record.into_ob12(id_provider).await.unwrap().into(),
+        ob11::MessageSeg::Video(video) => video.into_ob12(id_provider).await.unwrap().into(),
         ob11::MessageSeg::At(at) => at.into_ob12(()).unwrap().into(),
         ob11::MessageSeg::Rps(rps) => rps.into_ob12(()).unwrap().into(),
         ob11::MessageSeg::Dice(dice) => dice.into_ob12(()).unwrap().into(),
@@ -43,20 +47,21 @@ fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
     }
 }
 
-fn msg_ob12_to_11(msg: ob12::MessageSeg) -> ob11::MessageSeg {
+async fn msg_ob12_to_11(msg: ob12::MessageSeg) -> ob11::MessageSeg {
+    let file_provider = |_| async { Ok("sadwl".into()) };
     match msg {
         ob12::MessageSeg::Text(text) => text.into_ob11().unwrap().into(),
         ob12::MessageSeg::Mention(mention) => mention.into_ob11().unwrap().into(),
         ob12::MessageSeg::MentionAll(mention_all) => mention_all.into_ob11().unwrap().into(),
         ob12::MessageSeg::Location(location) => location.into_ob11().unwrap().into(),
         ob12::MessageSeg::Reply(reply) => reply.into_ob11().unwrap().into(),
-        ob12::MessageSeg::Image(image) => image.into_ob11().unwrap().into(),
-        ob12::MessageSeg::Voice(voice) => voice.into_ob11().unwrap().into(),
+        ob12::MessageSeg::Image(image) => image.into_ob11(file_provider).await.unwrap().into(),
+        ob12::MessageSeg::Voice(voice) => voice.into_ob11(file_provider).await.unwrap().into(),
         ob12::MessageSeg::Audio(_) => ob11::MessageSeg::Other(ob11::message::MessageSegRaw {
             r#type: Default::default(),
             data: serde_value::Value::Map(Default::default()),
         }),
-        ob12::MessageSeg::Video(video) => video.into_ob11().unwrap().into(),
+        ob12::MessageSeg::Video(video) => video.into_ob11(file_provider).await.unwrap().into(),
         ob12::MessageSeg::File(_) => ob11::MessageSeg::Other(ob11::message::MessageSegRaw {
             r#type: Default::default(),
             data: serde_value::Value::Map(Default::default()),
@@ -69,33 +74,39 @@ fn msg_ob12_to_11(msg: ob12::MessageSeg) -> ob11::MessageSeg {
     }
 }
 
-#[test]
-fn messages_ob12_to_11() {
+#[tokio::test]
+async fn messages_ob12_to_11() {
     let messages: Vec<Value> = serde_json::from_str(OB12_MESSAGES).unwrap();
 
     let mut messages_converted = Vec::<ob11::message::MessageSeg>::default();
     for (i, ele) in messages.into_iter().enumerate() {
         println!("#{}: {}", i, serde_json::to_string_pretty(&ele).unwrap());
         let msg = ob12::message::MessageSeg::deserialize(ele).unwrap();
-        let converted = msg_ob12_to_11(msg);
+        let converted = msg_ob12_to_11(msg).await;
         messages_converted.push(converted);
     }
 }
 
-#[test]
-fn messages_ob11_to_12() {
+#[tokio::test]
+async fn messages_ob11_to_12() {
     let messages: Vec<Value> = serde_json::from_str(OB11_MESSAGES).unwrap();
 
     let mut messages_converted = Vec::<ob12::message::MessageSeg>::default();
     for (i, ele) in messages.into_iter().enumerate() {
         println!("#{}: {}", i, serde_json::to_string_pretty(&ele).unwrap());
         let msg = ob11::message::MessageSeg::deserialize(ele).unwrap();
-        messages_converted.push(msg_ob11_to_12(msg));
+        messages_converted.push(msg_ob11_to_12(msg).await);
     }
+
+    fs::write(
+        "/tmp/test.json",
+        serde_json::to_string_pretty(&mut messages_converted).unwrap(),
+    )
+    .unwrap()
 }
 
-#[test]
-fn events_ob11_to_12() {
+#[tokio::test]
+async fn events_ob11_to_12() {
     let events: Vec<Value> = serde_json::from_str(OB11_EVENTS).unwrap();
 
     let mut events_converted = Vec::<ob12event::EventType>::default();
@@ -118,7 +129,10 @@ fn events_ob11_to_12() {
             }
             O11EventKind::Message(msg) => {
                 let event = msg
-                    .into_ob12(("sadadsa".into(), |ev| Ok(msg_ob11_to_12(ev))))
+                    .into_ob12(("sadadsa".into(), |ev| async {
+                        Ok(msg_ob11_to_12(ev).await)
+                    }))
+                    .await
                     .unwrap();
                 events_converted.push(event);
             }

@@ -15,13 +15,14 @@ pub mod ob11to12 {
     use serde_value::{SerializerError, Value};
 
     /// Converts an OB11 MessageEvent into an OB12 MessageEvent using the provided transformation function(transform message segment).
-    impl<F> IntoOB12Event<(String, F)> for ob11event::MessageEvent
+    impl<F, R> IntoOB12EventAsync<(String, F)> for ob11event::MessageEvent
     where
-        F: Fn(MessageSeg) -> Result<ob12::MessageSeg, SerializerError>,
+        F: Fn(MessageSeg) -> R,
+        R: Future<Output = Result<ob12::MessageSeg, SerializerError>>
     {
         type Output = ob12event::EventType;
 
-        fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
+        async fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             let (self_id, trans_fn) = param;
             let Message {
                 message_id,
@@ -31,10 +32,13 @@ pub mod ob11to12 {
                 font,
             } = self.message;
             let message = match message_segs.0 {
-                MessageChain::Array(segs) => segs
-                    .into_iter()
-                    .map(trans_fn)
-                    .collect::<Result<Vec<_>, SerializerError>>()?,
+                MessageChain::Array(segs) => {
+                    let mut transformed = vec![];
+                    for ele in segs {
+                        transformed.push(trans_fn(ele).await?);
+                    }
+                    transformed
+                },
                 MessageChain::String(_) => unimplemented!("cq code string"),
             };
 
