@@ -100,10 +100,10 @@
 
 #### `lifecycle` -> `meta.connect`
 
-| OneBot11 字段           | OneBot12 字段 | 备注 | 默认值                        |
-| ----------------------- | ------------- | ---- | ----------------------------- |
-| `sub_type == 'connect'` | 无            | 无   | 无                            |
-| 无                      | `version`     | 无   | OB12: resp[`[get_version]`]() |
+| OneBot11 字段           | OneBot12 字段 | 备注 | 默认值                                                  |
+| ----------------------- | ------------- | ---- | ------------------------------------------------------- |
+| `sub_type == 'connect'` | 无            | 无   | 无                                                      |
+| 无                      | `version`     | 无   | OB12: resp[`[get_version]`](#cleancache-ob11cleancache) |
 
 #### `lifecycle` -> `meta.ob11.lifecycle`
 
@@ -517,6 +517,10 @@ OneBot11中的请求事件全部转换为拓展事件。
 | 无            | `self`: `platform`   | 无        | OB12: `ob11` |
 
 #### `get_version_info` <- `get_version`
+
+拓展动作，字段均不变。
+
+**响应**
 
 | OneBot11 字段 | OneBot12 字段    | 备注 | 默认值 |
 | ------------- | ---------------- | ---- | ------ |
