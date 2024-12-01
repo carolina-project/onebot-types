@@ -29,3 +29,20 @@ impl IntoOB11Action for ob12action::GetUserInfo {
         })
     }
 }
+
+impl IntoOB11Action for ob12action::GetFriendList {
+    type Output = ob11action::GetFriendList;
+    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+        Ok(ob11action::GetFriendList {})
+    }
+}
+
+impl FromOB11Resp for Vec<ob12::UserInfo> {
+    type In = Vec<UserInfoResp>;
+
+    fn from_ob11(from: Self::In, param: ()) -> DesResult<Self> {
+        from.into_iter()
+            .map(|r| ob12::UserInfo::from_ob11(r, param))
+            .collect()
+    }
+}

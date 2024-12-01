@@ -477,11 +477,14 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 #### `get_record`, `get_image` <- `get_file`
 
-| OneBot11 字段 | OneBot12 字段 | 备注                          | 默认值 |
-| ------------- | ------------- | ----------------------------- | ------ |
-| `file`        | 无            | 由OneBot实现根据`file_id`决定 | 无     |
-| 无            | `file_id`     | 无                            | 无     |
-| 无            | `type`        | 只能为`path`                  | 无     |
+因为OneBot11协议中获取图片和语音的动作名称不同，所以要根据`file_id`来决定
+
+| OneBot11 字段 | OneBot12 字段     | 备注                          | 默认值 |
+| ------------- | ----------------- | ----------------------------- | ------ |
+| `file`        | 无                | 由OneBot实现根据`file_id`决定 | 无     |
+| `out_format`  | `ob11.out_format` | 如果是语音文件，本字段会存在  | `mp3`  |
+| 无            | `file_id`         | 无                            | 无     |
+| 无            | `type`            | 只能为`path`                  | 无     |
 
 **响应**
 
@@ -510,12 +513,16 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 由于OneBot11并不适用于多个Bot的环境，所以转换规则会将部分字段转换到`bots`字段的元素中
 
-| OneBot11 字段 | OneBot12 字段        | 备注      | 默认值       |
-| ------------- | -------------------- | --------- | ------------ |
-| `good`        | `good`               | 无        | 无           |
-| `online`      | `bots[_]` : `online` | 无        | 无           |
-| 无            | `self`: `user_id`    | Bot用户ID | 无           |
-| 无            | `self`: `platform`   | 无        | OB12: `ob11` |
+**响应**
+
+| OneBot11 字段 | OneBot12 字段        | 备注           | 默认值       |
+| ------------- | -------------------- | -------------- | ------------ |
+| `good`        | `good`               | 由实现自行判断 | 无           |
+| `online`      | `bots[_]` : `online` | 无             | 无           |
+| 无            | `self`: `user_id`    | Bot用户ID      | 无           |
+| 无            | `self`: `platform`   | 无             | OB12: `ob11` |
+
+OneBot 实现自行添加的其它内容字段名称都会加上`ob11.extra.`前缀
 
 #### `get_version_info` <- `get_version`
 
@@ -529,6 +536,8 @@ OneBot11中的请求事件全部转换为拓展事件。
 | `app_name`    | `ob11.app_name`  | 无   | 无     |
 | `app_version` | `version`        | 无   | 无     |
 | 无            | `onebot_version` | 无   | `12`   |
+
+OneBot 实现自行添加的其它内容字段名称都会加上`ob11.extra.`前缀
 
 #### `set_restart` <- `ob11.set_restart`
 

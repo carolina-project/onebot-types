@@ -1,4 +1,4 @@
-use ob_types_base::OBRespData;
+use ob_types_base::{OBAction, OBRespData};
 use ob_types_macro::data;
 
 mod file;
@@ -26,6 +26,20 @@ pub struct Action {
     pub self_: Option<super::BotSelf>,
 }
 
+#[data]
+pub struct ActionTypeRaw {
+    pub action: String,
+    pub params: serde_value::Value,
+}
+
+impl OBAction for ActionTypeRaw {
+    type Resp = serde_value::Value;
+
+    fn action_name(&self) -> &str {
+        &self.action
+    }
+}
+
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
         #[data]
@@ -35,10 +49,7 @@ macro_rules! actions {
                 $typ(#[serde(default)] $typ),
             )*
             #[serde(untagged)]
-            Other {
-                action: String,
-                params: serde_value::Value,
-            },
+            Other(ActionTypeRaw),
         }
 
         $(impl From<$typ> for ActionType {

@@ -218,7 +218,7 @@ pub struct Status {
 }
 
 #[onebot_action(VersionInfo)]
-pub struct GetVersion;
+pub struct GetVersionInfo;
 
 #[data]
 pub struct VersionInfo {

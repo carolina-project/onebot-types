@@ -1,22 +1,12 @@
-use std::future::Future;
-
+use super::*;
 pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
 use crate::ValueMap;
 use serde::Deserialize;
 pub(self) use serde_value::*;
+use std::future::Future;
 
 pub(self) use crate::{DesResult, SerResult};
-
-#[derive(thiserror::Error, Debug)]
-pub enum CompatError {
-    #[error(transparent)]
-    Serializer(#[from] serde_value::SerializerError),
-    #[error(transparent)]
-    Deserializer(#[from] serde_value::DeserializerError),
-    #[error("unknown compat type: {0}")]
-    UnknownCompat(String),
-}
 
 pub trait IntoOB12Seg<P = ()> {
     type Output: TryInto<ob12message::MessageSeg>;

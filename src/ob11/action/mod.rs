@@ -51,7 +51,7 @@ actions!(
     CanSendImage,
     CanSendRecord,
     GetStatus,
-    GetVersion,
+    GetVersionInfo,
     SetRestart,
     CleanCache,
     // from friend.rs

@@ -1,3 +1,5 @@
+pub(self) use super::*;
+
 use std::{future::Future, num::ParseIntError};
 
 pub(self) use crate::ob11::action as ob11action;
@@ -8,6 +10,7 @@ use ob_types_base::ext::{IntoValue, ValueExt};
 use ob_types_base::OBRespData;
 use ob_types_macro::data;
 pub(self) use serde::de::Error as DeError;
+use serde::Deserialize;
 pub(self) use serde_value::DeserializerError;
 pub(self) use serde_value::Value;
 
@@ -67,7 +70,7 @@ where
 }
 
 macro_rules! compat_actions {
-    ($($ob11action:ident),*) => {
+    ($($ob11action:ident $name:literal),*) => {
         pub enum CompatAction {
             $($ob11action(ob11action::$ob11action)),*
         }
@@ -82,37 +85,51 @@ macro_rules! compat_actions {
                 )*})
             }
         }
+
+        impl CompatAction {
+            pub fn into_data(self) -> Result<(&'static str, Value), CompatError> {
+                match self {
+                    $(CompatAction::$ob11action(action)
+                        => Ok((concat!("ob11.", $name), serde_value::to_value(action).map_err(DeserializerError::custom)?)),
+                    )*
+                }
+            }
+
+            pub fn from_data(name: &str, data: Value) -> Result<CompatAction, CompatError> {
+                match name {
+                    $(concat!("ob11.", $name)
+                        => Ok(Deserialize::deserialize(data).map(CompatAction::$ob11action).map_err(DeserializerError::custom)?),)*
+                    name => Err(CompatError::UnknownCompat(name.into())),
+                }
+            }
+        }
     };
 }
 
-macro_rules! compat_resp {
-    ($($ob11resp:ident),*) => {
-        pub enum CompatResp {
-            $($ob11resp(ob11action::$ob11resp)),*
-        }
+impl TryFrom<CompatAction> for ob12action::ActionType {
+    type Error = CompatError;
 
-        $(
-            impl From<ob11action::$ob11resp> for CompatResp {
-                fn from(ob11: ob11action::$ob11resp) -> Self {
-                    CompatResp::$ob11resp(ob11)
-                }
-            }
-        )*
-    };
+    fn try_from(value: CompatAction) -> Result<Self, Self::Error> {
+        let (action, params) = value.into_data()?;
+        Ok(Self::Other(ob12action::ActionTypeRaw {
+            action: action.into(),
+            params,
+        }))
+    }
 }
 
 compat_actions!(
-    GetMsg,
-    GetForwardMsg,
-    GetCookies,
-    GetCsrfToken,
-    GetCredentials,
-    CanSendImage,
-    CanSendRecord,
-    GetStatus,
-    GetVersion,
-    SetRestart,
-    CleanCache
+    GetMsg "get_msg",
+    GetForwardMsg "get_forward_msg",
+    GetCookies "get_cookies",
+    GetCsrfToken "get_csrf_token",
+    GetCredentials "get_credentials",
+    CanSendImage "can_send_image",
+    CanSendRecord "can_send_record",
+    GetStatus "get_status",
+    GetVersionInfo "get_version_info",
+    SetRestart "set_restart",
+    CleanCache "clean_cache"
 );
 
 #[inline]
@@ -135,10 +152,24 @@ fn remove_field_or_default<'a, T: serde::Deserialize<'a> + Default>(
     }
 }
 
+#[inline]
+fn remove_field<'a, T: serde::Deserialize<'a>>(
+    map: &mut ValueMap,
+    key: &str,
+) -> Option<DesResult<T>> {
+    if let Some(r) = map.remove(&Value::String(key.into())) {
+        Some(T::deserialize(r))
+    } else {
+        None
+    }
+}
+
 #[data]
 pub enum UserInfoResp {
     LoginInfo(ob11action::LoginInfo),
     StrangerInfo(ob11action::StrangerInfoResp),
+    FriendInfo(ob11action::FriendInfo),
+    GroupMemberInfo(ob11action::GroupMemberInfo),
 }
 
 impl FromOB11Resp for ob12::UserInfo {
@@ -179,6 +210,68 @@ impl FromOB11Resp for ob12::UserInfo {
                 Ok(Self {
                     user_name: user_id.clone(),
                     user_id,
+                    user_display_name,
+                    user_remark: None,
+                    extra,
+                })
+            }
+            UserInfoResp::FriendInfo(ob11action::FriendInfo {
+                user_id,
+                nickname: user_display_name,
+                remark,
+            }) => {
+                let user_id = user_id.to_string();
+                Ok(Self {
+                    user_name: user_id.clone(),
+                    user_id,
+                    user_display_name,
+                    user_remark: Some(remark),
+                    extra: default_obj(),
+                })
+            }
+            UserInfoResp::GroupMemberInfo(ob11action::GroupMemberInfo {
+                group_id: _,
+                user_id,
+                nickname: user_name,
+                card: user_display_name,
+                sex,
+                age,
+                area,
+                join_time,
+                last_sent_time,
+                level,
+                role,
+                unfriendly,
+                title,
+                title_expire_time,
+                card_changeable,
+            }) => {
+                #[inline]
+                fn to_value<T: serde::Serialize>(
+                    v: T,
+                ) -> Result<Value, serde_value::DeserializerError> {
+                    serde_value::to_value(v).map_err(DeserializerError::custom)
+                }
+                let extra = Value::from_map(
+                    [
+                        ("ob11.sex", to_value(sex)?),
+                        ("ob11.age", age.into_value()),
+                        ("ob11.area", area.into_value()),
+                        ("ob11.join_time", join_time.into_value()),
+                        ("ob11.last_sent_time", last_sent_time.into_value()),
+                        ("ob11.level", level.into_value()),
+                        ("ob11.role", role.into_value()),
+                        ("ob11.unfriendly", unfriendly.into_value()),
+                        ("ob11.title", title.into_value()),
+                        ("ob11.title_expire_time", title_expire_time.into_value()),
+                        ("ob11.card_changeable", card_changeable.into_value()),
+                    ]
+                    .into(),
+                );
+
+                Ok(Self {
+                    user_id: user_id.to_string(),
+                    user_name,
                     user_display_name,
                     user_remark: None,
                     extra,
