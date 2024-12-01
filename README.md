@@ -10,11 +10,11 @@
 
 -   [x] 提供OneBot12标准的数据类型
 -   [x] 提供OneBot11标准的数据类型
--   [ ] OneBot11标准的数据类型转换到OneBot12([文档](docs/zh_CN/conversion.md))
+-   [x] OneBot11标准的数据类型转换到OneBot12([文档](docs/zh_CN/conversion.md))
     -   [x] 消息段类型互相转换
-    -   [ ] OneBot11事件转换到OneBot12
-    -   [ ] OneBot12 动作转换到OneBot11 API
-    -   [ ] OneBot11 API响应转换到OneBot12 动作响应
+    -   [x] OneBot11事件转换到OneBot12
+    -   [x] OneBot12 动作转换到OneBot11 API
+    -   [x] OneBot11 API响应转换到OneBot12 动作响应
 
 ## 未实现功能
 
