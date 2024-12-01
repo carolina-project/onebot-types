@@ -33,7 +33,7 @@ pub struct MessageResp {
 #[onebot_action(EmptyResp)]
 #[allow(unused)]
 pub struct DeleteMsg {
-    message_id: i32,
+    pub message_id: i32,
 }
 
 #[onebot_action(GetMessageResp)]

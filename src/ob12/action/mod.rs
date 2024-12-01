@@ -40,6 +40,12 @@ macro_rules! actions {
                 params: serde_value::Value,
             },
         }
+
+        $(impl From<$typ> for ActionType {
+            fn from(from: $typ) -> Self {
+                Self::$typ(from)
+            }
+        })*
     };
 }
 

@@ -362,10 +362,11 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 **响应**
 
-| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
-| ------------- | ------------------ | ---- | -------- |
-| `nickname`    | `user_name`        | 无   | 无       |
-| 无            | `user_displayname` | 无   | 空字符串 |
+| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值 |
+| ------------- | ------------------ | ---- | ------ |
+| `user_id`     | `user_id`          | 无   | 无     |
+| `user_id`     | `user_name`        | 无   | 无     |
+| `nickname`    | `user_displayname` | 无   | 无     |
 
 #### `get_stranger_info` <- `get_user_info`
 
@@ -377,8 +378,9 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 | OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
 | ------------- | ------------------ | ---- | -------- |
-| `nickname`    | `user_name`        | 无   | 无       |
-| 无            | `user_displayname` | 无   | 空字符串 |
+| `user_id`     | `user_id`          | 无   | 无       |
+| `user_id`     | `user_name`        | 无   | 无       |
+| `nickname`    | `user_displayname` | 无   | 无       |
 | 无            | `user_remark`      | 无   | 空字符串 |
 | `sex`         | `ob11.sex`         | 无   | 无       |
 | `age`         | `ob11.age`         | 无   | 无       |
@@ -391,11 +393,12 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 由以下元素组成的数组
 
-| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值   |
-| ------------- | ------------------ | ---- | -------- |
-| `nickname`    | `user_name`        | 无   | 无       |
-| 无            | `user_displayname` | 无   | 空字符串 |
-| `remark`      | `user_remark`      | 无   | 无       |
+| OneBot11 字段 | OneBot12 字段      | 备注 | 默认值 |
+| ------------- | ------------------ | ---- | ------ |
+| `user_id`     | `user_id`          | 无   | 无     |
+| `user_id`     | `user_name`        | 无   | 无     |
+| `nickname`    | `user_displayname` | 无   | 无     |
+| `remark`      | `user_remark`      | 无   | 无     |
 
 #### `get_group_info` <- `get_group_info`
 
@@ -428,12 +431,10 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 | OneBot11 字段       | OneBot12 字段            | 备注 | 默认值   |
 | ------------------- | ------------------------ | ---- | -------- |
-| `nickname`          | `user_name`              | 无   | 无       |
-| 无                  | `user_displayname`       | 无   | 空字符串 |
-| 无                  | `user_remark`            | 无   | 空字符串 |
+| `nickname`          | `user_name`              | 无   | 空字符串 |
+| `card`              | `user_displayname`       | 无   | 空字符串 |
 | `sex`               | `ob11.sex`               | 无   | 无       |
 | `age`               | `ob11.age`               | 无   | 无       |
-| `card`              | `ob11.card`              | 无   | 无       |
 | `area`              | `ob11.area`              | 无   | 无       |
 | `join_time`         | `ob11.join_time`         | 无   | 无       |
 | `last_sent_time`    | `ob11.last_sent_time`    | 无   | 无       |

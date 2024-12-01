@@ -2,6 +2,7 @@ use crate::ob12::{self, BotSelf};
 
 pub mod event;
 pub mod message;
+pub mod action;
 
 #[inline]
 pub(self) fn default_obj() -> serde_value::Value {

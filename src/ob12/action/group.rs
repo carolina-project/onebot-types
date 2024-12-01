@@ -1,7 +1,7 @@
 use ob_types_macro::onebot_action;
 
 use crate::{
-    ob12::{GroupInfo, GroupMemberInfo},
+    ob12::{GroupInfo, UserInfo},
     scalable_struct,
 };
 
@@ -14,12 +14,12 @@ scalable_struct! {
     },
     #[onebot_action(Vec<GroupInfo>)]
     GetGroupList,
-    #[onebot_action(GroupMemberInfo)]
+    #[onebot_action(UserInfo)]
     GetGroupMemberInfo = {
         group_id: String,
         user_id: String
     },
-    #[onebot_action(Vec<GroupMemberInfo>)]
+    #[onebot_action(Vec<UserInfo>)]
     GetGroupMemberList = {
         group_id: String,
     },

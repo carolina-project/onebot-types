@@ -98,10 +98,6 @@ scalable_struct! {
         group_id: String,
         group_name: String,
     },
-    GroupMemberInfo = {
-        group_id: String,
-        user_id: String,
-    },
     GuildInfo = {
         guild_id: String,
         guild_name: String,

@@ -25,6 +25,14 @@ macro_rules! actions {
         pub enum ActionType {$(
             $typ($typ),
         )*}
+
+        $(
+            impl From<$typ> for ActionType {
+                fn from(action: $typ) -> Self {
+                    Self::$typ(action)
+                }
+            }
+        )*
     };
 }
 

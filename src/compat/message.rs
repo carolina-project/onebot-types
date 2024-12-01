@@ -19,25 +19,25 @@ pub enum CompatError {
 }
 
 pub trait IntoOB12Seg<P = ()> {
-    type Output: Into<ob12message::MessageSeg>;
+    type Output: TryInto<ob12message::MessageSeg>;
 
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
 pub trait IntoOB12SegAsync<P = ()> {
-    type Output: Into<ob12message::MessageSeg>;
+    type Output: TryInto<ob12message::MessageSeg>;
 
     fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
 }
 
 pub trait IntoOB11Seg {
-    type Output: Into<ob11message::MessageSeg>;
+    type Output: TryInto<ob11message::MessageSeg>;
 
     fn into_ob11(self) -> DesResult<Self::Output>;
 }
 
 pub trait IntoOB11SegAsync<P> {
-    type Output: Into<ob11message::MessageSeg>;
+    type Output: TryInto<ob11message::MessageSeg>;
 
     fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>>;
 }
