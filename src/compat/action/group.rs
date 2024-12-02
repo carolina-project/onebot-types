@@ -66,6 +66,17 @@ impl FromOB11Resp for Vec<ob12::GroupInfo> {
     }
 }
 
+impl IntoOB11Action for ob12action::SetGroupName {
+    type Output = ob11action::SetGroupName;
+
+    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+        Ok(ob11action::SetGroupName {
+            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
+            group_name: self.group_name,
+        })
+    }
+}
+
 impl IntoOB11Action for ob12action::GetGroupMemberInfo {
     type Output = ob11action::GetGroupMemberInfo;
 
@@ -88,4 +99,3 @@ impl IntoOB11Action for ob12action::GetGroupMemberList {
         })
     }
 }
-

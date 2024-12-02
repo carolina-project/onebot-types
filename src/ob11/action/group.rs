@@ -85,7 +85,8 @@ pub struct SetGroupName {
 #[onebot_action(EmptyResp)]
 pub struct SetGroupLeave {
     pub group_id: i64,
-    pub is_dismiss: Option<bool>,
+    #[serde(default)]
+    pub is_dismiss: bool,
 }
 
 #[onebot_action(EmptyResp)]
@@ -97,18 +98,24 @@ pub struct SetGroupSpecialTitle {
     pub duration: Option<Duration>,
 }
 
+const fn true_v() -> bool {
+    true
+}
+
 #[onebot_action(EmptyResp)]
 pub struct SetGroupAddRequest {
     pub flag: String,
     pub sub_type: AddGroupType,
-    pub approve: Option<bool>,
+    #[serde(default = "true_v")]
+    pub approve: bool,
     pub reason: Option<String>,
 }
 
 #[onebot_action(GroupInfo)]
 pub struct GetGroupInfo {
     pub group_id: i64,
-    pub no_cache: Option<bool>,
+    #[serde(default)]
+    pub no_cache: bool,
 }
 
 #[data]
@@ -126,7 +133,8 @@ pub struct GetGroupList;
 pub struct GetGroupMemberInfo {
     pub group_id: i64,
     pub user_id: i64,
-    pub no_cache: Option<bool>,
+    #[serde(default)]
+    pub no_cache: bool,
 }
 
 #[data]

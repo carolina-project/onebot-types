@@ -76,7 +76,8 @@ actions!(
     GetGroupMemberList,
     GetGroupList,
     GetGroupInfo,
-    SetGroupAddRequest
+    SetGroupAddRequest,
+    GetGroupHonorInfo
 );
 
 #[derive(Copy)]

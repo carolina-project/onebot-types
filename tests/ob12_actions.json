@@ -36,7 +36,7 @@
     {
         "action": "delete_message",
         "params": {
-            "message_id": "2452352435"
+            "message_id": "24523524"
         }
     },
     {
@@ -222,12 +222,6 @@
             "stage": "transfer",
             "offset": 0,
             "size": 100
-        }
-    },
-    {
-        "action": "ob11.set_group_anonymous_ban",
-        "params": {
-            "aaa": "bbb"
         }
     }
 ]

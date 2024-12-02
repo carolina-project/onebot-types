@@ -1,18 +1,22 @@
 use std::fs;
 
 use onebot_types::compat;
+use onebot_types::compat::action::bot::FileType;
+use onebot_types::compat::action::{CompatAction, IntoOB11Action, IntoOB11ActionAsync};
 use onebot_types::compat::event::IntoOB12EventAsync;
 use onebot_types::compat::message::{IntoOB11Seg, IntoOB11SegAsync, IntoOB12Seg, IntoOB12SegAsync};
-use onebot_types::ob11::{self, event as ob11event};
-use onebot_types::ob12::event as ob12event;
+use onebot_types::ob11::{self, action as ob11action, event as ob11event};
+use onebot_types::ob12::{action as ob12action, event as ob12event};
 use onebot_types::{compat::event::IntoOB12Event, ob11::event::EventKind as O11EventKind, ob12};
 use serde::Deserialize;
 use serde_json::Value;
+use serde_value::DeserializerError;
 
 static OB11_MESSAGES: &str = include_str!("ob11_messages.json");
 static OB11_EVENTS: &str = include_str!("ob11_events.json");
 
 static OB12_MESSAGES: &str = include_str!("ob12_messages.json");
+static OB12_ACTIONS: &str = include_str!("ob12_actions.json");
 
 async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
     let id_provider = |_| async { Ok("sadwl".into()) };
@@ -98,11 +102,6 @@ async fn messages_ob11_to_12() {
         messages_converted.push(msg_ob11_to_12(msg).await);
     }
 
-    fs::write(
-        "/tmp/test.json",
-        serde_json::to_string_pretty(&mut messages_converted).unwrap(),
-    )
-    .unwrap()
 }
 
 #[tokio::test]
@@ -146,6 +145,64 @@ async fn events_ob11_to_12() {
                 let event = request.into_ob12("sadwa".to_string()).unwrap();
                 events_converted.push(event);
             }
+        }
+    }
+}
+
+async fn convert_ob12_action(action: ob12action::ActionType) -> Option<ob11action::ActionType> {
+    match action {
+        ob12action::ActionType::GetLatestEvents(_) => None,
+        ob12action::ActionType::GetSupportedActions(_) => None,
+        ob12action::ActionType::GetStatus(status) => Some(status.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetVersion(version) => Some(version.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetSelfInfo(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetUserInfo(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetFriendList(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::SendMessage(action) => Some(
+            action
+                .into_ob11(|msg| async { Ok::<_, DeserializerError>(msg_ob12_to_11(msg).await) })
+                .await
+                .unwrap()
+                .into(),
+        ),
+        ob12action::ActionType::DeleteMessage(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetGroupInfo(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetGroupList(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetGroupMemberInfo(action) => {
+            Some(action.into_ob11(()).unwrap().into())
+        }
+        ob12action::ActionType::GetGroupMemberList(action) => {
+            Some(action.into_ob11(()).unwrap().into())
+        }
+        ob12action::ActionType::SetGroupName(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::LeaveGroup(action) => Some(action.into_ob11(()).unwrap().into()),
+        ob12action::ActionType::GetFile(action) => Some(
+            action
+                .into_ob11(|_| async { FileType::Record("sadwa".into()) })
+                .await
+                .unwrap()
+                .into(),
+        ),
+        ob12action::ActionType::Other(action) => {
+            CompatAction::from_data(&action.action, action.params).unwrap();
+            None
+        }
+        _ => None,
+    }
+}
+
+#[tokio::test]
+async fn ob12_actions_to_11() {
+    let actions: Vec<Value> = serde_json::from_str(OB12_ACTIONS).unwrap();
+
+    let mut actions_converted = Vec::<ob11action::ActionType>::default();
+
+    for (i, ele) in actions.into_iter().enumerate() {
+        println!("#{}: {}", i, serde_json::to_string_pretty(&ele).unwrap());
+        let action = ob12action::ActionType::deserialize(ele).unwrap();
+        if let Some(action) = convert_ob12_action(action).await {
+            println!("converted: {}", serde_json::to_string_pretty(&action).unwrap());
+            actions_converted.push(action);
         }
     }
 }

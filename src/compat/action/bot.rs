@@ -4,22 +4,26 @@ use super::*;
 
 use crate::compat::{compat_self, default_obj};
 
-impl<F, E> IntoOB11Action<F> for ob12action::SendMessage
+impl<F, E, R> IntoOB11ActionAsync<F> for ob12action::SendMessage
 where
-    F: Fn(ob12::MessageSeg) -> Result<ob11::MessageSeg, E>,
+    F: Fn(ob12::MessageSeg) -> R,
     E: std::error::Error,
+    R: Future<Output = Result<ob11::MessageSeg, E>>,
 {
     type Output = ob11action::SendMsg;
 
-    fn into_ob11(self, msg_trans_fn: F) -> DesResult<Self::Output> {
+    async fn into_ob11(self, msg_trans_fn: F) -> DesResult<Self::Output> {
         let message: Vec<_> = {
             let ob12::message::MessageChain::Array(arr) = self.message else {
                 unimplemented!("cq code string")
             };
 
-            arr.into_iter()
-                .map(|e| msg_trans_fn(e).map_err(DeError::custom))
-                .collect::<Result<_, DeserializerError>>()?
+            let mut transformed = vec![];
+            for ele in arr.into_iter() {
+                transformed.push(msg_trans_fn(ele).await.map_err(DeserializerError::custom)?);
+            }
+
+            transformed
         };
 
         Ok(ob11action::SendMsg {
@@ -71,12 +75,15 @@ impl From<OB11GetFile> for ob11action::ActionType {
     }
 }
 
-type DetectFn = Box<dyn FnOnce(&str) -> FileType>;
-impl IntoOB11Action<DetectFn> for ob12action::GetFile {
+impl<F, R> IntoOB11ActionAsync<F> for ob12action::GetFile
+where
+    F: FnOnce(String) -> R,
+    R: Future<Output = FileType>,
+{
     type Output = OB11GetFile;
 
-    fn into_ob11(self, detect_fn: DetectFn) -> DesResult<Self::Output> {
-        let file_type: FileType = detect_fn(&self.file_id);
+    async fn into_ob11(self, detect_fn: F) -> DesResult<Self::Output> {
+        let file_type: FileType = detect_fn(self.file_id).await;
         let mut extra = unwrap_value_map(self.extra)?;
 
         Ok(match file_type {
@@ -145,7 +152,7 @@ impl FromOB11Resp for ob12::VersionInfo {
             r#impl: "ob11".into(),
             version: from.app_version,
             onebot_version: "12".into(),
-            extra: extra.into_value()
+            extra: extra.into_value(),
         })
     }
 }

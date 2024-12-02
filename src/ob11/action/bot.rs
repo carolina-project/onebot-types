@@ -10,11 +10,10 @@ use serde_value::Value;
 use super::EmptyResp;
 
 #[data]
+#[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum ChatTarget {
-    #[serde(rename = "group_id")]
-    Private(i64),
-    #[serde(rename = "user_id")]
-    Group(i64),
+    Private { user_id: i64 },
+    Group { group_id: i64 },
     Unknown,
 }
 

@@ -475,6 +475,14 @@ OneBot11中的请求事件全部转换为拓展事件。
 
 字段均不变。
 
+#### `get_credentials` <- `ob11.get_credentials`
+
+拓展动作，字段均不变。
+
+**响应**
+
+字段均不变。
+
 #### `get_record`, `get_image` <- `get_file`
 
 因为OneBot11协议中获取图片和语音的动作名称不同，所以要根据`file_id`来决定

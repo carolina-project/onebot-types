@@ -25,11 +25,13 @@ impl TryFrom<ob12::ChatTarget> for ob11action::ChatTarget {
 
     fn try_from(value: ob12::ChatTarget) -> Result<Self, Self::Error> {
         match value {
-            ob12::ChatTarget::Private { user_id } => user_id.parse().map(Self::Private),
+            ob12::ChatTarget::Private { user_id } => {
+                user_id.parse().map(|r| Self::Private { user_id: r })
+            }
             ob12::ChatTarget::Group {
                 group_id,
                 user_id: _,
-            } => group_id.parse().map(Self::Group),
+            } => group_id.parse().map(|r| Self::Group { group_id: r }),
             ob12::ChatTarget::Channel {
                 guild_id: _,
                 channel_id: _,
@@ -95,8 +97,8 @@ macro_rules! compat_actions {
                 }
             }
 
-            pub fn from_data(name: &str, data: Value) -> Result<CompatAction, CompatError> {
-                match name {
+            pub fn from_data(name: impl AsRef<str>, data: Value) -> Result<CompatAction, CompatError> {
+                match name.as_ref() {
                     $(concat!("ob11.", $name)
                         => Ok(Deserialize::deserialize(data).map(CompatAction::$ob11action).map_err(DeserializerError::custom)?),)*
                     name => Err(CompatError::UnknownCompat(name.into())),
@@ -121,16 +123,64 @@ impl TryFrom<CompatAction> for ob12action::ActionType {
 compat_actions!(
     GetMsg "get_msg",
     GetForwardMsg "get_forward_msg",
+    SendLike "send_like",
     GetCookies "get_cookies",
     GetCsrfToken "get_csrf_token",
     GetCredentials "get_credentials",
     CanSendImage "can_send_image",
     CanSendRecord "can_send_record",
-    GetStatus "get_status",
-    GetVersionInfo "get_version_info",
     SetRestart "set_restart",
-    CleanCache "clean_cache"
+    CleanCache "clean_cache",
+    SetGroupKick "set_group_kick",
+    SetGroupBan "set_group_ban",
+    SetGroupAnonymousBan "set_group_anonymous_ban",
+    SetGroupWholeBan "set_group_whole_ban",
+    SetGroupAdmin "set_group_admin",
+    SetGroupAnonymous "set_group_anonymous",
+    SetGroupCard "set_group_card",
+    SetGroupSpecialTitle "set_group_special_title",
+    SetFriendAddRequest "set_friend_add_request",
+    SetGroupAddRequest "set_group_add_request",
+    GetGroupHonorInfo "get_group_honor_info"
 );
+
+pub static SUPPORTED_ACTIONS: [&str; 35] = [
+    "send_message",
+    "delete_message",
+    "ob11.get_msg",
+    "ob11.get_forward_msg",
+    "ob11.send_like",
+    "ob11.set_group_kick",
+    "ob11.set_group_ban",
+    "ob11.set_group_anonymous_ban",
+    "ob11.set_group_whole_ban",
+    "ob11.set_group_admin",
+    "ob11.set_group_anonymous",
+    "ob11.set_group_card",
+    "set_group_name",
+    "leave_group",
+    "ob11.set_group_special_title",
+    "ob11.set_friend_add_request",
+    "ob11.set_group_add_request",
+    "get_self_info",
+    "get_user_info",
+    "get_friend_list",
+    "get_group_info",
+    "get_group_list",
+    "get_group_member_info",
+    "get_group_member_list",
+    "ob11.get_group_honor_info",
+    "ob11.get_cookies",
+    "ob11.get_csrf_token",
+    "ob11.get_credentials",
+    "get_file",
+    "ob11.can_send_image",
+    "ob11.can_send_record",
+    "get_status",
+    "get_version",
+    "ob11.set_restart",
+    "ob11.clean_cache",
+];
 
 #[inline]
 pub(self) fn unwrap_value_map(value: Value) -> DesResult<ValueMap> {

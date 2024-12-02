@@ -18,17 +18,24 @@ pub struct SendLike {
     pub times: Option<u16>,
 }
 
+const fn true_value() -> bool {
+    true
+}
+
 #[onebot_action(EmptyResp)]
 pub struct SetFriendAddRequest {
     pub flag: String,
-    pub approve: Option<bool>,
+    #[serde(default = "true_value")]
+    pub approve: bool,
+    #[serde(default)]
     pub remark: Option<String>,
 }
 
 #[onebot_action(StrangerInfoResp)]
 pub struct GetStrangerInfo {
     pub user_id: i64,
-    pub no_cache: Option<bool>,
+    #[serde(default)]
+    pub no_cache: bool,
 }
 
 #[data]

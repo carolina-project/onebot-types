@@ -60,6 +60,12 @@ macro_rules! actions {
     };
 }
 
+impl From<ActionTypeRaw> for ActionType {
+    fn from(value: ActionTypeRaw) -> Self {
+        Self::Other(value)
+    }
+}
+
 actions!(
     // Meta actions
     GetLatestEvents,
