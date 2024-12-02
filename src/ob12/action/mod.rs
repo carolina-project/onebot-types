@@ -15,6 +15,7 @@ pub use group::*;
 pub use guild::*;
 pub use message::*;
 pub use meta::*;
+use thiserror::Error;
 pub use user::*;
 
 use super::scalable_struct;
@@ -125,7 +126,7 @@ pub struct RespData<T: OBRespData> {
     pub echo: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Error)]
 pub struct RespError {
     pub retcode: RetCode,
     pub message: String,
