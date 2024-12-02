@@ -123,6 +123,13 @@ pub struct RespData<T: OBRespData> {
     pub echo: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct RespError {
+    pub retcode: RetCode,
+    pub message: String,
+    pub echo: Option<String>,
+}
+
 scalable_struct! {
     EmptyResp
 }
