@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use ob_types_base::{OBAction, OBRespData};
 use ob_types_macro::data;
 
@@ -128,6 +130,18 @@ pub struct RespError {
     pub retcode: RetCode,
     pub message: String,
     pub echo: Option<String>,
+}
+
+impl Display for RespError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "RespError {{ retcode: {}, message: {}, echo: {} }}",
+            self.retcode.to_code(),
+            self.message,
+            self.echo.clone().unwrap_or_else(|| "null".into())
+        )
+    }
 }
 
 scalable_struct! {
