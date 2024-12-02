@@ -4,10 +4,12 @@ use std::borrow::Cow;
 
 pub use error::OBResult;
 
-pub mod tool;
 pub mod ext;
+pub mod tool;
 
-pub trait OBRespData {}
+pub trait OBRespData: serde::de::DeserializeOwned + serde::Serialize {}
+
+impl<T: serde::de::DeserializeOwned + serde::Serialize> OBRespData for T {}
 
 pub trait OBAction {
     const ACTION: Option<&'static str> = None;
@@ -27,8 +29,6 @@ pub struct ActionRaw<'a> {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct RespRaw(#[allow(dead_code)] serde_value::Value);
-
-impl<T: serde::de::DeserializeOwned + serde::Serialize> OBRespData for T {}
 
 impl<'a> OBAction for ActionRaw<'a> {
     type Resp = RespRaw;

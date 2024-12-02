@@ -1,4 +1,3 @@
-use ob_types_base::OBRespData;
 use ob_types_macro::data;
 
 mod bot;
@@ -90,9 +89,9 @@ pub enum RespStatus {
 }
 
 #[data]
-pub struct RespData<T: OBRespData> {
+pub struct RespData {
     pub status: RespStatus,
     pub retcode: i64,
-    pub data: T,
+    pub data: serde_value::Value,
     pub echo: Option<String>,
 }

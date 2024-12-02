@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use ob_types_base::{OBAction, OBRespData};
+use ob_types_base::OBAction;
 use ob_types_macro::data;
 
 mod file;
@@ -118,10 +118,10 @@ pub enum RespStatus {
 }
 
 #[data]
-pub struct RespData<T: OBRespData> {
+pub struct RespData {
     pub status: RespStatus,
     pub retcode: RetCode,
-    pub data: T,
+    pub data: serde_value::Value,
     pub message: String,
     pub echo: Option<String>,
 }
