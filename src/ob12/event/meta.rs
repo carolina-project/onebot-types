@@ -1,4 +1,5 @@
 use ob_types_macro::data;
+use crate::ValueMap;
 
 use super::EventType;
 use crate::ob12::{Status, VersionInfo};
@@ -21,7 +22,7 @@ macro_rules! meta_kinds {
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
-                pub extra: serde_value::Value,
+                pub extra: crate::ValueMap,
             }
         )*
 
@@ -46,7 +47,7 @@ macro_rules! meta_kinds {
             Other {
                 detail_type: String,
                 #[serde(flatten)]
-                data: serde_value::Value,
+                data: ValueMap,
             },
         }
     };

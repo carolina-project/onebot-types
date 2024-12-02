@@ -26,7 +26,7 @@ mod macros {
                         pub $field: $f_ty,
                     )*)?
                 #[serde(flatten)]
-                pub extra: serde_value::Value,
+                pub extra: $crate::ValueMap,
             }
 
             $crate::scalable_struct! {
@@ -52,7 +52,7 @@ mod macros {
                     )*
                 )?
                 #[serde(flatten)]
-                pub extra: serde_value::Value,
+                pub extra: $crate::ValueMap,
             }
 
             $crate::scalable_struct! {

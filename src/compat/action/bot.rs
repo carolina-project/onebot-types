@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::*;
 
-use crate::compat::{compat_self, default_obj};
+use crate::compat::compat_self;
 
 impl<F, E, R> IntoOB11ActionAsync<F> for ob12action::SendMessage
 where
@@ -49,7 +49,7 @@ impl FromOB11Resp<Duration> for ob12action::SendMessageResp {
         Ok(Self {
             message_id: from.message_id.to_string(),
             time,
-            extra: default_obj(),
+            extra: Default::default(),
         })
     }
 }
@@ -83,16 +83,17 @@ where
     type Output = OB11GetFile;
 
     async fn into_ob11(self, detect_fn: F) -> DesResult<Self::Output> {
-        let file_type: FileType = detect_fn(self.file_id).await;
-        let mut extra = unwrap_value_map(self.extra)?;
+        let ob12action::GetFile {
+            file_id,
+            r#type: _,
+            mut extra,
+        } = self;
+        let file_type: FileType = detect_fn(file_id).await;
 
         Ok(match file_type {
             FileType::Record(file) => OB11GetFile::GetRecord(ob11action::GetRecord {
                 file,
-                out_format: remove_field(&mut extra, "ob11.out_format")
-                    .unwrap_or_else(|| Ok(Value::String("mp3".into())))?
-                    .try_into_string()
-                    .ok_or_else(|| DeserializerError::custom("invalid type"))?,
+                out_format: remove_field_or(&mut extra, "ob11.out_format", || "mp3".into())?,
             }),
             FileType::Image(file) => OB11GetFile::GetImage(ob11action::GetImage { file }),
             FileType::Unknown => return Err(DeserializerError::custom("unknown file type")),
@@ -110,19 +111,15 @@ impl IntoOB11Action for ob12action::GetStatus {
 impl FromOB11Resp<String> for ob12::BotState {
     type In = ob11action::Status;
     fn from_ob11(from: Self::In, self_id: String) -> DesResult<Self> {
-        let extra: ValueMap = unwrap_value_map(from.extra)?
+        let extra: ValueMap = from
+            .extra
             .into_iter()
-            .map(|(k, v)| {
-                let k = k
-                    .try_into_string()
-                    .ok_or_else(|| DeserializerError::custom("invalid type, expected string"))?;
-                Ok((Value::String("ob11.extra.".to_owned() + &k), v))
-            })
+            .map(|(k, v)| Ok(("ob11.extra.".to_owned() + &k, v)))
             .collect::<Result<_, DeserializerError>>()?;
         Ok(ob12::BotState {
             self_: compat_self(self_id),
             online: from.online,
-            extra: extra.into_value(),
+            extra,
         })
     }
 }
@@ -139,20 +136,16 @@ impl FromOB11Resp for ob12::VersionInfo {
     type In = ob11action::VersionInfo;
 
     fn from_ob11(from: Self::In, _: ()) -> DesResult<Self> {
-        let extra: ValueMap = unwrap_value_map(from.extra)?
+        let extra: ValueMap = from
+            .extra
             .into_iter()
-            .map(|(k, v)| {
-                let k = k
-                    .try_into_string()
-                    .ok_or_else(|| DeserializerError::custom("invalid type, expected string"))?;
-                Ok((Value::String("ob11.extra.".to_owned() + &k), v))
-            })
-            .collect::<Result<_, DeserializerError>>()?;
+            .map(|(k, v)| ("ob11.extra.".to_owned() + &k, v))
+            .collect();
         Ok(ob12::VersionInfo {
             r#impl: "ob11".into(),
             version: from.app_version,
             onebot_version: "12".into(),
-            extra: extra.into_value(),
+            extra,
         })
     }
 }

@@ -3,7 +3,7 @@ use super::*;
 impl IntoOB11Action for ob12action::LeaveGroup {
     type Output = ob11action::SetGroupLeave;
     fn into_ob11(self, _: ()) -> crate::DesResult<Self::Output> {
-        let mut map = unwrap_value_map(self.extra)?;
+        let mut map = self.extra;
         Ok(ob11action::SetGroupLeave {
             group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
             is_dismiss: remove_field_or_default(&mut map, "ob11.is_dismiss")?,
@@ -15,7 +15,7 @@ impl IntoOB11Action for ob12action::GetGroupInfo {
     type Output = ob11action::GetGroupInfo;
 
     fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
-        let mut map = unwrap_value_map(self.extra)?;
+        let mut map = self.extra;
         Ok(ob11action::GetGroupInfo {
             group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
             no_cache: remove_field_or_default(&mut map, "ob11.no_cache")?,
@@ -33,13 +33,11 @@ impl FromOB11Resp for ob12::GroupInfo {
             member_count,
             max_member_count,
         } = from;
-        let extra = Value::from_map(
-            [
-                ("ob11.member_count", member_count.into_value()),
-                ("ob11.max_member_count", max_member_count.into_value()),
-            ]
-            .into(),
-        );
+        let extra = [
+            ("ob11.member_count", member_count.into_value()),
+            ("ob11.max_member_count", max_member_count.into_value()),
+        ]
+        .into_map();
         Ok(Self {
             group_id: group_id.to_string(),
             group_name,
@@ -81,7 +79,7 @@ impl IntoOB11Action for ob12action::GetGroupMemberInfo {
     type Output = ob11action::GetGroupMemberInfo;
 
     fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
-        let mut map = unwrap_value_map(self.extra)?;
+        let mut map = self.extra;
         Ok(ob11action::GetGroupMemberInfo {
             group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
             user_id: self.user_id.parse().map_err(DeserializerError::custom)?,

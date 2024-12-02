@@ -1,20 +1,67 @@
-use crate::ob11::{
-    event::message::{GroupSender, PrivateSender},
-    message::{MessageChain, MessageSeg},
+use crate::{
+    ob11::{
+        event::message::{GroupSender, PrivateSender},
+        message::{MessageChain, MessageSeg},
+    },
+    ValueMap,
 };
 #[allow(unused)]
 use ob_types_base::OBRespData;
 use ob_types_macro::{data, onebot_action};
-use serde_value::Value;
 
 use super::EmptyResp;
 
-#[data]
+#[derive(Debug, serde::Serialize, Clone)]
 #[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum ChatTarget {
     Private { user_id: i64 },
     Group { group_id: i64 },
     Unknown,
+}
+
+impl<'de> serde::Deserialize<'de> for ChatTarget {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "snake_case")]
+        enum ChatType {
+            Private,
+            Group,
+        }
+        #[derive(serde::Deserialize)]
+        struct Helper {
+            message_type: Option<ChatType>,
+            user_id: Option<i64>,
+            group_id: Option<i64>,
+        }
+
+        let Helper {
+            message_type,
+            user_id,
+            group_id,
+        } = Helper::deserialize(deserializer)?;
+        if let Some(chat_type) = message_type {
+            match chat_type {
+                ChatType::Private => Ok(ChatTarget::Private {
+                    user_id: user_id.ok_or_else(|| serde::de::Error::missing_field("user_id"))?,
+                }),
+                ChatType::Group => Ok(ChatTarget::Group {
+                    group_id: group_id
+                        .ok_or_else(|| serde::de::Error::missing_field("group_id"))?,
+                }),
+            }
+        } else {
+            if let Some(user_id) = user_id {
+                Ok(ChatTarget::Private { user_id })
+            } else if let Some(group_id) = group_id {
+                Ok(ChatTarget::Group { group_id })
+            } else {
+                Err(serde::de::Error::missing_field("message_type or *_id"))
+            }
+        }
+    }
 }
 
 #[onebot_action(MessageResp)]
@@ -61,13 +108,19 @@ mod serde_impl_get {
     use crate::ob11::{action::bot::MessageSender, MessageSeg};
 
     #[derive(Deserialize)]
-    struct DeHelper<'a> {
+    #[serde(rename_all = "snake_case")]
+    pub enum MsgType {
+        Private,
+        Group,
+    }
+    #[derive(Deserialize)]
+    struct DeHelper {
         time: u32,
         message_id: i32,
         real_id: i32,
         sender: Value,
         message: Vec<MessageSeg>,
-        message_type: &'a str,
+        message_type: MsgType,
     }
     #[derive(Serialize)]
     struct SerHelper<'a> {
@@ -86,24 +139,29 @@ mod serde_impl_get {
         {
             let value = DeHelper::deserialize(deserializer)?;
 
-            let sender: MessageSender = match value.message_type {
-                "private" => Deserialize::deserialize(value.sender)
+            let DeHelper {
+                time,
+                message_id,
+                real_id,
+                sender,
+                message,
+                message_type,
+            } = value;
+
+            let sender: MessageSender = match message_type {
+                MsgType::Private => Deserialize::deserialize(sender)
                     .map(MessageSender::Private)
                     .map_err(serde::de::Error::custom)?,
-                "group" => Deserialize::deserialize(value.sender)
+                MsgType::Group => Deserialize::deserialize(sender)
                     .map(MessageSender::Group)
                     .map_err(serde::de::Error::custom)?,
-                t => Err(serde::de::Error::custom(format!(
-                    "unkown message type: {}",
-                    t
-                )))?,
             };
             Ok(Self {
-                time: value.time,
-                message_id: value.message_id,
-                real_id: value.real_id,
+                time,
+                message_id,
+                real_id,
                 sender,
-                message: value.message,
+                message,
             })
         }
     }
@@ -213,7 +271,7 @@ pub struct Status {
     pub online: bool,
     pub good: bool,
     #[serde(flatten)]
-    pub extra: Value,
+    pub extra: ValueMap,
 }
 
 #[onebot_action(VersionInfo)]
@@ -225,7 +283,7 @@ pub struct VersionInfo {
     pub app_version: String,
     pub protocol_version: String,
     #[serde(flatten)]
-    pub extra: Value,
+    pub extra: ValueMap,
 }
 
 #[onebot_action(EmptyResp)]

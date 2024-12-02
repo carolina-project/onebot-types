@@ -118,7 +118,7 @@ async fn events_ob11_to_12() {
                         r#impl: Default::default(),
                         version: Default::default(),
                         onebot_version: Default::default(),
-                        extra: serde_value::Value::Map(Default::default()),
+                        extra: Default::default(),
                     })
                     .unwrap();
                 println!("{:?}", event);

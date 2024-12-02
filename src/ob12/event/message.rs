@@ -1,4 +1,7 @@
-use crate::ob12::{message::MessageChain, BotSelf, ChatTarget};
+use crate::{
+    ob12::{message::MessageChain, BotSelf, ChatTarget},
+    ValueMap,
+};
 
 #[derive(serde::Serialize, Debug, Clone)]
 pub struct MessageEvent {
@@ -11,7 +14,7 @@ pub struct MessageEvent {
     #[serde(flatten)]
     pub source: ChatTarget,
     #[serde(flatten)]
-    pub extra: serde_value::Value,
+    pub extra: ValueMap,
 }
 
 impl From<MessageEvent> for super::EventType {
@@ -21,11 +24,12 @@ impl From<MessageEvent> for super::EventType {
 }
 
 mod serde_impl {
-    use std::collections::BTreeMap;
 
-    use crate::ob12::{message::MessageChain, BotSelf, ChatTarget, CHAT_TARGET_FIELDS};
+    use crate::{
+        ob12::{message::MessageChain, BotSelf, ChatTarget, CHAT_TARGET_FIELDS},
+        ValueMap,
+    };
     use serde::Deserialize;
-    use serde_value::Value;
 
     #[derive(Deserialize)]
     pub struct DeHelper {
@@ -38,7 +42,7 @@ mod serde_impl {
         #[serde(flatten)]
         pub source: ChatTarget,
         #[serde(flatten)]
-        pub extra: BTreeMap<Value, Value>,
+        pub extra: ValueMap,
     }
 
     use super::MessageEvent;
@@ -46,18 +50,16 @@ mod serde_impl {
         fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let mut helper = DeHelper::deserialize(deserializer)?;
 
-            let extra: Value = match helper.source {
+            let extra = match helper.source {
                 ChatTarget::Other { detail_type: _ } => {
-                    helper
-                        .extra
-                        .remove_entry(&Value::String("detail_type".into()));
-                    Value::Map(helper.extra)
+                    helper.extra.remove_entry("detail_type");
+                    helper.extra
                 }
                 _ => {
                     for ele in CHAT_TARGET_FIELDS {
-                        helper.extra.remove(&Value::String((*ele).to_owned()));
+                        helper.extra.remove(*ele);
                     }
-                    Value::Map(helper.extra)
+                    helper.extra
                 }
             };
             Ok(Self {

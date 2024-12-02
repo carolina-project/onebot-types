@@ -42,7 +42,7 @@ macro_rules! notice_kinds {
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
-                pub extra: serde_value::Value,
+                pub extra: crate::ValueMap,
             }
 
             impl From<$kind> for NoticeKind {

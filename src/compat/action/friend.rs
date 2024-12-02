@@ -22,10 +22,10 @@ impl IntoOB11Action for ob12action::GetSelfInfo {
 impl IntoOB11Action for ob12action::GetUserInfo {
     type Output = ob11action::GetStrangerInfo;
     fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
-        let mut extra = unwrap_value_map(self.extra)?;
+        let mut map = self.extra;
         Ok(ob11action::GetStrangerInfo {
             user_id: self.user_id.parse().map_err(DeserializerError::custom)?,
-            no_cache: remove_field_or_default(&mut extra, "ob11.no_cache")?,
+            no_cache: remove_field_or_default(&mut map, "ob11.no_cache")?,
         })
     }
 }

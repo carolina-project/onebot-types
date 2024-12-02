@@ -6,15 +6,13 @@ pub(self) use crate::ob11::action as ob11action;
 pub(self) use crate::ob12::action as ob12action;
 pub(self) use crate::{ob11, ob12};
 use crate::{DesResult, ValueMap};
-use ob_types_base::ext::{IntoValue, ValueExt};
+use ob_types_base::ext::{IntoValue, ValueMapExt};
 use ob_types_base::OBRespData;
 use ob_types_macro::data;
 pub(self) use serde::de::Error as DeError;
 use serde::Deserialize;
 pub(self) use serde_value::DeserializerError;
 pub(self) use serde_value::Value;
-
-use super::default_obj;
 
 pub mod bot;
 pub mod friend;
@@ -183,19 +181,11 @@ pub static SUPPORTED_ACTIONS: [&str; 35] = [
 ];
 
 #[inline]
-pub(self) fn unwrap_value_map(value: Value) -> DesResult<ValueMap> {
-    match value {
-        serde_value::Value::Map(map) => Ok(map),
-        _ => Err(DeserializerError::custom("invalid value, expected map")),
-    }
-}
-
-#[inline]
 fn remove_field_or_default<'a, T: serde::Deserialize<'a> + Default>(
     map: &mut ValueMap,
     key: &str,
 ) -> DesResult<T> {
-    if let Some(r) = map.remove(&Value::String(key.into())) {
+    if let Some(r) = map.remove(key.into()) {
         T::deserialize(r)
     } else {
         Ok(T::default())
@@ -203,14 +193,28 @@ fn remove_field_or_default<'a, T: serde::Deserialize<'a> + Default>(
 }
 
 #[inline]
+#[allow(unused)]
 fn remove_field<'a, T: serde::Deserialize<'a>>(
     map: &mut ValueMap,
     key: &str,
 ) -> Option<DesResult<T>> {
-    if let Some(r) = map.remove(&Value::String(key.into())) {
+    if let Some(r) = map.remove(key.into()) {
         Some(T::deserialize(r))
     } else {
         None
+    }
+}
+
+#[inline]
+fn remove_field_or<'a, T: serde::Deserialize<'a>>(
+    map: &mut ValueMap,
+    key: &str,
+    or: impl FnOnce() -> T,
+) -> DesResult<T> {
+    if let Some(r) = map.remove(key.into()) {
+        T::deserialize(r)
+    } else {
+        Ok(or())
     }
 }
 
@@ -237,7 +241,7 @@ impl FromOB11Resp for ob12::UserInfo {
                     user_id,
                     user_display_name,
                     user_remark: None,
-                    extra: default_obj(),
+                    extra: Default::default(),
                 })
             }
             UserInfoResp::StrangerInfo(ob11action::StrangerInfoResp {
@@ -247,16 +251,14 @@ impl FromOB11Resp for ob12::UserInfo {
                 age,
             }) => {
                 let user_id = user_id.to_string();
-                let extra = Value::from_map(
-                    [
-                        (
-                            "ob11.sex",
-                            serde_value::to_value(sex).map_err(DeserializerError::custom)?,
-                        ),
-                        ("ob11.age", age.into_value()),
-                    ]
-                    .into(),
-                );
+                let extra = [
+                    (
+                        "ob11.sex",
+                        serde_value::to_value(sex).map_err(DeserializerError::custom)?,
+                    ),
+                    ("ob11.age", age.into_value()),
+                ]
+                .into_map();
                 Ok(Self {
                     user_name: user_id.clone(),
                     user_id,
@@ -276,7 +278,7 @@ impl FromOB11Resp for ob12::UserInfo {
                     user_id,
                     user_display_name,
                     user_remark: Some(remark),
-                    extra: default_obj(),
+                    extra: Default::default(),
                 })
             }
             UserInfoResp::GroupMemberInfo(ob11action::GroupMemberInfo {
@@ -302,22 +304,20 @@ impl FromOB11Resp for ob12::UserInfo {
                 ) -> Result<Value, serde_value::DeserializerError> {
                     serde_value::to_value(v).map_err(DeserializerError::custom)
                 }
-                let extra = Value::from_map(
-                    [
-                        ("ob11.sex", to_value(sex)?),
-                        ("ob11.age", age.into_value()),
-                        ("ob11.area", area.into_value()),
-                        ("ob11.join_time", join_time.into_value()),
-                        ("ob11.last_sent_time", last_sent_time.into_value()),
-                        ("ob11.level", level.into_value()),
-                        ("ob11.role", role.into_value()),
-                        ("ob11.unfriendly", unfriendly.into_value()),
-                        ("ob11.title", title.into_value()),
-                        ("ob11.title_expire_time", title_expire_time.into_value()),
-                        ("ob11.card_changeable", card_changeable.into_value()),
-                    ]
-                    .into(),
-                );
+                let extra = [
+                    ("ob11.sex", to_value(sex)?),
+                    ("ob11.age", age.into_value()),
+                    ("ob11.area", area.into_value()),
+                    ("ob11.join_time", join_time.into_value()),
+                    ("ob11.last_sent_time", last_sent_time.into_value()),
+                    ("ob11.level", level.into_value()),
+                    ("ob11.role", role.into_value()),
+                    ("ob11.unfriendly", unfriendly.into_value()),
+                    ("ob11.title", title.into_value()),
+                    ("ob11.title_expire_time", title_expire_time.into_value()),
+                    ("ob11.card_changeable", card_changeable.into_value()),
+                ]
+                .into_map();
 
                 Ok(Self {
                     user_id: user_id.to_string(),

@@ -127,8 +127,8 @@ impl From<CompatSegment> for ob12message::MessageSeg {
 pub mod ob11to12 {
     use std::future::Future;
 
-    use crate::{compat::default_obj, ValueMap};
-    use serde::{ser::Error, Serialize};
+    use crate::ValueMap;
+    use serde::ser::Error;
 
     use super::*;
     use ob12message::*;
@@ -143,46 +143,39 @@ pub mod ob11to12 {
             match value {
                 OB12Mention::Mention(m) => MessageSeg::Mention(m),
                 OB12Mention::MentionAll => MessageSeg::MentionAll(MentionAll {
-                    extra: default_obj(),
+                    extra: Default::default(),
                 }),
             }
         }
     }
 
     #[inline]
-    fn unwrap_value_map(value: Value) -> SerResult<ValueMap> {
-        match value {
-            serde_value::Value::Map(map) => Ok(map),
-            _ => Err(serde_value::SerializerError::custom(
-                "invalid value, expected map",
-            )),
-        }
-    }
-
-    #[inline]
-    fn to_map<T: Serialize>(value: T) -> SerResult<ValueMap> {
-        serde_value::to_value(value).and_then(unwrap_value_map)
-    }
-
-    #[inline]
     fn remove_field(map: &mut ValueMap, key: &str) -> SerResult<Value> {
-        map.remove(&Value::String(key.into()))
+        map.remove(key)
             .ok_or_else(|| serde_value::SerializerError::custom(format!("missing field {}", key)))
     }
 
     #[inline]
-    fn rename_ob11_field(map: ValueMap) -> Value {
-        Value::Map(
+    fn rename_ob11_field(map: ValueMap) -> ValueMap {
+        map.into_iter()
+            .map(|(k, v)| ("ob11.".to_owned() + &k, v))
+            .collect::<ValueMap>()
+    }
+
+    fn serialize_into_map<T: serde::Serialize>(value: T) -> SerResult<ValueMap> {
+        let v = serde_value::to_value(value)?;
+        if let Value::Map(map) = v {
             map.into_iter()
-                .filter_map(|(k, v)| {
-                    if let Value::String(k) = k {
-                        Some((Value::String("ob11.".to_owned() + &k), v))
-                    } else {
-                        None
-                    }
+                .map(|(k, v)| {
+                    let Value::String(k) = k else {
+                        return Err(serde_value::SerializerError::custom("expected string key"));
+                    };
+                    Ok((k, v))
                 })
-                .collect::<ValueMap>(),
-        )
+                .collect()
+        } else {
+            Err(SerializerError::custom("expected map"))
+        }
     }
 
     impl IntoOB12Seg for ob11message::Text {
@@ -191,7 +184,7 @@ pub mod ob11to12 {
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
             Ok(Text {
                 text: self.text,
-                extra: default_obj(),
+                extra: Default::default(),
             })
         }
     }
@@ -203,7 +196,7 @@ pub mod ob11to12 {
     {
         type Output = Image;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            let mut value = to_map(self)?;
+            let mut value = serialize_into_map(self)?;
             let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
@@ -221,7 +214,7 @@ pub mod ob11to12 {
     {
         type Output = Voice;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            let mut value = to_map(self)?;
+            let mut value = serialize_into_map(self)?;
             let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
@@ -239,7 +232,7 @@ pub mod ob11to12 {
     {
         type Output = Video;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            let mut value = to_map(self)?;
+            let mut value = serialize_into_map(self)?;
             let Value::String(file) = remove_field(&mut value, "file")? else {
                 return Err(serde_value::SerializerError::custom("missing field file"));
             };
@@ -264,7 +257,7 @@ pub mod ob11to12 {
             Ok(match self {
                 ob11message::AtTarget::QQ(id) => OB12Mention::Mention(ob12message::Mention {
                     user_id: id.to_string(),
-                    extra: default_obj(),
+                    extra: Default::default(),
                 }),
                 ob11message::AtTarget::All => OB12Mention::MentionAll,
             })
@@ -280,7 +273,7 @@ pub mod ob11to12 {
                 longitude: self.lon,
                 title: self.title.unwrap_or_else(|| "OneBot 11 Title".into()),
                 content: self.content.unwrap_or_else(|| "OneBot 11 Content".into()),
-                extra: default_obj(),
+                extra: Default::default(),
             })
         }
     }
@@ -292,7 +285,7 @@ pub mod ob11to12 {
             Ok(ob12message::Reply {
                 message_id: self.id.to_string(),
                 user_id: param,
-                extra: default_obj(),
+                extra: Default::default(),
             })
         }
     }
@@ -301,13 +294,12 @@ pub mod ob11to12 {
 pub mod ob12to11 {
     use super::*;
     use ob11message::*;
-    use ob_types_base::ext::IntoValue;
     use serde::de::Error;
 
     #[inline]
     #[allow(unused)]
     fn remove_field<'a, T: Deserialize<'a>>(map: &mut ValueMap, key: &str) -> DesResult<T> {
-        map.remove(&Value::String(key.into()))
+        map.remove(key)
             .ok_or_else(|| serde_value::DeserializerError::custom(format!("missing field {}", key)))
             .and_then(|r| T::deserialize(r))
     }
@@ -317,7 +309,7 @@ pub mod ob12to11 {
         map: &mut ValueMap,
         key: &str,
     ) -> DesResult<T> {
-        if let Some(r) = map.remove(&Value::String(key.into())) {
+        if let Some(r) = map.remove(key) {
             T::deserialize(r)
         } else {
             Ok(T::default())
@@ -325,42 +317,30 @@ pub mod ob12to11 {
     }
 
     fn remove_field_bool(map: &mut ValueMap, key: &str) -> DesResult<bool> {
-        if let Some(r) = map.remove(&Value::String(key.into())) {
+        if let Some(r) = map.remove(key) {
             ob_types_base::tool::str_bool::deserialize(r)
         } else {
             Ok(bool::default())
         }
     }
 
-    #[inline]
-    fn unwrap_value_map(value: Value) -> DesResult<ValueMap> {
-        match value {
-            serde_value::Value::Map(map) => Ok(map),
-            _ => Err(serde_value::DeserializerError::custom(
-                "invalid value, expected map",
-            )),
-        }
-    }
-
-    #[inline]
-    fn rename_ob12_extra(extra: Value) -> DesResult<ValueMap> {
-        unwrap_value_map(extra).map(rename_ob12_field)
-    }
-
     fn rename_ob12_field(map: ValueMap) -> ValueMap {
         map.into_iter()
-            .filter_map(|(k, v)| {
-                if let Value::String(k) = k {
-                    if k.starts_with("ob11.") {
-                        Some((Value::String(k[5..].to_owned()), v))
-                    } else {
-                        None
-                    }
+            .map(|(k, v)| {
+                if k.starts_with("ob11.") {
+                    (k[5..].to_owned(), v)
                 } else {
-                    None
+                    (k, v)
                 }
             })
             .collect::<ValueMap>()
+    }
+
+    #[inline]
+    fn deserialize_map<'de, T: serde::Deserialize<'de>>(value: ValueMap) -> DesResult<T> {
+        serde_value::to_value(value)
+            .map_err(DeserializerError::custom)
+            .and_then(T::deserialize)
     }
 
     impl IntoOB11Seg for ob12message::Text {
@@ -399,12 +379,12 @@ pub mod ob12to11 {
         type Output = Image;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
-            let mut extra = rename_ob12_extra(self.extra)?;
+            let mut extra = rename_ob12_field(self.extra);
             let r#type: ImageType = remove_field_or_default(&mut extra, "type")?;
             Ok(Image {
                 file: trans_fn(self.file_id).await?,
                 r#type,
-                option: Deserialize::deserialize(extra.into_value())?,
+                option: deserialize_map(extra)?,
             })
         }
     }
@@ -417,12 +397,14 @@ pub mod ob12to11 {
         type Output = Record;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
-            let mut extra = rename_ob12_extra(self.extra)?;
+            let mut extra = rename_ob12_field(self.extra);
             let file = trans_fn(self.file_id).await?;
             Ok(Record {
                 file,
                 magic: remove_field_bool(&mut extra, "magic")?,
-                option: Deserialize::deserialize(extra.into_value())?,
+                option: Deserialize::deserialize(
+                    serde_value::to_value(extra).map_err(DeserializerError::custom)?,
+                )?,
             })
         }
     }
@@ -435,11 +417,11 @@ pub mod ob12to11 {
         type Output = Video;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
-            let extra = rename_ob12_extra(self.extra)?;
+            let extra = rename_ob12_field(self.extra);
             let file = trans_fn(self.file_id).await?;
             Ok(Video {
                 file,
-                option: Deserialize::deserialize(extra.into_value())?,
+                option: deserialize_map(extra)?,
             })
         }
     }

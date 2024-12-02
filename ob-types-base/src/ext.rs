@@ -156,3 +156,16 @@ impl ValueExt for Value {
         }
     }
 }
+
+pub trait ValueMapExt {
+    fn into_map(self) -> BTreeMap<String, Value>;
+}
+
+impl<const N: usize, K> ValueMapExt for [(K, Value); N]
+where
+    K: Into<String>,
+{
+    fn into_map(self) -> BTreeMap<String, Value> {
+        self.into_iter().map(|(k, v)| (k.into(), v)).collect()
+    }
+}

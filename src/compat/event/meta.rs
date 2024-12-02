@@ -1,4 +1,4 @@
-use crate::{compat::default_obj, DesResult};
+use crate::DesResult;
 
 use super::*;
 use ob12event::meta;
@@ -34,7 +34,7 @@ impl From<CompatLifecycle> for ob12event::EventType {
                     .expect("invalid type"),
                 kind: meta::MetaKind::Other {
                     detail_type: "ob11.lifecycle".into(),
-                    data: default_obj(),
+                    data: Default::default(),
                 },
             },
         })
@@ -78,7 +78,7 @@ pub mod ob11to12 {
                                     .ok_or_else(|| serde::ser::Error::custom("invalid type"))?,
                                 kind: MetaKind::Other {
                                     detail_type: "ob11.lifecycle".into(),
-                                    data: default_obj(),
+                                    data: Default::default(),
                                 },
                             }),
                             None,
@@ -107,7 +107,7 @@ pub mod ob11to12 {
                 meta::LifeCycle::Disable => CompatLifecycle::Lifecycle(LifeCycle::Disable),
                 meta::LifeCycle::Connect => CompatLifecycle::Connect(Connect {
                     version: param.clone(),
-                    extra: default_obj(),
+                    extra: Default::default(),
                 }),
             })
         }
@@ -121,7 +121,7 @@ pub mod ob11to12 {
             Ok((
                 Heartbeat {
                     interval: self.interval,
-                    extra: default_obj(),
+                    extra: Default::default(),
                 },
                 self.status,
             ))

@@ -43,11 +43,12 @@ impl CompatGroupNotice {
 
 pub mod ob11to12 {
     use ob11event::notice::*;
-    use ob_types_base::ext::{IntoValue, ValueExt};
+    use ob_types_base::ext::ValueMapExt;
+    use ob_types_base::ext::IntoValue;
     use serde::ser::Error;
     use serde_value::Value;
 
-    use crate::compat::{compat_self, default_obj};
+    use crate::compat::compat_self;
     use crate::ob12;
 
     use ob12event::notice::NoticeKind as O12NoticeKind;
@@ -61,14 +62,13 @@ pub mod ob11to12 {
         fn from(value: GroupUploadFile) -> Self {
             Self {
                 file_id: value.id,
-                extra: Value::from_map(
+                extra: 
                     [
                         ("ob11.name", value.name.into_value()),
                         ("ob11.size", value.size.into_value()),
                         ("ob11.busid", value.busid.into_value()),
                     ]
-                    .into(),
-                ),
+                    .into_map(),
             }
         }
     }
@@ -132,7 +132,7 @@ pub mod ob11to12 {
                 group_id,
                 user_id: Some(user_id),
             },
-            extra: default_obj(),
+            extra: Default::default(),
         }))
     }
 
@@ -197,7 +197,7 @@ pub mod ob11to12 {
                                 group_id: group_id.to_string(),
                                 user_id: user_id.to_string(),
                                 operator_id: operator_id.to_string(),
-                                extra: default_obj(),
+                                extra: Default::default(),
                             }
                             .into(),
                         })),
@@ -211,7 +211,7 @@ pub mod ob11to12 {
                                 group_id: group_id.to_string(),
                                 user_id: user_id.to_string(),
                                 operator_id: operator_id.to_string(),
-                                extra: default_obj(),
+                                extra: Default::default(),
                             }
                             .into(),
                         })),
@@ -236,7 +236,7 @@ pub mod ob11to12 {
                                 group_id: group_id.to_string(),
                                 user_id: user_id.to_string(),
                                 operator_id: operator_id.to_string(),
-                                extra: default_obj(),
+                                extra: Default::default(),
                             }
                             .into(),
                         })),
@@ -268,7 +268,7 @@ pub mod ob11to12 {
                             kind: notice::FriendIncrease {
                                 sub_type: Default::default(),
                                 user_id: user_id.to_string(),
-                                extra: default_obj(),
+                                extra: Default::default(),
                             }
                             .into(),
                         })),
@@ -279,7 +279,7 @@ pub mod ob11to12 {
                                     sub_type: Default::default(),
                                     message_id: message_id.to_string(),
                                     user_id: user_id.to_string(),
-                                    extra: default_obj(),
+                                    extra: Default::default(),
                                 }
                                 .into(),
                             }))

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ob_types_base::tool::duration_secs;
+use ob_types_base::{ext::ValueExt, tool::duration_secs};
 use ob_types_macro::data;
 
 use crate::ValueMap;
@@ -31,17 +31,11 @@ impl<'de> serde::Deserialize<'de> for NoticeEvent {
         } = Helper::deserialize(deserializer)?;
 
         if notice_type.starts_with("group") {
-            extra.insert(
-                Value::String("notice_type".into()),
-                Value::String(notice_type),
-            );
-            GroupNotice::deserialize(Value::Map(extra)).map(NoticeEvent::GroupNotice)
+            extra.insert("notice_type".into(), Value::String(notice_type));
+            GroupNotice::deserialize(Value::from_map(extra)).map(NoticeEvent::GroupNotice)
         } else {
-            extra.insert(
-                Value::String("notice_type".into()),
-                Value::String(notice_type),
-            );
-            FriendNotice::deserialize(Value::Map(extra)).map(NoticeEvent::FriendNotice)
+            extra.insert("notice_type".into(), Value::String(notice_type));
+            FriendNotice::deserialize(Value::from_map(extra)).map(NoticeEvent::FriendNotice)
         }
         .map_err(Error::custom)
     }
