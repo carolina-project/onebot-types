@@ -10,6 +10,7 @@ pub mod ob12;
 #[cfg(feature = "compat")]
 pub mod compat;
 
+#[allow(unused)]
 pub(crate) type ValueMap = BTreeMap<serde_value::Value, serde_value::Value>;
 #[allow(unused)]
 pub(crate) type SerResult<T> = Result<T, serde_value::SerializerError>;

@@ -1,5 +1,3 @@
-use std::fs;
-
 use onebot_types::compat;
 use onebot_types::compat::action::bot::FileType;
 use onebot_types::compat::action::{CompatAction, IntoOB11Action, IntoOB11ActionAsync};
