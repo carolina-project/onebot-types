@@ -7,7 +7,7 @@ pub(self) use crate::ob12::action as ob12action;
 pub(self) use crate::{ob11, ob12};
 use crate::{DesResult, ValueMap};
 use ob_types_base::ext::{IntoValue, ValueMapExt};
-use ob_types_base::{OBAction, OBRespData};
+use ob_types_base::OBRespData;
 use ob_types_macro::data;
 pub(self) use serde::de::Error as DeError;
 use serde::Deserialize;
@@ -55,7 +55,7 @@ pub trait FromOB11Resp<P = ()>
 where
     Self: Sized,
 {
-    type In: OBRespData;
+    type In: OBRespData<'static>;
 
     fn from_ob11(from: Self::In, param: P) -> DesResult<Self>;
 }
@@ -64,7 +64,7 @@ pub trait FromOB11RespAsync<P = ()>
 where
     Self: Sized,
 {
-    type In: OBRespData;
+    type In: OBRespData<'static>;
 
     fn from_ob11(from: Self::In, param: P) -> impl Future<Output = DesResult<Self>>;
 }

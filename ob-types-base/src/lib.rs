@@ -7,13 +7,13 @@ pub use error::OBResult;
 pub mod ext;
 pub mod tool;
 
-pub trait OBRespData: serde::de::DeserializeOwned + serde::Serialize {}
+pub trait OBRespData<'de>: serde::de::Deserialize<'de> + serde::Serialize {}
 
-impl<T: serde::de::DeserializeOwned + serde::Serialize> OBRespData for T {}
+impl<'de, T: serde::de::Deserialize<'de> + serde::Serialize> OBRespData<'de> for T {}
 
 pub trait OBAction {
     const ACTION: Option<&'static str> = None;
-    type Resp: OBRespData;
+    type Resp: OBRespData<'static>;
 
     fn action_name(&self) -> &str {
         Self::ACTION.expect("Action name not set")
