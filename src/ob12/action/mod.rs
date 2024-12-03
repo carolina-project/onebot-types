@@ -109,7 +109,7 @@ actions!(
     GetFileFragmented,
 );
 
-#[derive(Copy)]
+#[derive(Copy, PartialEq, Eq)]
 #[data]
 #[serde(rename_all = "lowercase")]
 pub enum RespStatus {
@@ -126,11 +126,27 @@ pub struct RespData {
     pub echo: Option<String>,
 }
 
+impl RespData {
+    pub fn is_success(&self) -> bool {
+        matches!(self.status, RespStatus::Ok)
+    }
+}
+
 #[derive(Debug, Clone, Error)]
 pub struct RespError {
     pub retcode: RetCode,
     pub message: String,
     pub echo: Option<String>,
+}
+
+impl From<RespData> for RespError {
+    fn from(value: RespData) -> Self {
+        Self {
+            retcode: value.retcode,
+            message: value.message,
+            echo: value.echo,
+        }
+    }
 }
 
 impl Display for RespError {
