@@ -4,13 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-thiserror = { version = "*"}
+thiserror = { version = "2"}
 ob-types-macro = { path = "./ob-types-macro" }
 ob-types-base = { path = "./ob-types-base" }
-serde = { version = "*", features = ["derive"] }
-serde-value = { version = "*" }
-base64 =  { version = "*", optional = true }
-const_format = { version = "*" }
+serde = { version = "1", features = ["derive"] }
+serde-value = { version = "0.7" }
+base64 =  { version = "0.22", optional = true }
 
 [features]
 default = ["ob12"]
@@ -20,6 +19,6 @@ ob12 = []
 compat = ["ob11", "ob12"]
 
 [dev-dependencies]
-eyre = "*"
-serde_json = "*"
-tokio = { version = "*", features = ["macros", "rt"]}
+eyre = "0.6"
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt"]}
