@@ -200,8 +200,8 @@ pub enum RetCode {
 }
 
 impl RetCode {
-    pub fn from_code(code: u32) -> Option<Self> {
-        Some(match code {
+    pub fn from_code(code: u32) -> Self {
+        match code {
             0 => Self::Success,
             // 动作请求错误
             10001 => Self::BadRequest,
@@ -226,9 +226,8 @@ impl RetCode {
             // 保留错误段
             40000..=59999 => Self::ReservedError(code),
             // 其它错误段
-            60000..=99999 => Self::OtherError(code),
-            _ => return None, // 默认处理
-        })
+            code => Self::OtherError(code),
+        }
     }
 
     pub fn to_code(&self) -> u32 {
@@ -262,13 +261,27 @@ impl RetCode {
     }
 }
 
+macro_rules! from_impl {
+    ($($typ:ty),* $(,)?) => {
+        $(
+        impl From<$typ> for RetCode {
+            fn from(value: $typ) -> Self {
+                Self::from_code(value as u32)
+            }
+        }
+        )*
+    };
+}
+
+from_impl!(u8, u16, u32, u64, usize, i8, i16, i32, i64, isize);
+
 impl<'de> serde::Deserialize<'de> for RetCode {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let code = u32::deserialize(deserializer)?;
-        Self::from_code(code).ok_or_else(|| serde::de::Error::custom("invalid onebot retcode"))
+        Ok(Self::from(code))
     }
 }
 
