@@ -2,7 +2,7 @@ use onebot_types::compat;
 use onebot_types::compat::action::bot::OB11File;
 use onebot_types::compat::action::{CompatAction, IntoOB11Action, IntoOB11ActionAsync};
 use onebot_types::compat::event::IntoOB12EventAsync;
-use onebot_types::compat::message::{IntoOB11Seg, IntoOB11SegAsync, IntoOB12Seg, IntoOB12SegAsync};
+use onebot_types::compat::message::{FileSeg, IntoOB11Seg, IntoOB11SegAsync, IntoOB12Seg, IntoOB12SegAsync};
 use onebot_types::ob11::{self, action as ob11action, event as ob11event};
 use onebot_types::ob12::{action as ob12action, event as ob12event};
 use onebot_types::{compat::event::IntoOB12Event, ob11::event::EventKind as O11EventKind, ob12};
@@ -52,8 +52,8 @@ async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
 }
 
 async fn msg_ob12_to_11(msg: ob12::MessageSeg) -> ob11::MessageSeg {
-    async fn file_provider<T: Default>(_: String) -> Result<T, DeserializerError> {
-        Ok(T::default())
+    async fn file_provider(_: String) -> Result<FileSeg, DeserializerError> {
+        Ok(FileSeg::default())
     }
     match msg {
         ob12::MessageSeg::Text(text) => text.into_ob11().unwrap().into(),
