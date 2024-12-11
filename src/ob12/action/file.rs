@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::{Deref, DerefMut}};
 
 use ob_types_macro::{data, onebot_action};
 
@@ -30,6 +30,20 @@ mod data {
 #[data]
 #[serde(transparent)]
 pub struct UploadData(#[cfg_attr(feature = "base64", serde(with = "data"))] pub Vec<u8>);
+
+impl Deref for UploadData {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for UploadData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[data]
 #[serde(tag = "type", rename_all = "snake_case")]
