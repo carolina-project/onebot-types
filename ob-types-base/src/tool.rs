@@ -143,8 +143,8 @@ pub mod str_bool {
         let v = Value::deserialize(deserializer)?;
         match v {
             Value::String(s) => match s.as_str() {
-                "1" => Ok(true),
-                "0" => Ok(false),
+                "1" | "yes" | "true" => Ok(true),
+                "0" | "no" | "false" => Ok(false),
                 _ => Err(serde::de::Error::custom(format!(
                     "Invalid bool string: {}",
                     s

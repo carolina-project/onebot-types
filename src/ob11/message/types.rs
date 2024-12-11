@@ -121,7 +121,7 @@ mod serde_impl {
     }
 }
 
-#[data(str)]
+#[data(default, str)]
 pub struct Image {
     pub file: String,
     #[serde(default)]
@@ -129,7 +129,7 @@ pub struct Image {
     #[serde(flatten)]
     pub option: Option<FileOption>,
 }
-#[data(str)]
+#[data(default, str)]
 pub struct Record {
     pub file: String,
     #[serde(default)]
@@ -137,7 +137,7 @@ pub struct Record {
     #[serde(flatten)]
     pub option: Option<FileOption>,
 }
-#[data(str)]
+#[data(default, str)]
 pub struct Video {
     pub file: String,
     #[serde(flatten)]

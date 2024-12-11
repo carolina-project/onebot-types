@@ -54,49 +54,59 @@ impl FromOB11Resp<Duration> for ob12action::SendMessageResp {
     }
 }
 
-pub enum FileType {
-    Record(String),
-    Image(String),
-    Unknown,
-}
-
 #[data]
 pub enum OB11GetFile {
     GetRecord(ob11action::GetRecord),
     GetImage(ob11action::GetImage),
+    GetVideo(ob12action::FileOpt),
 }
 
-impl From<OB11GetFile> for ob11action::ActionType {
-    fn from(value: OB11GetFile) -> Self {
+impl TryFrom<OB11GetFile> for ob11action::ActionType {
+    type Error = ob12action::FileOpt;
+
+    fn try_from(value: OB11GetFile) -> Result<Self, Self::Error> {
         match value {
-            OB11GetFile::GetRecord(record) => Self::GetRecord(record),
-            OB11GetFile::GetImage(image) => Self::GetImage(image),
+            OB11GetFile::GetRecord(record) => Ok(Self::GetRecord(record)),
+            OB11GetFile::GetImage(image) => Ok(Self::GetImage(image)),
+            OB11GetFile::GetVideo(video) => Err(video),
         }
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum OB11File {
+    Record(String),
+    Image(String),
+    Video(ob12action::FileOpt),
+}
+
 impl<F, R> IntoOB11ActionAsync<F> for ob12action::GetFile
 where
-    F: FnOnce(String) -> R,
-    R: Future<Output = FileType>,
+    F: FnOnce(&str) -> R,
+    R: Future<Output = Option<OB11File>>,
 {
     type Output = OB11GetFile;
 
-    async fn into_ob11(self, detect_fn: F) -> DesResult<Self::Output> {
+    async fn into_ob11(self, find_fn: F) -> DesResult<Self::Output> {
         let ob12action::GetFile {
             file_id,
             r#type: _,
             mut extra,
         } = self;
-        let file_type: FileType = detect_fn(file_id).await;
+        let Some(ty) = find_fn(&file_id).await else {
+            return Err(DeserializerError::custom(format!(
+                "cannot find file {}",
+                file_id
+            )));
+        };
 
-        Ok(match file_type {
-            FileType::Record(file) => OB11GetFile::GetRecord(ob11action::GetRecord {
+        Ok(match ty {
+            OB11File::Record(file) => OB11GetFile::GetRecord(ob11action::GetRecord {
                 file,
                 out_format: remove_field_or(&mut extra, "ob11.out_format", || "mp3".into())?,
             }),
-            FileType::Image(file) => OB11GetFile::GetImage(ob11action::GetImage { file }),
-            FileType::Unknown => return Err(DeserializerError::custom("unknown file type")),
+            OB11File::Image(file) => OB11GetFile::GetImage(ob11action::GetImage { file }),
+            OB11File::Video(file) => OB11GetFile::GetVideo(file),
         })
     }
 }

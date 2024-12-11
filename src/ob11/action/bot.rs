@@ -93,6 +93,15 @@ pub enum MessageSender {
     Group(GroupSender),
 }
 
+impl MessageSender {
+    pub fn user_id(&self) -> Option<i64> {
+        match self {
+            MessageSender::Private(sender) => sender.user_id.clone(),
+            MessageSender::Group(sender) => sender.user_id.clone(),
+        }
+    }
+}
+
 pub struct GetMessageResp {
     pub time: u32,
     pub message_id: i32,
