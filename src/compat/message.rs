@@ -254,6 +254,7 @@ pub mod ob11to12 {
 pub mod ob12to11 {
     use super::*;
     use ob11message::*;
+    use ob_types_base::tool;
     use serde::de::Error;
 
     #[inline]
@@ -334,7 +335,7 @@ pub mod ob12to11 {
             let mut extra = rename_ob12_field(self.extra);
             let mut record = trans_fn(self.file_id).await?;
             if let Some(field) = extra.remove("magic") {
-                record.magic = bool::deserialize(field)?;
+                record.magic = tool::str_bool::deserialize(field)?;
             }
 
             Ok(record)
