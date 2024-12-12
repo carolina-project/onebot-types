@@ -38,7 +38,7 @@ pub struct FileSendOpt {
 #[data(str)]
 pub struct FileRecvOpt {
     #[allow(dead_code)]
-    url: String,
+    pub url: String,
 }
 
 #[derive(Debug, Clone)]

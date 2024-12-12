@@ -12,7 +12,7 @@ pub(self) use crate::{DesResult, SerResult};
 #[data(default)]
 pub struct FileSeg {
     pub file: String,
-    pub opt: Option<ob11message::FileOption>,
+    pub url: Option<String>,
 }
 
 pub trait IntoOB12Seg<P = ()> {
@@ -135,9 +135,37 @@ pub mod ob11to12 {
     use std::future::Future;
 
     use ob_types_base::ext::{IntoValue, ValueMapExt};
+    use serde::ser::Error;
 
     use super::*;
     use ob12message::*;
+
+    #[inline]
+    fn remove_field(map: &mut ValueMap, key: &str) -> SerResult<Value> {
+        map.remove(key)
+            .ok_or_else(|| serde_value::SerializerError::custom(format!("missing field {}", key)))
+    }
+    #[inline]
+    fn rename_ob11_field(map: ValueMap) -> ValueMap {
+        map.into_iter()
+            .map(|(k, v)| ("ob11.".to_owned() + &k, v))
+            .collect::<ValueMap>()
+    }
+    fn serialize_into_map<T: serde::Serialize>(value: T) -> SerResult<ValueMap> {
+        let v = serde_value::to_value(value)?;
+        if let Value::Map(map) = v {
+            map.into_iter()
+                .map(|(k, v)| {
+                    let Value::String(k) = k else {
+                        return Err(serde_value::SerializerError::custom("expected string key"));
+                    };
+                    Ok((k, v))
+                })
+                .collect()
+        } else {
+            Err(SerializerError::custom("expected map"))
+        }
+    }
 
     pub enum OB12Mention {
         Mention(Mention),
@@ -166,6 +194,24 @@ pub mod ob11to12 {
         }
     }
 
+    fn extract_file_opt(
+        option: Option<ob11message::FileOption>,
+        append: impl IntoIterator<Item = (String, Value)>,
+    ) -> SerResult<(Option<String>, ValueMap)> {
+        use ob11message::FileOption;
+        let (url, mut extra) = if let Some(opt) = option {
+            match opt {
+                FileOption::Send(send) => (None, serialize_into_map(send)?),
+                FileOption::Receive(recv) => (Some(recv.url), Default::default()),
+            }
+        } else {
+            (None, Default::default())
+        };
+        extra.extend(append);
+
+        Ok((url, rename_ob11_field(extra)))
+    }
+
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Image
     where
         F: FnOnce(FileSeg) -> R,
@@ -173,15 +219,16 @@ pub mod ob11to12 {
     {
         type Output = Image;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            let img_ty = self.r#type;
-            Ok(ob12message::Image {
-                file_id: trans_fn(FileSeg {
-                    file: self.file,
-                    opt: self.option,
-                })
-                .await?,
-                extra: [("ob11.type", serde_value::to_value(img_ty)?)].into_map(),
+            let (url, extra) = extract_file_opt(
+                self.option,
+                [("type".into(), serde_value::to_value(self.r#type)?)],
+            )?;
+            let file_id = trans_fn(FileSeg {
+                file: self.file,
+                url,
             })
+            .await?;
+            Ok(ob12message::Image { file_id, extra })
         }
     }
 
@@ -192,15 +239,14 @@ pub mod ob11to12 {
     {
         type Output = Voice;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            let magic = self.magic;
-            Ok(ob12message::Voice {
-                file_id: trans_fn(FileSeg {
-                    file: self.file,
-                    opt: self.option,
-                })
-                .await?,
-                extra: [("ob11.magic", magic.into_value())].into_map(),
+            let (url, extra) =
+                extract_file_opt(self.option, [("magic".into(), self.magic.into_value())])?;
+            let file_id = trans_fn(FileSeg {
+                file: self.file,
+                url,
             })
+            .await?;
+            Ok(ob12message::Voice { file_id, extra })
         }
     }
 
@@ -211,14 +257,13 @@ pub mod ob11to12 {
     {
         type Output = Video;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
-            Ok(ob12message::Video {
-                file_id: trans_fn(FileSeg {
-                    file: self.file,
-                    opt: self.option,
-                })
-                .await?,
-                extra: Default::default(),
+            let (url, extra) = extract_file_opt(self.option, [])?;
+            let file_id = trans_fn(FileSeg {
+                file: self.file,
+                url,
             })
+            .await?;
+            Ok(ob12message::Video { file_id, extra })
         }
     }
 
