@@ -1,3 +1,4 @@
+use ob_types_base::ext::{IntoValue, ValueExt};
 use ob_types_macro::data;
 
 mod bot;
@@ -7,14 +8,24 @@ mod group;
 pub use bot::*;
 pub use friend::*;
 pub use group::*;
+use serde::Deserialize;
+use serde_value::{DeserializerError, Value};
+
+use crate::ValueMap;
 
 pub(crate) type EmptyResp = ();
 
 #[data]
 pub struct Action {
     #[serde(flatten)]
-    pub action: ActionType,
+    pub detail: ActionDetail,
     pub echo: Option<String>,
+}
+
+#[data]
+pub struct ActionDetail {
+    pub action: String,
+    pub params: ValueMap,
 }
 
 macro_rules! actions {
@@ -78,6 +89,21 @@ actions!(
     SetGroupAddRequest,
     GetGroupHonorInfo
 );
+
+impl TryFrom<ActionDetail> for ActionType {
+    type Error = DeserializerError;
+
+    fn try_from(detail: ActionDetail) -> Result<Self, Self::Error> {
+        let ActionDetail { action, params } = detail;
+        Deserialize::deserialize(Value::from_map(
+            [
+                ("action", action.into_value()),
+                ("params", Value::from_map(params)),
+            ]
+            .into(),
+        ))
+    }
+}
 
 #[derive(Copy)]
 #[data]

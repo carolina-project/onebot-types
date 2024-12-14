@@ -1,5 +1,7 @@
 use ob_types_macro::data;
 
+use crate::ValueMap;
+
 #[data]
 pub struct RequestEvent {
     pub user_id: i64,
@@ -10,10 +12,18 @@ pub struct RequestEvent {
 }
 
 #[data]
+pub struct RequestRaw {
+    pub request_type: String,
+    #[serde(flatten)]
+    pub detail: ValueMap,
+}
+
+#[data]
 #[serde(tag = "request_type", rename_all = "snake_case")]
 pub enum RequestKind {
     Friend,
     Group(AddGroup),
+    Other(RequestRaw),
 }
 
 #[data]

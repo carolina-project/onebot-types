@@ -124,6 +124,7 @@ dependencies = [
  "ob-types-base",
  "proc-macro2",
  "quote",
+ "serde",
  "syn",
 ]
 

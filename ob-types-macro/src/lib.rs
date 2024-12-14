@@ -61,7 +61,7 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
         #[ob_types_macro::data]
         #input_struct
 
-        impl ob_types_base::OBAction for #struct_name {
+        impl ob_types_base::OBAction<'static> for #struct_name {
             const ACTION: Option<&'static str> = Some(#action_name);
             type Resp = #resp_type;
         }

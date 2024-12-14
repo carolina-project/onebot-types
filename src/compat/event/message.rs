@@ -10,6 +10,7 @@ pub mod ob11to12 {
     use ob11event::message::*;
     use ob_types_base::ext::{IntoValue, ValueMapExt};
     use ob_types_base::tool;
+    use serde::ser::Error;
     use serde_value::SerializerError;
 
     /// Converts an OB11 MessageEvent into an OB12 MessageEvent using the provided transformation function(transform message segment).
@@ -60,6 +61,9 @@ pub mod ob11to12 {
                     if let Some(anonymous) = group.anonymous {
                         extra.insert("ob11.anonymous".into(), serde_value::to_value(anonymous)?);
                     }
+                }
+                MessageKind::Other(_) => {
+                    return Err(SerializerError::custom("unsupported message kind"))
                 }
             }
             Ok(ob12event::EventType::Message(ob12event::MessageEvent {

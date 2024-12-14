@@ -62,6 +62,11 @@ pub mod ob11to12 {
                 kind: match kind {
                     RequestKind::Friend => CompatRequestKind::Friend,
                     RequestKind::Group(add) => CompatRequestKind::Group(add),
+                    RequestKind::Other(_) => {
+                        return Err(serde_value::SerializerError::custom(
+                            "Unsupported request kind",
+                        ))
+                    }
                 },
                 comment: Some(comment),
                 flag: Some(flag),

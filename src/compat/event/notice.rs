@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use ob_types_base::ext::IntoValue;
 use ob_types_macro::data;
 use serde::Deserialize;
@@ -11,15 +13,23 @@ use super::*;
 #[serde(tag = "type")]
 pub enum CompatGNoticeKind {
     #[serde(rename = "ob11.group_admin")]
-    GroupAdmin(ob11event::notice::GroupAdmin),
+    GroupAdmin {
+        sub_type: ob11event::notice::AdminChange,
+    },
     #[serde(rename = "ob11.group_ban")]
-    GroupBan(ob11event::notice::GroupBan),
+    GroupBan {
+        sub_type: ob11event::notice::MuteType,
+        operator_id: i64,
+        duration: Duration,
+    },
     #[serde(rename = "ob11.poke")]
-    Poke(ob11event::notice::Poke),
+    Poke { target_id: i64 },
     #[serde(rename = "ob11.lucky_king")]
-    LuckyKing(ob11event::notice::LuckyKing),
+    LuckyKing { target_id: i64 },
     #[serde(rename = "ob11.honor")]
-    Honor(ob11event::notice::Honor),
+    Honor {
+        honor_type: ob11event::notice::GroupHonor,
+    },
 }
 
 #[data]
@@ -43,9 +53,10 @@ impl CompatGroupNotice {
 
 pub mod ob11to12 {
     use ob11event::notice::*;
-    use ob_types_base::ext::ValueMapExt;
     use ob_types_base::ext::IntoValue;
+    use ob_types_base::ext::ValueMapExt;
     use serde::ser::Error;
+    use serde_value::SerializerError;
     use serde_value::Value;
 
     use crate::compat::compat_self;
@@ -62,13 +73,12 @@ pub mod ob11to12 {
         fn from(value: GroupUploadFile) -> Self {
             Self {
                 file_id: value.id,
-                extra: 
-                    [
-                        ("ob11.name", value.name.into_value()),
-                        ("ob11.size", value.size.into_value()),
-                        ("ob11.busid", value.busid.into_value()),
-                    ]
-                    .into_map(),
+                extra: [
+                    ("ob11.name", value.name.into_value()),
+                    ("ob11.size", value.size.into_value()),
+                    ("ob11.busid", value.busid.into_value()),
+                ]
+                .into_map(),
             }
         }
     }
@@ -167,124 +177,152 @@ pub mod ob11to12 {
             use ob12event::notice;
             let (self_id, msg_id_provider) = param;
             match self {
-                NoticeEvent::GroupNotice(group) => {
-                    let GroupNotice {
-                        group_id,
-                        user_id,
-                        kind,
-                    } = group;
-                    match kind {
-                        GroupNoticeKind::GroupUpload(GroupUpload { file }) => group_upload_convert(
-                            self_id,
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            msg_id_provider(&file),
-                            file,
-                        ),
-                        GroupNoticeKind::GroupAdmin(admin) => other_group_notice_event(
-                            self_id.to_string(),
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            CompatGNoticeKind::GroupAdmin(admin),
-                        ),
-                        GroupNoticeKind::GroupIncrease(GroupIncrease {
-                            sub_type,
-                            operator_id,
-                        }) => Ok(O12EventType::Notice(O12Notice {
-                            self_: compat_self(self_id),
-                            kind: ob12event::notice::GroupMemberIncrease {
-                                sub_type: sub_type.into(),
-                                group_id: group_id.to_string(),
-                                user_id: user_id.to_string(),
-                                operator_id: operator_id.to_string(),
-                                extra: Default::default(),
-                            }
-                            .into(),
-                        })),
-                        GroupNoticeKind::GroupDecrease(GroupDecrease {
-                            sub_type,
-                            operator_id,
-                        }) => Ok(O12EventType::Notice(O12Notice {
-                            self_: compat_self(self_id),
-                            kind: ob12event::notice::GroupMemberDecrease {
-                                sub_type: sub_type.into(),
-                                group_id: group_id.to_string(),
-                                user_id: user_id.to_string(),
-                                operator_id: operator_id.to_string(),
-                                extra: Default::default(),
-                            }
-                            .into(),
-                        })),
-                        GroupNoticeKind::GroupBan(ban) => other_group_notice_event(
-                            self_id.to_string(),
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            CompatGNoticeKind::GroupBan(ban),
-                        ),
-                        GroupNoticeKind::GroupRecall(GroupRecall {
-                            operator_id,
-                            message_id,
-                        }) => Ok(O12EventType::Notice(O12Notice {
-                            self_: compat_self(self_id),
-                            kind: ob12event::notice::GroupMessageDelete {
-                                sub_type: if operator_id == user_id {
-                                    notice::MessageDeleteType::Recall
-                                } else {
-                                    notice::MessageDeleteType::Delete
-                                },
-                                message_id: message_id.to_string(),
-                                group_id: group_id.to_string(),
-                                user_id: user_id.to_string(),
-                                operator_id: operator_id.to_string(),
-                                extra: Default::default(),
-                            }
-                            .into(),
-                        })),
-                        GroupNoticeKind::Poke(poke) => other_group_notice_event(
-                            self_id.to_string(),
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            CompatGNoticeKind::Poke(poke),
-                        ),
-                        GroupNoticeKind::LuckyKing(luck) => other_group_notice_event(
-                            self_id.to_string(),
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            CompatGNoticeKind::LuckyKing(luck),
-                        ),
-                        GroupNoticeKind::Honor(honor) => other_group_notice_event(
-                            self_id.to_string(),
-                            group_id.to_string(),
-                            user_id.to_string(),
-                            CompatGNoticeKind::Honor(honor),
-                        ),
+                NoticeEvent::GroupUpload(GroupUpload {
+                    group_id,
+                    user_id,
+                    file,
+                }) => group_upload_convert(
+                    self_id,
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    msg_id_provider(&file),
+                    file,
+                ),
+                NoticeEvent::GroupAdmin(GroupAdmin {
+                    group_id,
+                    user_id,
+                    sub_type,
+                }) => other_group_notice_event(
+                    self_id.to_string(),
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    CompatGNoticeKind::GroupAdmin { sub_type },
+                ),
+                NoticeEvent::GroupIncrease(GroupIncrease {
+                    group_id,
+                    user_id,
+                    sub_type,
+                    operator_id,
+                }) => Ok(O12EventType::Notice(O12Notice {
+                    self_: compat_self(self_id),
+                    kind: ob12event::notice::GroupMemberIncrease {
+                        sub_type: sub_type.into(),
+                        group_id: group_id.to_string(),
+                        user_id: user_id.to_string(),
+                        operator_id: operator_id.to_string(),
+                        extra: Default::default(),
                     }
-                }
-                NoticeEvent::FriendNotice(friend) => {
-                    let FriendNotice { user_id, kind } = friend;
-                    match kind {
-                        FriendNoticeKind::FriendAdd(_) => Ok(O12EventType::Notice(O12Notice {
-                            self_: compat_self(self_id),
-                            kind: notice::FriendIncrease {
-                                sub_type: Default::default(),
-                                user_id: user_id.to_string(),
-                                extra: Default::default(),
-                            }
-                            .into(),
-                        })),
-                        FriendNoticeKind::FriendRecall(FriendRecall { message_id }) => {
-                            Ok(O12EventType::Notice(O12Notice {
-                                self_: compat_self(self_id),
-                                kind: notice::PrivateMessageDelete {
-                                    sub_type: Default::default(),
-                                    message_id: message_id.to_string(),
-                                    user_id: user_id.to_string(),
-                                    extra: Default::default(),
-                                }
-                                .into(),
-                            }))
+                    .into(),
+                })),
+                NoticeEvent::GroupDecrease(GroupDecrease {
+                    group_id,
+                    user_id,
+                    sub_type,
+                    operator_id,
+                }) => Ok(O12EventType::Notice(O12Notice {
+                    self_: compat_self(self_id),
+                    kind: ob12event::notice::GroupMemberDecrease {
+                        sub_type: sub_type.into(),
+                        group_id: group_id.to_string(),
+                        user_id: user_id.to_string(),
+                        operator_id: operator_id.to_string(),
+                        extra: Default::default(),
+                    }
+                    .into(),
+                })),
+                NoticeEvent::GroupBan(GroupBan {
+                    group_id,
+                    user_id,
+                    sub_type,
+                    operator_id,
+                    duration,
+                }) => other_group_notice_event(
+                    self_id.to_string(),
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    CompatGNoticeKind::GroupBan {
+                        sub_type,
+                        operator_id,
+                        duration,
+                    },
+                ),
+                NoticeEvent::GroupRecall(GroupRecall {
+                    group_id,
+                    user_id,
+                    operator_id,
+                    message_id,
+                }) => Ok(O12EventType::Notice(O12Notice {
+                    self_: compat_self(self_id),
+                    kind: ob12event::notice::GroupMessageDelete {
+                        sub_type: if operator_id == user_id {
+                            notice::MessageDeleteType::Recall
+                        } else {
+                            notice::MessageDeleteType::Delete
+                        },
+                        message_id: message_id.to_string(),
+                        group_id: group_id.to_string(),
+                        user_id: user_id.to_string(),
+                        operator_id: operator_id.to_string(),
+                        extra: Default::default(),
+                    }
+                    .into(),
+                })),
+                NoticeEvent::Poke(Poke {
+                    group_id,
+                    user_id,
+                    target_id,
+                }) => other_group_notice_event(
+                    self_id.to_string(),
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    CompatGNoticeKind::Poke { target_id },
+                ),
+                NoticeEvent::LuckyKing(LuckyKing {
+                    group_id,
+                    user_id,
+                    target_id,
+                }) => other_group_notice_event(
+                    self_id.to_string(),
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    CompatGNoticeKind::LuckyKing { target_id },
+                ),
+                NoticeEvent::Honor(Honor {
+                    group_id,
+                    user_id,
+                    honor_type,
+                }) => other_group_notice_event(
+                    self_id.to_string(),
+                    group_id.to_string(),
+                    user_id.to_string(),
+                    CompatGNoticeKind::Honor { honor_type },
+                ),
+                NoticeEvent::FriendAdd(FriendAdd { user_id }) => {
+                    Ok(O12EventType::Notice(O12Notice {
+                        self_: compat_self(self_id),
+                        kind: notice::FriendIncrease {
+                            sub_type: Default::default(),
+                            user_id: user_id.to_string(),
+                            extra: Default::default(),
                         }
+                        .into(),
+                    }))
+                }
+                NoticeEvent::FriendRecall(FriendRecall {
+                    user_id,
+                    message_id,
+                }) => Ok(O12EventType::Notice(O12Notice {
+                    self_: compat_self(self_id),
+                    kind: notice::PrivateMessageDelete {
+                        sub_type: Default::default(),
+                        message_id: message_id.to_string(),
+                        user_id: user_id.to_string(),
+                        extra: Default::default(),
                     }
+                    .into(),
+                })),
+                NoticeEvent::Other(_) => {
+                    return Err(SerializerError::custom("unknown notice kind"))
                 }
             }
         }

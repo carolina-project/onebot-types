@@ -1,16 +1,20 @@
 mod types;
 
+use ob_types_base::ext::{IntoValue, ValueExt};
 use ob_types_macro::data;
-use serde_value::Value;
+use serde::Deserialize;
+use serde_value::{DeserializerError, Value};
 
 #[allow(unused)]
 use std::{fmt::Display, str::FromStr};
 pub use types::*;
 
+use crate::ValueMap;
+
 #[data]
 pub struct MessageSegRaw {
     pub r#type: String,
-    pub data: Value,
+    pub data: ValueMap,
 }
 
 macro_rules! message_segs {
@@ -58,10 +62,26 @@ message_segs! {
     Json,
 }
 
+impl TryFrom<MessageSegRaw> for MessageSeg {
+    type Error = DeserializerError;
+
+    fn try_from(seg: MessageSegRaw) -> Result<Self, Self::Error> {
+        let MessageSegRaw { r#type, data } = seg;
+        Deserialize::deserialize(Value::from_map(
+            [
+                ("type", r#type.into_value()),
+                ("data", Value::from_map(data)),
+            ]
+            .into(),
+        ))
+    }
+}
+
 #[data]
 #[serde(untagged)]
 pub enum MessageChain {
     Array(Vec<MessageSeg>),
+    /// DO NOT USE, CQ code has not been implemented yet
     String(String),
 }
 

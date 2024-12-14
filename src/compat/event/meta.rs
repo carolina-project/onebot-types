@@ -54,7 +54,8 @@ pub mod ob11to12 {
     use super::*;
     use ob11event::meta;
     use ob12event::meta::*;
-    use serde_value::Value;
+    use serde::ser::Error;
+    use serde_value::{SerializerError, Value};
 
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
         type Output = (ob12event::EventType, Option<Value>);
@@ -94,6 +95,9 @@ pub mod ob11to12 {
                         Some(s),
                     )
                 }),
+                meta::MetaEvent::Other(_) => {
+                    return Err(SerializerError::custom("unknown meta kind"))
+                }
             }
         }
     }

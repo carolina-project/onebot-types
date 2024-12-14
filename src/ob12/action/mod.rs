@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use ob_types_base::OBAction;
+use ob_types_base::ext::{IntoValue, ValueExt};
 use ob_types_macro::data;
 
 mod file;
@@ -15,31 +15,42 @@ pub use group::*;
 pub use guild::*;
 pub use message::*;
 pub use meta::*;
+use serde::Deserialize;
+use serde_value::{DeserializerError, Value};
 use thiserror::Error;
 pub use user::*;
+
+use crate::ValueMap;
 
 use super::scalable_struct;
 
 #[data]
 pub struct Action {
     #[serde(flatten)]
-    pub action: ActionType,
+    pub action: ActionDetail,
     pub echo: Option<String>,
     #[serde(rename = "self")]
     pub self_: Option<super::BotSelf>,
 }
 
 #[data]
-pub struct ActionTypeRaw {
+pub struct ActionDetail {
     pub action: String,
-    pub params: serde_value::Value,
+    pub params: ValueMap,
 }
 
-impl OBAction for ActionTypeRaw {
-    type Resp = serde_value::Value;
+impl TryFrom<ActionDetail> for ActionType {
+    type Error = DeserializerError;
 
-    fn action_name(&self) -> &str {
-        &self.action
+    fn try_from(detail: ActionDetail) -> Result<Self, Self::Error> {
+        let ActionDetail { action, params } = detail;
+        Deserialize::deserialize(Value::from_map(
+            [
+                ("action", action.into_value()),
+                ("params", Value::from_map(params)),
+            ]
+            .into(),
+        ))
     }
 }
 
@@ -52,7 +63,7 @@ macro_rules! actions {
                 $typ(#[serde(default)] $typ),
             )*
             #[serde(untagged)]
-            Other(ActionTypeRaw),
+            Other(ActionDetail),
         }
 
         $(impl From<$typ> for ActionType {
@@ -61,12 +72,6 @@ macro_rules! actions {
             }
         })*
     };
-}
-
-impl From<ActionTypeRaw> for ActionType {
-    fn from(value: ActionTypeRaw) -> Self {
-        Self::Other(value)
-    }
 }
 
 actions!(

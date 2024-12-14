@@ -1,11 +1,15 @@
 use ob_types_macro::data;
 use serde_value::Value;
 
+use crate::ValueMap;
+
 #[data]
 #[serde(tag = "meta_event_type", rename_all = "lowercase")]
 pub enum MetaEvent {
     LifeCycle(LifeCycle),
     Heartbeat(Heartbeat),
+    #[serde(untagged)]
+    Other(ValueMap),
 }
 
 #[data]

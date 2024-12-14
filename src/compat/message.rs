@@ -9,6 +9,7 @@ use std::future::Future;
 
 pub(self) use crate::{DesResult, SerResult};
 
+/// Represents a file message segment's common fields.
 #[data(default)]
 pub struct FileSeg {
     pub file: String,
@@ -134,17 +135,12 @@ impl From<CompatSegment> for ob12message::MessageSeg {
 pub mod ob11to12 {
     use std::future::Future;
 
-    use ob_types_base::ext::{IntoValue, ValueMapExt};
+    use ob_types_base::ext::IntoValue;
     use serde::ser::Error;
 
     use super::*;
     use ob12message::*;
 
-    #[inline]
-    fn remove_field(map: &mut ValueMap, key: &str) -> SerResult<Value> {
-        map.remove(key)
-            .ok_or_else(|| serde_value::SerializerError::custom(format!("missing field {}", key)))
-    }
     #[inline]
     fn rename_ob11_field(map: ValueMap) -> ValueMap {
         map.into_iter()
@@ -319,7 +315,7 @@ pub mod ob12to11 {
     use super::*;
     use ob11message::*;
     use ob_types_base::tool;
-    use serde::de::Error;
+    use serde::de::{Error, IntoDeserializer};
 
     #[inline]
     #[allow(unused)]
@@ -373,21 +369,26 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Image
     where
         F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<FileSeg>>,
+        R: Future<Output = DesResult<String>>,
     {
         type Output = Image;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
-            let seg = trans_fn(self.file_id).await?;
-            let mut img = Image {
-                file: seg.file,
-                r#type: ImageType::Normal,
-                option: seg.opt,
+            let img_ty = match extra.remove("type") {
+                Some(ty) => ImageType::deserialize(ty)?,
+                None => ImageType::Normal,
             };
-            if let Some(field) = extra.remove("type") {
-                img.r#type = ImageType::deserialize(field)?;
-            }
+            let option = if extra.len() > 0 {
+                Some(FileOption::deserialize(extra.into_deserializer())?)
+            } else {
+                None
+            };
+            let img = Image {
+                file: trans_fn(self.file_id).await?,
+                r#type: img_ty,
+                option,
+            };
 
             Ok(img)
         }
@@ -396,36 +397,79 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Voice
     where
         F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<FileSeg>>,
+        R: Future<Output = DesResult<String>>,
     {
         type Output = Record;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
-            let option = trans_fn(self.file_id).await?;
-            let mut record = Record {
-                file: option.file,
-                magic: false,
-                option: option.opt,
+            let magic = match extra.remove("magic") {
+                Some(r) => tool::str_bool::deserialize(r)?,
+                None => false,
             };
-            if let Some(field) = extra.remove("magic") {
-                record.magic = tool::str_bool::deserialize(field)?;
-            }
+            let option = if extra.len() > 0 {
+                Some(FileOption::deserialize(extra.into_deserializer())?)
+            } else {
+                None
+            };
+            let img = Record {
+                file: trans_fn(self.file_id).await?,
+                magic,
+                option,
+            };
 
-            Ok(record)
+            Ok(img)
+        }
+    }
+
+    impl<F, R> IntoOB11SegAsync<F> for ob12message::Audio
+    where
+        F: FnOnce(String) -> R,
+        R: Future<Output = DesResult<String>>,
+    {
+        type Output = Record;
+
+        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+            let mut extra = rename_ob12_field(self.extra);
+            let magic = match extra.remove("magic") {
+                Some(r) => tool::str_bool::deserialize(r)?,
+                None => false,
+            };
+            let option = if extra.len() > 0 {
+                Some(FileOption::deserialize(extra.into_deserializer())?)
+            } else {
+                None
+            };
+            let img = Record {
+                file: trans_fn(self.file_id).await?,
+                magic,
+                option,
+            };
+
+            Ok(img)
         }
     }
 
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Video
     where
         F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<FileSeg>>,
+        R: Future<Output = DesResult<String>>,
     {
         type Output = Video;
 
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
-            let FileSeg { file, opt } = trans_fn(self.file_id).await?;
-            Ok(Video { file, option: opt })
+            let extra = rename_ob12_field(self.extra);
+            let option = if extra.len() > 0 {
+                Some(FileOption::deserialize(extra.into_deserializer())?)
+            } else {
+                None
+            };
+            let img = Video {
+                file: trans_fn(self.file_id).await?,
+                option,
+            };
+
+            Ok(img)
         }
     }
 

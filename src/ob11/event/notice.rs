@@ -1,59 +1,82 @@
 use std::time::Duration;
 
-use ob_types_base::{ext::ValueExt, tool::duration_secs};
+use ob_types_base::tool::duration_secs;
 use ob_types_macro::data;
 
 use crate::ValueMap;
 
-#[derive(serde::Serialize, Clone, Debug)]
-pub enum NoticeEvent {
-    GroupNotice(GroupNotice),
-    FriendNotice(FriendNotice),
-}
-
-impl<'de> serde::Deserialize<'de> for NoticeEvent {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
-        use serde_value::Value;
-
-        #[derive(serde::Deserialize)]
-        struct Helper {
-            notice_type: String,
-            #[serde(flatten)]
-            extra: ValueMap,
-        }
-        let Helper {
-            notice_type,
-            mut extra,
-        } = Helper::deserialize(deserializer)?;
-
-        if notice_type.starts_with("group") {
-            extra.insert("notice_type".into(), Value::String(notice_type));
-            GroupNotice::deserialize(Value::from_map(extra)).map(NoticeEvent::GroupNotice)
-        } else {
-            extra.insert("notice_type".into(), Value::String(notice_type));
-            FriendNotice::deserialize(Value::from_map(extra)).map(NoticeEvent::FriendNotice)
-        }
-        .map_err(Error::custom)
-    }
-}
-
 #[data]
-pub struct GroupNotice {
-    pub group_id: i64,
-    pub user_id: i64,
+pub struct NoticeRaw {
+    pub notice_type: String,
     #[serde(flatten)]
-    pub kind: GroupNoticeKind,
+    pub detail: ValueMap,
 }
 
-macro_rules! group_notice {
+macro_rules! mk_struct {
+    {
+        $(#[$meta:meta])*
+        $name:ident {
+            $(
+                $(#[$f_meta:meta])*
+                $field_name:ident: $field_type:ty
+            ),* $(,)?
+        }
+    } => {
+        $(#[$meta])*
+        #[data]
+        pub struct $name {
+            $(
+                $(#[$f_meta])*
+                pub $field_name: $field_type
+            ),*
+        }
+    };
+    {
+        $(#[$meta:meta])*
+        $name:ident group {
+            $(
+                $(#[$f_meta:meta])*
+                $field_name:ident: $field_type:ty
+            ),* $(,)?
+        }
+    } => {
+        $(#[$meta])*
+        #[data]
+        pub struct $name {
+            pub group_id: i64,
+            pub user_id: i64,
+            $(
+                $(#[$f_meta])*
+                pub $field_name: $field_type
+            ),*
+        }
+    };
+    {
+        $(#[$meta:meta])*
+        $name:ident friend {
+            $(
+                $(#[$f_meta:meta])*
+                $field_name:ident: $field_type:ty
+            ),* $(,)?
+        }
+    } => {
+        $(#[$meta])*
+        #[data]
+        pub struct $name {
+            pub user_id: i64,
+            $(
+                $(#[$f_meta])*
+                pub $field_name: $field_type
+            ),*
+        }
+    };
+}
+
+macro_rules! define_notice {
     {
         $(
             $(#[$meta:meta])*
-            $name:ident {
+            $name:ident $($typ:ident)? {
                 $(
                     $(#[$f_meta:meta])*
                     $field_name:ident: $field_type:ty
@@ -62,59 +85,65 @@ macro_rules! group_notice {
         ),* $(,)?
     } => {
         $(
-            $(#[$meta])*
-            #[data]
-            pub struct $name {
-                $(
-                    $(#[$f_meta])*
-                    pub $field_name: $field_type
-                ),*
+            mk_struct! {
+                $(#[$meta])*
+                $name $($typ)? {
+                    $(
+                        $(#[$f_meta])*
+                        $field_name: $field_type
+                    ),*
+                }
             }
         )*
 
         #[data]
         #[serde(tag = "notice_type", rename_all = "snake_case")]
-        pub enum GroupNoticeKind {$(
-            $name($name)
-        ),*}
+        pub enum NoticeEvent {
+            $(
+                $name($name),
+            )*
+            Other(NoticeRaw),
+        }
     };
 }
 
-group_notice! {
-    GroupUpload {
+define_notice! {
+    GroupUpload group {
         file: GroupUploadFile,
     },
-    GroupAdmin {
+    GroupAdmin group {
         sub_type: AdminChange,
     },
-    GroupIncrease {
+    GroupIncrease group {
         sub_type: IncreaseType,
         operator_id: i64,
     },
-    GroupDecrease {
+    GroupDecrease group {
         sub_type: DecreaseType,
         operator_id: i64,
     },
-    GroupBan {
+    GroupBan group {
         sub_type: MuteType,
         operator_id: i64,
         #[serde(with = "duration_secs")]
         duration: Duration,
     },
-    GroupRecall {
+    GroupRecall group {
         operator_id: i64,
         message_id: i32,
     },
-    /// poke target user id
-    Poke {
+    Poke group {
         target_id: i64,
     },
-    /// lucky king user id
-    LuckyKing {
+    LuckyKing group {
         target_id: i64,
     },
-    Honor {
+    Honor group {
         honor_type: GroupHonor,
+    },
+    FriendAdd friend {},
+    FriendRecall friend {
+        message_id: i32,
     },
 }
 
@@ -161,50 +190,4 @@ pub enum GroupHonor {
     Talkative,
     Performer,
     Emotion,
-}
-
-#[data]
-pub struct FriendNotice {
-    pub user_id: i64,
-    #[serde(flatten)]
-    pub kind: FriendNoticeKind,
-}
-
-macro_rules! friend_notice {
-    {
-        $(
-            $(#[$meta:meta])*
-            $name:ident {
-                $(
-                    $(#[$f_meta:meta])*
-                    $field_name:ident: $field_type:ty
-                ),* $(,)?
-            }
-        ),* $(,)?
-    } => {
-        $(
-            $(#[$meta])*
-            #[data]
-            pub struct $name {
-                $(
-                    $(#[$f_meta])*
-                    pub $field_name: $field_type
-                ),*
-            }
-        )*
-
-        #[data]
-        #[serde(tag = "notice_type", rename_all = "snake_case")]
-        pub enum FriendNoticeKind {$(
-            $name($name)
-        ),*}
-    };
-}
-
-friend_notice! {
-    FriendAdd {},
-    /// recalled message's id
-    FriendRecall {
-        message_id: i32,
-    },
 }

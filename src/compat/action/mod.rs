@@ -95,10 +95,13 @@ macro_rules! compat_actions {
         })*
 
         impl CompatAction {
-            pub fn into_data(self) -> Result<(&'static str, Value), CompatError> {
+            pub fn into_data(self) -> Result<(&'static str, ValueMap), CompatError> {
                 match self {
                     $(CompatAction::$ob11action(action)
-                        => Ok((concat!("ob11.", $name), serde_value::to_value(action).map_err(DeserializerError::custom)?)),
+                        => Ok((concat!("ob11.", $name), 
+                            serde_value::to_value(action)
+                            .map_err(DeserializerError::custom)
+                            .and_then(|r| ValueMap::deserialize(r))?)),
                     )*
                 }
             }
@@ -119,7 +122,7 @@ impl TryFrom<CompatAction> for ob12action::ActionType {
 
     fn try_from(value: CompatAction) -> Result<Self, Self::Error> {
         let (action, params) = value.into_data()?;
-        Ok(Self::Other(ob12action::ActionTypeRaw {
+        Ok(Self::Other(ob12action::ActionDetail {
             action: action.into(),
             params,
         }))

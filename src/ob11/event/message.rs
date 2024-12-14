@@ -1,6 +1,9 @@
 use ob_types_macro::data;
 
-use crate::ob11::{message::MessageChain, Sex};
+use crate::{
+    ob11::{message::MessageChain, Sex},
+    ValueMap,
+};
 
 #[data]
 pub struct MessageEvent {
@@ -80,10 +83,18 @@ pub struct GroupMessageKind {
     pub anonymous: Option<AnonymousSender>,
 }
 #[data]
+pub struct MessageKindRaw {
+    pub message_type: String,
+    pub detail: ValueMap,
+}
+
+#[data]
 #[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum MessageKind {
     Private(PrivateMessageKind),
     Group(GroupMessageKind),
+    #[serde(untagged)]
+    Other(MessageKindRaw),
 }
 
 #[data]
