@@ -1,25 +1,16 @@
 mod types;
 
-use ob_types_base::ext::{IntoValue, ValueExt};
-use ob_types_macro::data;
+use ob_types_macro::__data;
 use serde::Deserialize;
-use serde_value::{DeserializerError, Value};
+use serde_value::{DeserializerError, SerializerError, Value};
 
-#[allow(unused)]
-use std::{fmt::Display, str::FromStr};
 pub use types::*;
 
-use crate::ValueMap;
-
-#[data]
-pub struct MessageSegRaw {
-    pub r#type: String,
-    pub data: ValueMap,
-}
+use crate::base::RawMessageSeg;
 
 macro_rules! message_segs {
     ($($(#[$meta:meta])* $typ:ident $($doc:literal)?),* $(,)?) => {
-        #[data]
+        #[__data]
         #[serde(tag = "type", content = "data", rename_all = "snake_case")]
         pub enum MessageSeg {
             $(
@@ -27,8 +18,6 @@ macro_rules! message_segs {
             $(#[$meta])*
             $typ($typ),
             )*
-            #[serde(untagged)]
-            Other(MessageSegRaw),
         }
 
         $(impl From<$typ> for MessageSeg {
@@ -62,11 +51,11 @@ message_segs! {
     Json,
 }
 
-impl TryFrom<MessageSegRaw> for MessageSeg {
+impl TryFrom<RawMessageSeg> for MessageSeg {
     type Error = DeserializerError;
 
-    fn try_from(seg: MessageSegRaw) -> Result<Self, Self::Error> {
-        let MessageSegRaw { r#type, data } = seg;
+    fn try_from(seg: RawMessageSeg) -> Result<Self, Self::Error> {
+        let RawMessageSeg { r#type, data } = seg;
         Deserialize::deserialize(Value::from_map(
             [
                 ("type", r#type.into_value()),
@@ -77,20 +66,48 @@ impl TryFrom<MessageSegRaw> for MessageSeg {
     }
 }
 
-#[data]
+impl TryFrom<MessageSeg> for RawMessageSeg {
+    type Error = SerializerError;
+
+    fn try_from(seg: MessageSeg) -> Result<Self, Self::Error> {
+        use serde::ser::Error;
+        Ok(Self::deserialize(serde_value::to_value(seg)?).map_err(Error::custom)?)
+    }
+}
+
+#[__data]
 #[serde(untagged)]
 pub enum MessageChain {
-    Array(Vec<MessageSeg>),
+    Array(Vec<RawMessageSeg>),
     /// DO NOT USE, CQ code has not been implemented yet
     String(String),
+}
+impl Default for MessageChain {
+    fn default() -> Self {
+        Self::Array(vec![])
+    }
 }
 
 impl MessageChain {
     #[allow(unused)]
-    fn into_messages(self) -> Vec<MessageSeg> {
+    pub fn into_messages(self) -> Vec<RawMessageSeg> {
         match self {
             Self::Array(s) => s,
             Self::String(_) => unimplemented!("cq code string"),
+        }
+    }
+
+    pub fn append<T: TryInto<RawMessageSeg>>(self, segs: Vec<T>) -> Result<Self, T::Error> {
+        match self {
+            MessageChain::Array(mut arr) => {
+                arr.extend(
+                    segs.into_iter()
+                        .map(|r| r.try_into())
+                        .collect::<Result<Vec<_>, _>>()?,
+                );
+                Ok(Self::Array(arr))
+            }
+            MessageChain::String(_) => unimplemented!("cq code string"),
         }
     }
 }

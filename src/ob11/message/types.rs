@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display, str::FromStr, time::Duration};
 
-use ob_types_base::ext::ValueExt;
-use ob_types_macro::data;
+use ob_types_macro::__data;
 use serde::{Deserialize, Serialize};
 
 use super::MessageSeg;
@@ -10,32 +9,32 @@ const fn true_value() -> bool {
     true
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Text {
     pub text: String,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Face {
     pub id: u16,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Reply {
     pub id: i32,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct FileSendOpt {
     #[serde(default = "true_value")]
     pub cache: bool,
     #[serde(default = "true_value")]
     pub proxy: bool,
-    #[serde(with = "ob_types_base::tool::duration_str_opt", default)]
+    #[serde(with = "crate::base::tool::duration_str_opt", default)]
     pub timeout: Option<Duration>,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct FileRecvOpt {
     #[allow(dead_code)]
     pub url: String,
@@ -121,7 +120,7 @@ mod serde_impl {
     }
 }
 
-#[data(default, str)]
+#[__data(default, str)]
 pub struct Image {
     pub file: String,
     #[serde(default)]
@@ -129,7 +128,7 @@ pub struct Image {
     #[serde(flatten)]
     pub option: Option<FileOption>,
 }
-#[data(default, str)]
+#[__data(default, str)]
 pub struct Record {
     pub file: String,
     #[serde(default)]
@@ -137,7 +136,7 @@ pub struct Record {
     #[serde(flatten)]
     pub option: Option<FileOption>,
 }
-#[data(default, str)]
+#[__data(default, str)]
 pub struct Video {
     pub file: String,
     #[serde(flatten)]
@@ -175,7 +174,7 @@ impl<'de> Deserialize<'de> for AtTarget {
     }
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct At {
     pub qq: AtTarget,
 }
@@ -201,14 +200,14 @@ impl Display for AtTarget {
 }
 
 /// see [Mirai PokeMessage](https://github.com/mamoe/mirai/blob/f5eefae7ecee84d18a66afce3f89b89fe1584b78/mirai-core/src/commonMain/kotlin/net.mamoe.mirai/message/data/HummerMessage.kt#L49)
-#[data(str)]
+#[__data(str)]
 pub struct Poke {
     pub r#type: i32,
     pub id: i32,
     pub name: Option<String>,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Share {
     pub url: String,
     pub title: String,
@@ -216,13 +215,13 @@ pub struct Share {
     pub image: Option<String>,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Contact {
     pub r#type: String,
     pub id: u64,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Location {
     pub lat: f64,
     pub lon: f64,
@@ -230,7 +229,7 @@ pub struct Location {
     pub content: Option<String>,
 }
 
-#[data(str)]
+#[__data(str)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Music {
     #[serde(rename = "163")]
@@ -252,34 +251,34 @@ pub enum Music {
     },
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Rps;
 
-#[data(str)]
+#[__data(str)]
 pub struct Dice;
 
-#[data(str)]
+#[__data(str)]
 pub struct Shake;
 
-#[data(str)]
+#[__data(str)]
 pub struct Anonymous;
 
-#[data(str)]
+#[__data(str)]
 pub struct Forward {
     pub id: String,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Xml {
     pub data: String,
 }
 
-#[data(str)]
+#[__data(str)]
 pub struct Json {
     pub data: String,
 }
 
-#[data(str)]
+#[__data(str)]
 #[serde(untagged)]
 pub enum Node {
     Message {

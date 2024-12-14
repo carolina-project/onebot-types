@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 thiserror = { version = "2"}
 ob-types-macro = { path = "./ob-types-macro" }
-ob-types-base = { path = "./ob-types-base" }
 serde = { version = "1", features = ["derive"] }
 serde-value = { version = "0.7" }
 base64 =  { version = "0.22", optional = true }

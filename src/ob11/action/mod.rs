@@ -1,6 +1,3 @@
-use ob_types_base::ext::{IntoValue, ValueExt};
-use ob_types_macro::data;
-
 mod bot;
 mod friend;
 mod group;
@@ -8,21 +5,22 @@ mod group;
 pub use bot::*;
 pub use friend::*;
 pub use group::*;
-use serde::Deserialize;
-use serde_value::{DeserializerError, Value};
+use ob_types_macro::__data;
+use serde::{ser::Error, Deserialize};
+use serde_value::{DeserializerError, SerializerError, Value};
 
-use crate::ValueMap;
+use crate::{base::ext::{IntoValue, ValueExt}, ValueMap};
 
 pub(crate) type EmptyResp = ();
 
-#[data]
-pub struct Action {
+#[__data]
+pub struct RawAction {
     #[serde(flatten)]
     pub detail: ActionDetail,
     pub echo: Option<String>,
 }
 
-#[data]
+#[__data]
 pub struct ActionDetail {
     pub action: String,
     pub params: ValueMap,
@@ -30,7 +28,7 @@ pub struct ActionDetail {
 
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
-        #[data]
+        #[__data]
         #[serde(tag = "action", rename_all = "snake_case", content = "params")]
         pub enum ActionType {$(
             $typ($typ),
@@ -105,8 +103,16 @@ impl TryFrom<ActionDetail> for ActionType {
     }
 }
 
+impl TryInto<ActionDetail> for ActionType {
+    type Error = SerializerError;
+
+    fn try_into(self) -> Result<ActionDetail, Self::Error> {
+        ActionDetail::deserialize(serde_value::to_value(self)?).map_err(SerializerError::custom)
+    }
+}
+
 #[derive(Copy)]
-#[data]
+#[__data]
 #[serde(rename_all = "lowercase")]
 pub enum RespStatus {
     Ok,
@@ -114,7 +120,7 @@ pub enum RespStatus {
     Failed,
 }
 
-#[data]
+#[__data]
 pub struct RespData {
     pub status: RespStatus,
     pub retcode: i64,

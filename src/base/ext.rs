@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde_value::Value;
 
-use crate::error::TypeMismatchError;
+use super::error::TypeMismatchError;
 
 pub trait ValueExt {
     fn is_number(&self) -> bool;

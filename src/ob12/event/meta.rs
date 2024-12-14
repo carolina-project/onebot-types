@@ -1,15 +1,6 @@
-use ob_types_macro::data;
-use crate::ValueMap;
-
 use super::EventType;
 use crate::ob12::{Status, VersionInfo};
-
-#[data]
-pub struct MetaEvent {
-    pub sub_type: String,
-    #[serde(flatten)]
-    pub kind: MetaKind,
-}
+use ob_types_macro::__data;
 
 macro_rules! meta_kinds {
     {$(
@@ -18,7 +9,7 @@ macro_rules! meta_kinds {
         },
     )*} => {
         $(
-            #[data]
+            #[__data]
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
@@ -29,26 +20,18 @@ macro_rules! meta_kinds {
         $(
             impl From<$kind> for EventType {
                 fn from(value: $kind) -> Self {
-                    Self::Meta(MetaEvent {
-                        sub_type: Default::default(),
-                        kind: MetaKind::$kind(value),
-                    })
+                    Self::Meta(MetaEvent::$kind(value))
                 }
             }
         )*
 
-        #[data]
+        #[__data]
         #[serde(tag = "detail_type", rename_all = "snake_case")]
-        pub enum MetaKind {
+        pub enum MetaEvent {
             $(
             $kind($kind),
             )*
-            #[serde(untagged)]
-            Other {
-                detail_type: String,
-                #[serde(flatten)]
-                data: ValueMap,
-            },
+            Other(super::EventDetailed),
         }
     };
 }

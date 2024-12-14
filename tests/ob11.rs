@@ -1,5 +1,5 @@
 use eyre::Context;
-use onebot_types::ob11::{self, Event, MessageSeg};
+use onebot_types::ob11::{self, RawEvent, MessageSeg};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 static MESSAGES: &str = include_str!("ob11_messages.json");
@@ -26,7 +26,7 @@ fn ob11_messages() {
 
 #[test]
 fn ob11_events() {
-    let _events = parse::<Event>("event", EVENTS);
+    let _events = parse::<RawEvent>("event", EVENTS);
 }
 
 #[test]

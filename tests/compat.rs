@@ -41,7 +41,7 @@ async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
         ob11::MessageSeg::Node(forward_node) => forward_node.into_ob12(()).unwrap().into(),
         ob11::MessageSeg::Xml(xml) => xml.into_ob12(()).unwrap().into(),
         ob11::MessageSeg::Json(json) => json.into_ob12(()).unwrap().into(),
-        ob11::MessageSeg::Other(ob11::message::MessageSegRaw { r#type, data }) => {
+        ob11::MessageSeg::Other(ob11::message::RawMessageSeg { r#type, data }) => {
             if r#type != "file" {
                 panic!("Unhandled message segment: {:?}: {:?}", r#type, data)
             } else {
@@ -63,12 +63,12 @@ async fn msg_ob12_to_11(msg: ob12::MessageSeg) -> ob11::MessageSeg {
         ob12::MessageSeg::Reply(reply) => reply.into_ob11().unwrap().into(),
         ob12::MessageSeg::Image(image) => image.into_ob11(file_provider).await.unwrap().into(),
         ob12::MessageSeg::Voice(voice) => voice.into_ob11(file_provider).await.unwrap().into(),
-        ob12::MessageSeg::Audio(_) => ob11::MessageSeg::Other(ob11::message::MessageSegRaw {
+        ob12::MessageSeg::Audio(_) => ob11::MessageSeg::Other(ob11::message::RawMessageSeg {
             r#type: Default::default(),
             data: serde_value::Value::Map(Default::default()),
         }),
         ob12::MessageSeg::Video(video) => video.into_ob11(file_provider).await.unwrap().into(),
-        ob12::MessageSeg::File(_) => ob11::MessageSeg::Other(ob11::message::MessageSegRaw {
+        ob12::MessageSeg::File(_) => ob11::MessageSeg::Other(ob11::message::RawMessageSeg {
             r#type: Default::default(),
             data: serde_value::Value::Map(Default::default()),
         }),
@@ -112,7 +112,7 @@ async fn events_ob11_to_12() {
     let mut events_converted = Vec::<ob12event::EventType>::default();
     for (i, ele) in events.into_iter().enumerate() {
         println!("#{}: {}", i, serde_json::to_string_pretty(&ele).unwrap());
-        let event = ob11event::Event::deserialize(ele).unwrap();
+        let event = ob11event::RawEvent::deserialize(ele).unwrap();
 
         match event.detail {
             O11EventKind::Meta(meta) => {

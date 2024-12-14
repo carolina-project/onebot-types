@@ -4,10 +4,10 @@ pub mod event;
 pub mod message;
 
 pub use message::MessageSeg;
-pub use event::Event;
-use ob_types_macro::data;
+pub use event::RawEvent;
+use ob_types_macro::__data;
 
-#[data]
+#[__data]
 #[serde(rename_all = "lowercase")]
 pub enum Sex {
     Male,

@@ -1,24 +1,21 @@
-use ob_types_macro::data;
-
 mod types;
+use ob_types_macro::__data;
+use serde::Deserialize;
+use serde_value::{DeserializerError, SerializerError, Value};
 pub use types::*;
 
-#[data]
-pub struct MessageSegRaw {
-    pub r#type: String,
-    pub data: serde_value::Value,
-}
+use crate::base::{ext::{IntoValue, ValueExt}, RawMessageSeg};
 
-#[data]
+#[__data]
 #[serde(untagged)]
 pub enum MessageChain {
-    Array(Vec<MessageSeg>),
+    Array(Vec<RawMessageSeg>),
     String(String),
 }
 
 macro_rules! message_seg {
     ($($sg:ident),* $(,)?) => {
-        #[data]
+        #[__data]
         #[serde(rename_all = "snake_case", tag = "type", content = "data")]
         pub enum MessageSeg {
             $($sg($sg),)*
@@ -41,3 +38,27 @@ macro_rules! message_seg {
 }
 
 message_seg!(Text, Mention, MentionAll, Location, Reply, Image, Voice, Audio, Video, File);
+
+impl TryFrom<RawMessageSeg> for MessageSeg {
+    type Error = DeserializerError;
+
+    fn try_from(seg: RawMessageSeg) -> Result<Self, Self::Error> {
+        let RawMessageSeg { r#type, data } = seg;
+        Deserialize::deserialize(Value::from_map(
+            [
+                ("type", r#type.into_value()),
+                ("data", Value::from_map(data)),
+            ]
+            .into(),
+        ))
+    }
+}
+
+impl TryFrom<MessageSeg> for RawMessageSeg {
+    type Error = SerializerError;
+
+    fn try_from(seg: MessageSeg) -> Result<Self, Self::Error> {
+        use serde::ser::Error;
+        Ok(Self::deserialize(serde_value::to_value(seg)?).map_err(Error::custom)?)
+    }
+}

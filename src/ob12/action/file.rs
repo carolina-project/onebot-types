@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ops::{Deref, DerefMut}};
 
+use ob_types_macro::__data;
 use ob_types_macro::{data, onebot_action};
 
 use crate::scalable_struct;
@@ -27,7 +28,7 @@ mod data {
     }
 }
 
-#[data]
+#[__data]
 #[serde(transparent)]
 pub struct UploadData(#[cfg_attr(feature = "base64", serde(with = "data"))] pub Vec<u8>);
 
@@ -45,7 +46,7 @@ impl DerefMut for UploadData {
     }
 }
 
-#[data]
+#[__data]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UploadKind {
     Url {
@@ -64,7 +65,7 @@ pub enum UploadKind {
     },
 }
 
-#[data]
+#[__data]
 pub struct FileOpt {
     #[serde(flatten)]
     pub kind: UploadKind,
@@ -85,7 +86,7 @@ scalable_struct! {
     },
 }
 
-#[data]
+#[__data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum UploadFileReq {
     Prepare {
@@ -103,14 +104,14 @@ pub enum UploadFileReq {
     },
 }
 
-#[data]
+#[__data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum GetFileReq {
     Prepare,
     Transfer { offset: i64, size: i64 },
 }
 
-#[data]
+#[__data]
 #[serde(untagged)]
 pub enum GetFileFrag {
     Prepare {
@@ -123,7 +124,7 @@ pub enum GetFileFrag {
     },
 }
 
-#[data]
+#[__data]
 pub enum GetFileType {
     Url,
     Path,

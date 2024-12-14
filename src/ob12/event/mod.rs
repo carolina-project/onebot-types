@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use ob_types_base::{ext::IntoValue, OBAction};
-use ob_types_macro::data;
+use ob_types_macro::__data;
 
 pub mod message;
 pub mod meta;
@@ -13,11 +12,11 @@ pub use meta::MetaEvent;
 pub use notice::NoticeEvent;
 pub use request::RequestEvent;
 use serde::{de::IntoDeserializer, Deserialize};
-use serde_value::{DeserializerError, SerializerError};
+use serde_value::DeserializerError;
 
-use crate::ValueMap;
+use crate::{base::ext::IntoValue, ValueMap};
 
-#[data]
+#[__data]
 pub struct EventDetail {
     pub r#type: String,
     pub detail_type: String,
@@ -25,10 +24,17 @@ pub struct EventDetail {
     pub detail: ValueMap,
 }
 
-#[data]
+#[__data]
+pub struct EventDetailed {
+    pub detail_type: String,
+    #[serde(flatten)]
+    pub detail: ValueMap,
+}
+
+#[__data]
 pub struct Event {
     pub id: String,
-    #[serde(with = "ob_types_base::tool::duration_f64")]
+    #[serde(with = "crate::base::tool::duration_f64")]
     pub time: Duration,
     #[serde(flatten)]
     pub event: EventDetail,
@@ -49,7 +55,7 @@ impl TryFrom<EventDetail> for EventType {
     }
 }
 
-#[data]
+#[__data]
 #[serde(rename_all = "lowercase", tag = "type")]
 pub enum EventType {
     Meta(MetaEvent),

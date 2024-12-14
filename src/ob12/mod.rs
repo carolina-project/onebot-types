@@ -1,5 +1,3 @@
-use ob_types_macro::data;
-
 pub mod action;
 pub mod event;
 pub mod message;
@@ -43,7 +41,7 @@ mod macros {
                 ),* $(,)?
             })? $(, $($rest:tt)*)?
         } => {
-            #[ob_types_macro::data]
+            #[ob_types_macro::__data]
             pub struct $typ {
                 $(
                     $(
@@ -66,8 +64,9 @@ mod macros {
 }
 
 pub(self) use macros::scalable_struct;
+use ob_types_macro::__data;
 
-#[data]
+#[__data]
 pub struct BotSelf {
     pub platform: String,
     pub user_id: String,
@@ -116,7 +115,7 @@ pub(crate) static CHAT_TARGET_FIELDS: &[&str] = &[
     "detail_type",
 ];
 
-#[data]
+#[__data]
 #[serde(tag = "detail_type", rename_all = "snake_case")]
 pub enum ChatTarget {
     Private {

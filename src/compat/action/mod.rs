@@ -6,9 +6,6 @@ pub(self) use crate::ob11::action as ob11action;
 pub(self) use crate::ob12::action as ob12action;
 pub(self) use crate::{ob11, ob12};
 use crate::{DesResult, ValueMap};
-use ob_types_base::ext::{IntoValue, ValueMapExt};
-use ob_types_base::OBRespData;
-use ob_types_macro::data;
 pub(self) use serde::de::Error as DeError;
 use serde::Deserialize;
 pub(self) use serde_value::DeserializerError;
@@ -86,7 +83,7 @@ macro_rules! compat_actions {
             }
         }
 
-        $(impl TryFrom<ob11action::$ob11action> for ob12action::ActionType {
+        $(impl TryFrom<ob11action::$ob11action> for ob12action::ActionDetail {
             type Error = CompatError;
 
             fn try_from(value: ob11action::$ob11action) -> Result<Self, Self::Error> {
@@ -117,15 +114,15 @@ macro_rules! compat_actions {
     };
 }
 
-impl TryFrom<CompatAction> for ob12action::ActionType {
+impl TryFrom<CompatAction> for ob12action::ActionDetail {
     type Error = CompatError;
 
     fn try_from(value: CompatAction) -> Result<Self, Self::Error> {
         let (action, params) = value.into_data()?;
-        Ok(Self::Other(ob12action::ActionDetail {
+        Ok(ob12action::ActionDetail {
             action: action.into(),
             params,
-        }))
+        })
     }
 }
 

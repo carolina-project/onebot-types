@@ -1,6 +1,3 @@
-use std::collections::HashSet;
-
-use parse::Parse;
 use quote::quote;
 use syn::*;
 
@@ -15,18 +12,17 @@ pub fn str_field_append(field: &Field) -> Vec<Attribute> {
     if let Type::Path(typ) = field_type {
         if FROMSTR_TYPES.iter().any(|r| typ.path.is_ident(r)) {
             attrs.push(parse_quote! {
-                #[serde(with = "ob_types_base::tool::from_str")]
+                #[serde(with = "crate::base::tool::from_str")]
             });
         } else if typ.path.is_ident("bool") {
             attrs.push(parse_quote! {
-                #[serde(with = "ob_types_base::tool::str_bool")]
+                #[serde(with = "crate::base::tool::str_bool")]
             });
         }
     }
     attrs
 }
 
-/// Process enum fields with Serde attributes, append attributes for fields and variants, and wrap fields with the `serde` attribute in a `cfg_attr` attribute to ensure that the attribute is only enabled with the `json` feature.
 pub fn enum_fields_process(
     vis: Visibility,
     name: Ident,
@@ -76,7 +72,6 @@ pub fn enum_fields_process(
     }
 }
 
-/// Process struct fields with Serde attributes, append attributes for fields, and wrap fields with the `serde` attribute in a `cfg_attr` attribute to ensure that the attribute is only enabled with the `json` feature.
 pub fn struct_fields_proc(
     vis: Visibility,
     name: Ident,
@@ -113,49 +108,6 @@ pub fn struct_fields_proc(
                 #( #field_defs ),*
             }
         }
-    }
-}
-
-#[derive(Hash, PartialEq, Eq)]
-pub enum JsonAddition {
-    StringValue,
-}
-
-pub struct JsonProcMacro {
-    pub additions: HashSet<JsonAddition>,
-    pub has_default: bool,
-}
-
-impl Parse for JsonProcMacro {
-    fn parse(input: parse::ParseStream) -> Result<Self> {
-        let mut additions = HashSet::new();
-        let mut has_default = false;
-        let peek = || -> Result<_> {
-            if input.peek(Token![,]) {
-                input.parse::<Token![,]>()?;
-            }
-
-            Ok(())
-        };
-        while input.peek(Ident) {
-            let ident: Ident = input.parse()?;
-            match ident.to_string().as_str() {
-                "default" => {
-                    peek()?;
-                    has_default = true;
-                }
-                "str" => {
-                    peek()?;
-                    additions.insert(JsonAddition::StringValue);
-                }
-                _ => return Err(Error::new(ident.span(), "Unknown attribute")),
-            }
-        }
-
-        Ok(JsonProcMacro {
-            additions,
-            has_default,
-        })
     }
 }
 

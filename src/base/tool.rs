@@ -171,7 +171,7 @@ pub mod str_bool {
 pub fn serde_to_string<T: serde::Serialize>(
     value: T,
 ) -> Result<String, serde_value::SerializerError> {
-    use crate::ext::ValueExt;
+    use super::ext::ValueExt;
     use serde::ser::Error;
 
     serde_value::to_value(value)?

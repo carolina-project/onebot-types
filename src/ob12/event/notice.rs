@@ -1,10 +1,10 @@
-use ob_types_macro::data;
+use ob_types_macro::__data;
 
 use crate::ob12::BotSelf;
 
 use super::EventType;
 
-#[data]
+#[__data]
 #[serde(rename_all = "snake_case")]
 pub enum IncreaseType {
     Join,
@@ -13,7 +13,7 @@ pub enum IncreaseType {
     Other(String),
 }
 
-#[data]
+#[__data]
 #[serde(rename_all = "snake_case")]
 pub enum DecreaseType {
     Kick,
@@ -22,7 +22,7 @@ pub enum DecreaseType {
     Other(String),
 }
 
-#[data]
+#[__data]
 #[serde(rename_all = "snake_case")]
 pub enum MessageDeleteType {
     Delete,
@@ -38,7 +38,7 @@ macro_rules! notice_kinds {
         },
     )*} => {
         $(
-            #[data]
+            #[__data]
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
@@ -52,18 +52,14 @@ macro_rules! notice_kinds {
             }
         )*
 
-        #[data]
+        #[__data]
         #[serde(tag = "detail_type", rename_all = "snake_case")]
         pub enum NoticeKind {
             $(
             $kind($kind),
             )*
             #[serde(untagged)]
-            Other {
-                detail_type: String,
-                #[serde(flatten)]
-                data: serde_value::Value,
-            },
+            Other(super::EventDetailed),
         }
     };
 }
@@ -149,7 +145,7 @@ notice_kinds! {
     },
 }
 
-#[data]
+#[__data]
 pub struct NoticeEvent {
     #[serde(rename = "self")]
     pub self_: BotSelf,

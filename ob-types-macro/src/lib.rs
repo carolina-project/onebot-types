@@ -1,23 +1,11 @@
-use std::{fmt::Display, fs::OpenOptions};
-
-use parse::Parse;
-use proc::{JsonAddition, JsonProcMacro};
 use proc_macro::TokenStream;
-use quote::quote;
+use proc_macro_error::proc_macro_error;
+use punctuated::Punctuated;
+use quote::{quote, ToTokens};
+use std::{fmt::Display, fs::OpenOptions};
 use syn::*;
 
 mod proc;
-
-struct OBActionArgs {
-    response_type: Type,
-}
-impl Parse for OBActionArgs {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self {
-            response_type: input.parse()?,
-        })
-    }
-}
 
 #[allow(dead_code)]
 fn debug_tokens(tokens: impl Display) {
@@ -31,37 +19,29 @@ fn debug_tokens(tokens: impl Display) {
     writeln!(f, "{}", tokens).unwrap();
 }
 
-#[proc_macro_derive(OBRespData)]
-pub fn ob_resp_data(input: TokenStream) -> TokenStream {
-    use syn::DeriveInput;
-    let input = parse_macro_input!(input as DeriveInput);
-    let struct_name = &input.ident;
-    let generics = &input.generics;
-    let generic_types: Vec<_> = generics.type_params().map(|ty| &ty.ident).collect();
-    let const_generics: Vec<_> = generics.const_params().map(|ty| &ty.ident).collect();
-    let where_clause = &generics.where_clause;
-    let lifetimes = generics.lifetimes();
-    let t = quote! {
-        impl #generics ob_types_base::OBRespData for #struct_name < #(#lifetimes,)*
-            #(#generic_types, )* #(#const_generics, )*
-            > #where_clause {}
-    };
-    t.into()
-}
+#[proc_macro_error]
+#[proc_macro_derive(OBAction, attributes(resp, __oba_crate_path))]
+pub fn onebot_action(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
 
-#[proc_macro_attribute]
-pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
-    let input_struct: ItemStruct = parse_macro_input!(input);
-    let args = parse_macro_input!(args as OBActionArgs);
-    let action_name = proc::camel_to_snake(&input_struct.ident.to_string());
-    let resp_type = args.response_type;
+    let mut resp_type = None;
+    let mut crate_path: Path = parse_quote! { ::onebot_types };
+    for attr in &input.attrs {
+        if attr.path().is_ident("resp") {
+            let ty: Path = attr.parse_args().unwrap();
+            resp_type = Some(ty);
+        } else if attr.path().is_ident("__oba_crate_path") {
+            crate_path = attr.parse_args().unwrap();
+        }
+    }
+    if resp_type.is_none() {
+        proc_macro_error::abort!(input, "The attribute `#[resp(<Type>)]` must be specified.")
+    }
 
-    let struct_name = &input_struct.ident;
+    let name = input.ident;
+    let action_name = proc::camel_to_snake(&name.to_string());
     TokenStream::from(quote! {
-        #[ob_types_macro::data]
-        #input_struct
-
-        impl ob_types_base::OBAction<'static> for #struct_name {
+        impl #crate_path::OBAction for #name {
             const ACTION: Option<&'static str> = Some(#action_name);
             type Resp = #resp_type;
         }
@@ -69,26 +49,35 @@ pub fn onebot_action(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn data(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    let props: JsonProcMacro = parse_macro_input!(attrs);
-
+pub fn __data(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attr with Punctuated::<Meta, syn::Token![,]>::parse_terminated);
     let derive = parse_macro_input!(input as DeriveInput);
-    let mut input = if props.additions.contains(&JsonAddition::StringValue) {
-        proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
-    } else {
-        proc::derive_serde_process(derive, None)
-    };
 
-    if props.has_default {
-        input = quote! {
-            #[derive(Default)]
-            #input
+    let mut str_field = false;
+    let mut default = false;
+    for ele in args {
+        if ele.path().is_ident("str") {
+            str_field = true;
+        } else if ele.path().is_ident("default") {
+            default = true;
         }
     }
 
-    let tokens = quote! {
+    let mut input = if str_field {
+        proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
+    } else {
+        derive.into_token_stream()
+    };
+    if default {
+        input = quote! {
+            #[derive(Default)]
+            #input
+        };
+    }
+
+    quote! {
         #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
         #input
-    };
-    tokens.into()
+    }
+    .into()
 }

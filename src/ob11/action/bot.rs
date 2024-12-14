@@ -1,3 +1,5 @@
+use ob_types_macro::{OBAction, __data};
+
 use crate::{
     ob11::{
         event::message::{GroupSender, PrivateSender},
@@ -5,9 +7,6 @@ use crate::{
     },
     ValueMap,
 };
-#[allow(unused)]
-use ob_types_base::OBRespData;
-use ob_types_macro::{data, onebot_action};
 
 use super::EmptyResp;
 
@@ -64,30 +63,39 @@ impl<'de> serde::Deserialize<'de> for ChatTarget {
     }
 }
 
-#[onebot_action(MessageResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(MessageResp)]
+#[__oba_crate_path(crate)]
 pub struct SendMsg {
     #[serde(flatten)]
     pub target: ChatTarget,
     pub message: MessageChain,
 }
 
-#[data]
+#[__data]
 pub struct MessageResp {
     pub message_id: i32,
 }
 
-#[onebot_action(EmptyResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(EmptyResp)]
+#[__oba_crate_path(crate)]
 #[allow(unused)]
 pub struct DeleteMsg {
     pub message_id: i32,
 }
 
-#[onebot_action(GetMessageResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(GetMessageResp)]
+#[__oba_crate_path(crate)]
 pub struct GetMsg {
     pub message_id: i32,
 }
 
-#[data]
+#[__data]
 pub enum MessageSender {
     Private(PrivateSender),
     Group(GroupSender),
@@ -197,85 +205,115 @@ mod serde_impl_get {
     }
 }
 
-#[onebot_action(GetForwardMsgResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(GetForwardMsgResp)]
+#[__oba_crate_path(crate)]
 pub struct GetForwardMsg {
     pub id: String,
 }
 
-#[data]
+#[__data]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
 
-#[onebot_action(LoginInfo)]
+#[__data]
+#[derive(OBAction)]
+#[resp(LoginInfo)]
+#[__oba_crate_path(crate)]
 pub struct GetLoginInfo;
 
-#[data]
+#[__data]
 pub struct LoginInfo {
     pub user_id: i64,
     pub nickname: String,
 }
 
-#[onebot_action(Cookies)]
+#[__data]
+#[derive(OBAction)]
+#[resp(Cookies)]
+#[__oba_crate_path(crate)]
 pub struct GetCookies {
     pub domain: Option<String>,
 }
 
-#[data]
+#[__data]
 pub struct Cookies {
     pub cookies: String,
 }
 
-#[onebot_action(CSRFToken)]
+#[__data]
+#[derive(OBAction)]
+#[resp(CSRFToken)]
+#[__oba_crate_path(crate)]
 pub struct GetCsrfToken;
 
-#[data]
+#[__data]
 pub struct CSRFToken {
     pub token: i32,
 }
 
-#[onebot_action(Credentials)]
+#[__data]
+#[derive(OBAction)]
+#[resp(Credentials)]
+#[__oba_crate_path(crate)]
 pub struct GetCredentials {
     pub domain: Option<String>,
 }
 
-#[data]
+#[__data]
 pub struct Credentials {
     pub cookies: String,
     pub csrf_token: i32,
 }
 
-#[data]
+#[__data]
 pub struct FileResp {
     pub file: String,
 }
 
-#[onebot_action(FileResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(FileResp)]
+#[__oba_crate_path(crate)]
 pub struct GetRecord {
     pub file: String,
     pub out_format: String,
 }
 
-#[onebot_action(FileResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(FileResp)]
+#[__oba_crate_path(crate)]
 pub struct GetImage {
     pub file: String,
 }
 
-#[data]
+#[__data]
 pub struct IsAllowd {
     pub yes: bool,
 }
 
-#[onebot_action(IsAllowd)]
+#[__data]
+#[derive(OBAction)]
+#[resp(IsAllowd)]
+#[__oba_crate_path(crate)]
 pub struct CanSendImage;
 
-#[onebot_action(IsAllowd)]
+#[__data]
+#[derive(OBAction)]
+#[resp(IsAllowd)]
+#[__oba_crate_path(crate)]
 pub struct CanSendRecord;
 
-#[onebot_action(Status)]
+#[__data]
+#[derive(OBAction)]
+#[resp(Status)]
+#[__oba_crate_path(crate)]
 pub struct GetStatus;
 
-#[data]
+#[__data]
 pub struct Status {
     pub online: bool,
     pub good: bool,
@@ -283,10 +321,13 @@ pub struct Status {
     pub extra: ValueMap,
 }
 
-#[onebot_action(VersionInfo)]
+#[__data]
+#[derive(OBAction)]
+#[resp(VersionInfo)]
+#[__oba_crate_path(crate)]
 pub struct GetVersionInfo;
 
-#[data]
+#[__data]
 pub struct VersionInfo {
     pub app_name: String,
     pub app_version: String,
@@ -295,10 +336,16 @@ pub struct VersionInfo {
     pub extra: ValueMap,
 }
 
-#[onebot_action(EmptyResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(EmptyResp)]
+#[__oba_crate_path(crate)]
 pub struct SetRestart {
     pub delay: i32,
 }
 
-#[onebot_action(EmptyResp)]
+#[__data]
+#[derive(OBAction)]
+#[resp(EmptyResp)]
+#[__oba_crate_path(crate)]
 pub struct CleanCache;

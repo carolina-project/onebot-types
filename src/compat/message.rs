@@ -2,7 +2,7 @@ use super::*;
 pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
 use crate::ValueMap;
-use ob_types_macro::data;
+use ob_types_macro::__data;
 use serde::Deserialize;
 pub(self) use serde_value::*;
 use std::future::Future;
@@ -10,7 +10,7 @@ use std::future::Future;
 pub(self) use crate::{DesResult, SerResult};
 
 /// Represents a file message segment's common fields.
-#[data(default)]
+#[__data(default)]
 pub struct FileSeg {
     pub file: String,
     pub url: Option<String>,
@@ -135,7 +135,7 @@ impl From<CompatSegment> for ob12message::MessageSeg {
 pub mod ob11to12 {
     use std::future::Future;
 
-    use ob_types_base::ext::IntoValue;
+    use crate::base::ext::IntoValue;
     use serde::ser::Error;
 
     use super::*;
@@ -312,9 +312,10 @@ pub mod ob11to12 {
 }
 
 pub mod ob12to11 {
+    use crate::base::tool;
+
     use super::*;
     use ob11message::*;
-    use ob_types_base::tool;
     use serde::de::{Error, IntoDeserializer};
 
     #[inline]
