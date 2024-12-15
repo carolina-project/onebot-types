@@ -1,8 +1,5 @@
 use std::fmt::Display;
 
-use ob_types_base::ext::{IntoValue, ValueExt};
-use ob_types_macro::data;
-
 mod file;
 mod group;
 mod guild;
@@ -15,16 +12,17 @@ pub use group::*;
 pub use guild::*;
 pub use message::*;
 pub use meta::*;
+use ob_types_macro::__data;
 use serde::Deserialize;
 use serde_value::{DeserializerError, Value};
 use thiserror::Error;
 pub use user::*;
 
-use crate::ValueMap;
+use crate::{base::ext::{IntoValue, ValueExt}, ValueMap};
 
 use super::scalable_struct;
 
-#[data]
+#[__data]
 pub struct Action {
     #[serde(flatten)]
     pub action: ActionDetail,
@@ -33,7 +31,7 @@ pub struct Action {
     pub self_: Option<super::BotSelf>,
 }
 
-#[data]
+#[__data]
 pub struct ActionDetail {
     pub action: String,
     pub params: ValueMap,
@@ -56,7 +54,7 @@ impl TryFrom<ActionDetail> for ActionType {
 
 macro_rules! actions {
     ($($typ:ident),* $(,)?) => {
-        #[data]
+        #[__data]
         #[serde(tag = "action", rename_all = "snake_case", content = "params")]
         pub enum ActionType {
             $(
@@ -115,14 +113,14 @@ actions!(
 );
 
 #[derive(Copy, PartialEq, Eq)]
-#[data]
+#[__data]
 #[serde(rename_all = "lowercase")]
 pub enum RespStatus {
     Ok,
     Failed,
 }
 
-#[data]
+#[__data]
 pub struct RespData {
     pub status: RespStatus,
     pub retcode: RetCode,

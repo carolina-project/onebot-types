@@ -1,7 +1,6 @@
 use ob_types_macro::__data;
 
-use crate::define_action;
-use crate::ob11::message::MessageChain;
+use crate::base::{define_action, MessageChain};
 use crate::ob11::Sex;
 
 use super::bot::MessageResp;

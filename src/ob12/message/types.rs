@@ -23,7 +23,6 @@ scalable_struct! {
 macro_rules! file_msgs {
     ($($typ:ident),* $(,)?) => {
         scalable_struct! {$(
-            #[ob_types_macro::__data(default)]
             $typ = {
                 file_id: String
             },

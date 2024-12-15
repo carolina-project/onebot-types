@@ -1,15 +1,20 @@
 pub(self) use super::*;
 
+use serde::de::IntoDeserializer;
 use std::{future::Future, num::ParseIntError};
 
+use crate::base::ext::{IntoValue, ValueMapExt};
+use crate::base::RespData;
 pub(self) use crate::ob11::action as ob11action;
+pub(self) use crate::ob12;
 pub(self) use crate::ob12::action as ob12action;
-pub(self) use crate::{ob11, ob12};
-use crate::{DesResult, ValueMap};
+use ob_types_macro::__data;
 pub(self) use serde::de::Error as DeError;
 use serde::Deserialize;
 pub(self) use serde_value::DeserializerError;
 pub(self) use serde_value::Value;
+
+use crate::{DesResult, ValueMap};
 
 pub mod bot;
 pub mod friend;
@@ -52,7 +57,7 @@ pub trait FromOB11Resp<P = ()>
 where
     Self: Sized,
 {
-    type In: OBRespData<'static>;
+    type In: RespData;
 
     fn from_ob11(from: Self::In, param: P) -> DesResult<Self>;
 }
@@ -61,7 +66,7 @@ pub trait FromOB11RespAsync<P = ()>
 where
     Self: Sized,
 {
-    type In: OBRespData<'static>;
+    type In: RespData;
 
     fn from_ob11(from: Self::In, param: P) -> impl Future<Output = DesResult<Self>>;
 }
@@ -95,7 +100,7 @@ macro_rules! compat_actions {
             pub fn into_data(self) -> Result<(&'static str, ValueMap), CompatError> {
                 match self {
                     $(CompatAction::$ob11action(action)
-                        => Ok((concat!("ob11.", $name), 
+                        => Ok((concat!("ob11.", $name),
                             serde_value::to_value(action)
                             .map_err(DeserializerError::custom)
                             .and_then(|r| ValueMap::deserialize(r))?)),
@@ -103,10 +108,12 @@ macro_rules! compat_actions {
                 }
             }
 
-            pub fn from_data(name: impl AsRef<str>, data: Value) -> Result<CompatAction, CompatError> {
+            pub fn from_data(name: impl AsRef<str>, data: ValueMap) -> Result<CompatAction, CompatError> {
                 match name.as_ref() {
                     $(concat!("ob11.", $name)
-                        => Ok(Deserialize::deserialize(data).map(CompatAction::$ob11action).map_err(DeserializerError::custom)?),)*
+                        => Ok(Deserialize::deserialize(
+                                data.into_deserializer()
+                            ).map(CompatAction::$ob11action).map_err(DeserializerError::custom)?),)*
                     name => Err(CompatError::UnknownCompat(name.into())),
                 }
             }
@@ -226,7 +233,7 @@ fn remove_field_or<'a, T: serde::Deserialize<'a>>(
     }
 }
 
-#[data]
+#[__data]
 pub enum UserInfoResp {
     LoginInfo(ob11action::LoginInfo),
     StrangerInfo(ob11action::StrangerInfoResp),

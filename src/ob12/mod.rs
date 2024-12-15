@@ -8,7 +8,7 @@ mod macros {
     #[macro_export]
     macro_rules! scalable_struct {
         {
-            $(#[$head_meta:meta])+
+            $(#[resp($resp:ty)])?
             $typ:ident $(= {
                 $(
                     $(#[$meta:meta])*
@@ -16,7 +16,11 @@ mod macros {
                 ),* $(,)?
             })? $(, $($rest:tt)*)?
         } => {
-            $(#[$head_meta])+
+            #[ob_types_macro::__data]
+            $(
+            #[derive(ob_types_macro::OBAction)]
+            #[action(__crate_path = crate, resp = $resp)]
+            )?
             pub struct $typ {
                 $(
                     $(
@@ -32,31 +36,6 @@ mod macros {
             }
 
         };
-
-        {
-            $typ:ident $(= {
-                $(
-                    $(#[$meta:meta])*
-                    $field:ident : $f_ty:ty
-                ),* $(,)?
-            })? $(, $($rest:tt)*)?
-        } => {
-            #[ob_types_macro::__data]
-            pub struct $typ {
-                $(
-                    $(
-                        $(#[$meta])*
-                        pub $field: $f_ty,
-                    )*
-                )?
-                #[serde(flatten)]
-                pub extra: $crate::ValueMap,
-            }
-
-            $crate::scalable_struct! {
-                $($($rest)*)?
-            }
-        };
         {} => {};
     }
 
@@ -66,7 +45,7 @@ mod macros {
 pub(self) use macros::scalable_struct;
 use ob_types_macro::__data;
 
-#[__data]
+#[__data(default)]
 pub struct BotSelf {
     pub platform: String,
     pub user_id: String,
@@ -106,14 +85,6 @@ scalable_struct! {
         channel_name: String,
     },
 }
-
-pub(crate) static CHAT_TARGET_FIELDS: &[&str] = &[
-    "user_id",
-    "group_id",
-    "guild_id",
-    "channel_id",
-    "detail_type",
-];
 
 #[__data]
 #[serde(tag = "detail_type", rename_all = "snake_case")]

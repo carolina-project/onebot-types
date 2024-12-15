@@ -3,6 +3,8 @@ use std::{collections::BTreeMap, fmt::Display, str::FromStr, time::Duration};
 use ob_types_macro::__data;
 use serde::{Deserialize, Serialize};
 
+use crate::base::ext::ValueExt;
+
 use super::MessageSeg;
 
 const fn true_value() -> bool {
@@ -48,8 +50,9 @@ pub enum FileOption {
 
 impl serde::Serialize for FileOption {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer {
+    where
+        S: serde::Serializer,
+    {
         match self {
             FileOption::Send(s) => s.serialize(serializer),
             FileOption::Receive(r) => r.serialize(serializer),

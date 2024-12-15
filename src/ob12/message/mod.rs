@@ -4,14 +4,10 @@ use serde::Deserialize;
 use serde_value::{DeserializerError, SerializerError, Value};
 pub use types::*;
 
-use crate::base::{ext::{IntoValue, ValueExt}, RawMessageSeg};
-
-#[__data]
-#[serde(untagged)]
-pub enum MessageChain {
-    Array(Vec<RawMessageSeg>),
-    String(String),
-}
+use crate::base::{
+    ext::{IntoValue, ValueExt},
+    RawMessageSeg,
+};
 
 macro_rules! message_seg {
     ($($sg:ident),* $(,)?) => {
@@ -20,11 +16,7 @@ macro_rules! message_seg {
         pub enum MessageSeg {
             $($sg($sg),)*
             #[serde(untagged)]
-            /// Extra message types or messages which missing fields.
-            Other {
-                r#type: String,
-                data: serde_value::Value,
-            }
+            Other(RawMessageSeg),
         }
 
         $(

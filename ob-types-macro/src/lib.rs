@@ -1,3 +1,4 @@
+use proc::{gen_selector, DeriveAttr};
 use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use punctuated::Punctuated;
@@ -20,32 +21,71 @@ fn debug_tokens(tokens: impl Display) {
 }
 
 #[proc_macro_error]
-#[proc_macro_derive(OBAction, attributes(resp, __oba_crate_path))]
+#[proc_macro_derive(OBAction, attributes(action))]
 pub fn onebot_action(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
+    let in_name = input.ident.clone();
 
-    let mut resp_type = None;
-    let mut crate_path: Path = parse_quote! { ::onebot_types };
-    for attr in &input.attrs {
-        if attr.path().is_ident("resp") {
-            let ty: Path = attr.parse_args().unwrap();
-            resp_type = Some(ty);
-        } else if attr.path().is_ident("__oba_crate_path") {
-            crate_path = attr.parse_args().unwrap();
-        }
-    }
-    if resp_type.is_none() {
-        proc_macro_error::abort!(input, "The attribute `#[resp(<Type>)]` must be specified.")
+    let attrs = DeriveAttr::<Path>::parse("action", &input.attrs, &in_name, "resp").unwrap();
+    if attrs.custom_attr.is_none() {
+        proc_macro_error::abort!(
+            input,
+            "The response type must be specified.(`#[action(resp = <Type>)]`)"
+        )
     }
 
-    let name = input.ident;
-    let action_name = proc::camel_to_snake(&name.to_string());
+    let full_name = attrs.full_name();
+    let DeriveAttr {
+        crate_path,
+        custom_attr,
+        ..
+    } = attrs;
     TokenStream::from(quote! {
-        impl #crate_path::OBAction for #name {
-            const ACTION: Option<&'static str> = Some(#action_name);
-            type Resp = #resp_type;
+        impl #crate_path::OBAction for #in_name {
+            const ACTION: Option<&'static str> = Some(#full_name);
+            type Resp = #custom_attr;
         }
     })
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(OBEvent, attributes(event))]
+pub fn onebot_event(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
+    let in_name = input.ident.clone();
+
+    let attrs = DeriveAttr::<LitStr>::parse("event", &input.attrs, &in_name, "type").unwrap();
+    if attrs.custom_attr.is_none() {
+        proc_macro_error::abort!(
+            input,
+            "The event type must be specified.(`#[event(type = \"<Type(message, notice ...)>\")]`)"
+        )
+    }
+
+    let full_name = attrs.full_name();
+    let DeriveAttr {
+        crate_path,
+        custom_attr,
+        ..
+    } = attrs;
+    quote! {
+        impl #crate_path::OBEvent for #in_name {
+            const TYPE: &'static str = #custom_attr;
+            const DETAIL_TYPE: &'static str = #full_name;
+        }
+    }
+    .into()
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(OBEventSelector)]
+pub fn onebot_event_selector(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
+
+    let Data::Enum(data) = input.data.clone() else {
+        proc_macro_error::abort!(input, "expected Enum")
+    };
+    gen_selector(data).unwrap().into()
 }
 
 #[proc_macro_attribute]

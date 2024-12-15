@@ -1,14 +1,12 @@
-use ob_types_macro::onebot_action;
-
 use crate::{ob12::UserInfo, scalable_struct};
 
 scalable_struct! {
-    #[onebot_action(UserInfo)]
+    #[resp(UserInfo)]
     GetSelfInfo,
-    #[onebot_action(UserInfo)]
+    #[resp(UserInfo)]
     GetUserInfo = {
         user_id: String,
     },
-    #[onebot_action(Vec<UserInfo>)]
+    #[resp(Vec<UserInfo>)]
     GetFriendList,
 }

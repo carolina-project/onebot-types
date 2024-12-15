@@ -76,19 +76,7 @@
         "raw_message": "[CQ:file,file=libnghttp2-14_1.57.0-1_mipsel_24kc.ipk,url=/sadwa,file_id=000000dc4e61704361744f6e65426f747c4d736746696c657c327c3437373531373138327c373433323636373539343331393132303637307c373433323636373539343331393132303636397c2f38393163626235362d626534642d343163382d396165622d376630373132326636366530.libnghttp2-14_1.57.0-1_mipsel_24kc.ipk,file_size=60232,file_unique=b0e430871ec831f481d4f3a34d6abe84]",
         "font": 14,
         "sub_type": "normal",
-        "message": [
-            {
-                "type": "file",
-                "data": {
-                    "file": "libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
-                    "path": "",
-                    "url": "file://sadwa",
-                    "file_id": "000000dc4e61704361744f6e65426f747c4d736746696c657c327c3437373531373138327c373433323636373539343331393132303637307c373433323636373539343331393132303636397c2f38393163626235362d626534642d343163382d396165622d376630373132326636366530.libnghttp2-14_1.57.0-1_mipsel_24kc.ipk",
-                    "file_size": "60232",
-                    "file_unique": "b0e430871ec831f481d4f3a34d6abe84"
-                }
-            }
-        ],
+        "message": [],
         "message_format": "array",
         "post_type": "message",
         "group_id": 112233

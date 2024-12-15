@@ -1,5 +1,3 @@
-use ob_types_macro::onebot_action;
-
 use crate::{
     ob12::{GroupInfo, UserInfo},
     scalable_struct,
@@ -8,27 +6,27 @@ use crate::{
 use super::EmptyResp;
 
 scalable_struct! {
-    #[onebot_action(GroupInfo)]
+    #[resp(GroupInfo)]
     GetGroupInfo = {
         group_id: String,
     },
-    #[onebot_action(Vec<GroupInfo>)]
+    #[resp(Vec<GroupInfo>)]
     GetGroupList,
-    #[onebot_action(UserInfo)]
+    #[resp(UserInfo)]
     GetGroupMemberInfo = {
         group_id: String,
         user_id: String
     },
-    #[onebot_action(Vec<UserInfo>)]
+    #[resp(Vec<UserInfo>)]
     GetGroupMemberList = {
         group_id: String,
     },
-    #[onebot_action(EmptyResp)]
+    #[resp(EmptyResp)]
     SetGroupName = {
         group_id: String,
         group_name: String,
     },
-    #[onebot_action(EmptyResp)]
+    #[resp(EmptyResp)]
     LeaveGroup = {
         group_id: String,
     },

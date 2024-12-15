@@ -1,11 +1,12 @@
 use super::*;
 pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
-use crate::ValueMap;
+use crate::{base::RawMessageSeg, ValueMap};
 use ob_types_macro::__data;
 use serde::Deserialize;
 pub(self) use serde_value::*;
 use std::future::Future;
+use serde::de::IntoDeserializer;
 
 pub(self) use crate::{DesResult, SerResult};
 
@@ -68,21 +69,23 @@ macro_rules! define_compat_types {
         impl CompatSegment {
             /// parse from name and data(ob11 messages that transformed into ob12)
             pub fn parse_data(
-                name: impl AsRef<str>, data: serde_value::Value
+                name: impl AsRef<str>, data: ValueMap
             ) -> Result<Self, CompatError> {
                 match name.as_ref() {
                     $(concat!("ob11.", $name) => {
-                        Ok(CompatSegment::$typ(ob11message::$typ::deserialize(data)?))
+                        Ok(CompatSegment::$typ(ob11message::$typ::deserialize(data.into_deserializer())?))
                     })*
                     _ => Err(CompatError::UnknownCompat(name.as_ref().to_string())),
                 }
             }
 
-            pub fn into_data(self) -> Result<(&'static str, serde_value::Value), CompatError> {
+            pub fn into_data(self) -> Result<(&'static str, ValueMap), CompatError> {
                 match self {
                     $(
                         CompatSegment::$typ(data)
-                            => Ok((concat!("ob11.", $name), serde_value::to_value(data)?)),
+                            => Ok((concat!("ob11.", $name),
+                                ValueMap::deserialize(serde_value::to_value(data)?)?
+                            )),
                     )*
                 }
             }
@@ -125,10 +128,10 @@ define_compat_types! (
 impl From<CompatSegment> for ob12message::MessageSeg {
     fn from(value: CompatSegment) -> Self {
         let (r#type, data) = value.into_data().unwrap();
-        Self::Other {
-            r#type: r#type.into(),
+        Self::Other(RawMessageSeg {
+            r#type: r#type.to_owned(),
             data,
-        }
+        })
     }
 }
 

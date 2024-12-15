@@ -7,7 +7,8 @@ use serde::{
 use serde_value::{DeserializerError, SerializerError};
 
 use crate::{
-    ob11::{message::MessageChain, Sex},
+    base::{MessageChain, RawMessageSeg},
+    ob11::Sex,
     ValueMap,
 };
 
@@ -128,6 +129,16 @@ pub struct GroupMessage {
 
 #[derive(Clone, Debug)]
 pub struct MsgEventChain(pub MessageChain);
+impl From<MsgEventChain> for MessageChain {
+    fn from(value: MsgEventChain) -> Self {
+        value.0
+    }
+}
+impl MsgEventChain {
+    pub fn into_inner(self) -> Vec<RawMessageSeg> {
+        self.0.into_inner()
+    }
+}
 
 mod serde_impl_segs {
     use super::MessageChain;
@@ -143,18 +154,11 @@ mod serde_impl_segs {
                 message: &'a T,
             }
 
-            match &self.0 {
-                MessageChain::Array(segs) => Helper {
-                    message_format: "array",
-                    message: segs,
-                }
-                .serialize(serializer),
-                MessageChain::String(s) => Helper {
-                    message_format: "string",
-                    message: s,
-                }
-                .serialize(serializer),
+            Helper {
+                message_format: "array",
+                message: self.0.inner(),
             }
+            .serialize(serializer)
         }
     }
     impl<'de> de::Deserialize<'de> for super::MsgEventChain {

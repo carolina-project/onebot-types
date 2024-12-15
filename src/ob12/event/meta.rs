@@ -1,5 +1,6 @@
-use super::EventType;
+use super::EventKind;
 use crate::ob12::{Status, VersionInfo};
+use ob_types_macro::OBEvent;
 use ob_types_macro::__data;
 
 macro_rules! meta_kinds {
@@ -10,6 +11,8 @@ macro_rules! meta_kinds {
     )*} => {
         $(
             #[__data]
+            #[derive(OBEvent)]
+            #[event(__crate_path = crate, type = "meta")]
             pub struct $kind {
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
@@ -18,7 +21,7 @@ macro_rules! meta_kinds {
         )*
 
         $(
-            impl From<$kind> for EventType {
+            impl From<$kind> for EventKind {
                 fn from(value: $kind) -> Self {
                     Self::Meta(MetaEvent::$kind(value))
                 }
@@ -31,6 +34,7 @@ macro_rules! meta_kinds {
             $(
             $kind($kind),
             )*
+            #[serde(untagged)]
             Other(super::EventDetailed),
         }
     };
@@ -46,4 +50,10 @@ meta_kinds! {
     StatusUpdate {
         status: Status,
     },
+}
+
+impl From<MetaEvent> for EventKind {
+    fn from(value: MetaEvent) -> Self {
+        Self::Meta(value)
+    }
 }

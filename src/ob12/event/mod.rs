@@ -40,7 +40,7 @@ pub struct Event {
     pub event: EventDetail,
 }
 
-impl TryFrom<EventDetail> for EventType {
+impl TryFrom<EventDetail> for EventKind {
     type Error = DeserializerError;
 
     fn try_from(detail: EventDetail) -> Result<Self, Self::Error> {
@@ -57,7 +57,7 @@ impl TryFrom<EventDetail> for EventType {
 
 #[__data]
 #[serde(rename_all = "lowercase", tag = "type")]
-pub enum EventType {
+pub enum EventKind {
     Meta(MetaEvent),
     Message(MessageEvent),
     Notice(NoticeEvent),

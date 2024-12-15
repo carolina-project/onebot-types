@@ -1,3 +1,4 @@
+use parse::Parse;
 use quote::quote;
 use syn::*;
 
@@ -158,4 +159,103 @@ pub fn camel_to_snake(s: &str) -> String {
     }
 
     result
+}
+
+pub(crate) struct DeriveAttr<T: Parse> {
+    pub imp: Option<syn::LitStr>,
+    pub name: syn::LitStr,
+    pub crate_path: syn::Path,
+    pub custom_attr: Option<T>,
+}
+
+impl<T: Parse> DeriveAttr<T> {
+    pub fn parse(
+        attr_name: &str,
+        attrs: &[syn::Attribute],
+        name: &Ident,
+        custom_attr_name: &str,
+    ) -> Result<Self> {
+        let mut custom = None::<T>;
+        let mut crate_path: Path = parse_quote! { ::onebot_types };
+        let mut imp = None::<syn::LitStr>;
+        let mut name = LitStr::new(&camel_to_snake(&name.to_string()), proc_macro2::Span::call_site());
+        for attr in attrs {
+            if attr.path().is_ident(attr_name) {
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident(custom_attr_name) {
+                        custom = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("__crate_path") {
+                        crate_path = meta.value()?.parse()?;
+                    } else if meta.path.is_ident("imp") {
+                        imp = meta.value()?.parse()?;
+                    } else if meta.path.is_ident("rename") {
+                        name = meta.value()?.parse()?;
+                    }
+
+                    Ok(())
+                })?;
+            }
+        }
+
+        Ok(Self {
+            imp,
+            name,
+            crate_path,
+            custom_attr: custom,
+        })
+    }
+
+    pub fn full_name(&self) -> String {
+        if let Some(imp) = &self.imp {
+            format!("{}.{}", imp.value(), self.name.value())
+        } else {
+            self.name.value()
+        }
+    }
+}
+
+fn filter_enum_variants(variants: syn::punctuated::IntoIter<Variant>) -> Result<(Vec<Ident>, Vec<Field>)> {
+    let mut names = vec![];
+    let mut fields_vec = vec![];
+    for var in variants {
+        match var.fields {
+            Fields::Named(_) => {
+                return Err(syn::Error::new_spanned(var, "expected unnamed variant"))
+            },
+            Fields::Unnamed(fields) => {
+                let mut fields_: Vec<_> = fields.unnamed.clone().into_iter().collect();
+                if fields_.len() > 1 {
+                    return Err(syn::Error::new_spanned(fields, "more than 1 fields received"))
+                }
+                names.push(var.ident);
+                fields_vec.push(fields_.remove(0));
+            },
+            Fields::Unit => 
+                return Err(syn::Error::new_spanned(var, "expected unnamed variant")),
+        }
+    }
+
+    Ok((names, fields_vec))
+}
+
+fn generate_impl(crate_path: Path, name: Ident, names: Vec<Ident>, fields: Vec<Field>) -> proc_macro2::TokenStream {
+    quote! {
+        impl #crate_path::OBEventSelector for #name {
+            fn deserialize_event(event: #crate_path::ob12::event::EventDetail) -> Result<Self, DeserializerError> {
+                use serde::de::IntoDeserializer;
+
+                let #crate_path::ob12::event::EventDetail { r#type, detail_type, detail } = event;
+                let event = match (r#type.as_str(), detail_type.as_str()) {
+                    #( ( <#fields as #crate_path::OBEvent>::TYPE, <#fields as #crate_path::OBEvent>::DETAIL_TYPE ) => 
+                            #name::#names( <#fields as serde::Deserialize>::deserialize(detail.into_deserializer())? ),
+                    )*
+                };
+                Ok(event)
+            }
+        }
+    }
+}
+
+pub fn gen_selector(data: DataEnum) -> Result<proc_macro2::TokenStream, Error> {
+    let variants = data.variants.into_iter().filter(|v| v.fields.)
 }

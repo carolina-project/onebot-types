@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::base::tool::duration_secs;
+use crate::base::{ext::IntoValue, tool::duration_secs};
 
 use ob_types_macro::__data;
 use serde::{de::IntoDeserializer, ser::Error, Deserialize};

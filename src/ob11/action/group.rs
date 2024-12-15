@@ -4,11 +4,8 @@ use ob_types_macro::__data;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    define_action,
-    ob11::{
-        event::{message::AnonymousSender, request::AddGroupType},
-        message::MessageChain,
-    },
+    base::{define_action, MessageChain},
+    ob11::event::{message::AnonymousSender, request::AddGroupType},
 };
 
 use crate::base::tool::duration_secs_opt;
@@ -172,8 +169,8 @@ pub enum GroupHonor {
 }
 
 define_action! {
-    /// see [get_group_honor_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF)
     #[resp(GroupHonorResp)]
+    /// see [get_group_honor_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_honor_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%8D%A3%E8%AA%89%E4%BF%A1%E6%81%AF)
     pub struct GetGroupHonorInfo {
         pub group_id: i64,
         pub r#type: GroupHonor,

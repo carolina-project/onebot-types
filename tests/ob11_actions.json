@@ -2,7 +2,14 @@
     {
         "action": "send_msg",
         "params": {
-            "message": "Hello, World!",
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "Hello World!"
+                    }
+                }
+            ],
             "user_id": 114514
         }
     },
@@ -10,14 +17,28 @@
         "action": "send_group_msg",
         "params": {
             "group_id": 123456789,
-            "message": "Hello, World!"
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "Hello World!"
+                    }
+                }
+            ]
         }
     },
     {
         "action": "send_private_msg",
         "params": {
             "user_id": 123456789,
-            "message": "Hello, World!"
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "Hello World!"
+                    }
+                }
+            ]
         }
     },
     {

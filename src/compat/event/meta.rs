@@ -1,13 +1,12 @@
-use crate::DesResult;
+use crate::{base::ext::ValueMapExt, DesResult};
 
 use super::*;
 use ob12event::meta;
-use ob_types_base::ext::ValueExt;
-use ob_types_macro::data;
+use ob_types_macro::__data;
 use serde::Deserialize;
 use serde_value::Value;
 
-#[data]
+#[__data]
 pub enum LifeCycle {
     #[serde(rename = "ob11.enable")]
     Enable,
@@ -20,23 +19,17 @@ pub enum CompatLifecycle {
     Lifecycle(LifeCycle),
 }
 
-impl From<CompatLifecycle> for ob12event::EventType {
+impl From<CompatLifecycle> for ob12event::EventKind {
     fn from(value: CompatLifecycle) -> Self {
         Self::Meta(match value {
-            CompatLifecycle::Connect(c) => ob12event::MetaEvent {
-                sub_type: Default::default(),
-                kind: meta::MetaKind::Connect(c),
-            },
-            CompatLifecycle::Lifecycle(cycle) => ob12event::MetaEvent {
-                sub_type: serde_value::to_value(cycle)
-                    .unwrap()
-                    .try_into_string()
-                    .expect("invalid type"),
-                kind: meta::MetaKind::Other {
-                    detail_type: "ob11.lifecycle".into(),
-                    data: Default::default(),
-                },
-            },
+            CompatLifecycle::Connect(c) => ob12event::MetaEvent::Connect(c),
+            CompatLifecycle::Lifecycle(cycle) => {
+                ob12event::MetaEvent::Other(ob12event::EventDetailed {
+                    detail_type: "ob11.lifecycle".to_owned(),
+                    detail: [("sub_type".to_owned(), serde_value::to_value(cycle).unwrap())]
+                        .into_map(),
+                })
+            }
         })
     }
 }
@@ -54,50 +47,22 @@ pub mod ob11to12 {
     use super::*;
     use ob11event::meta;
     use ob12event::meta::*;
-    use serde::ser::Error;
-    use serde_value::{SerializerError, Value};
 
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
-        type Output = (ob12event::EventType, Option<Value>);
+        type Output = (ob12event::EventKind, Option<Value>);
 
         fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
             match self {
                 meta::MetaEvent::LifeCycle(cycle) => {
                     let cycle = cycle.into_ob12(param)?;
-                    match cycle {
-                        CompatLifecycle::Connect(connect) => Ok((
-                            ob12event::EventType::Meta(MetaEvent {
-                                sub_type: Default::default(),
-                                kind: MetaKind::Connect(connect),
-                            }),
-                            None,
-                        )),
-                        CompatLifecycle::Lifecycle(c) => Ok((
-                            ob12event::EventType::Meta(ob12event::MetaEvent {
-                                sub_type: serde_value::to_value(c)?
-                                    .try_into_string()
-                                    .ok_or_else(|| serde::ser::Error::custom("invalid type"))?,
-                                kind: MetaKind::Other {
-                                    detail_type: "ob11.lifecycle".into(),
-                                    data: Default::default(),
-                                },
-                            }),
-                            None,
-                        )),
-                    }
+                    Ok((cycle.into(), None))
                 }
                 ob11event::MetaEvent::Heartbeat(beat) => beat.into_ob12(()).map(|(r, s)| {
                     (
-                        ob12event::EventType::Meta(MetaEvent {
-                            sub_type: Default::default(),
-                            kind: MetaKind::Heartbeat(r),
-                        }),
+                        ob12event::EventKind::Meta(ob12event::MetaEvent::Heartbeat(r)),
                         Some(s),
                     )
                 }),
-                meta::MetaEvent::Other(_) => {
-                    return Err(SerializerError::custom("unknown meta kind"))
-                }
             }
         }
     }
@@ -132,20 +97,17 @@ pub mod ob11to12 {
         }
     }
 
-    impl<T> From<(ob12event::EventType, T)> for ob12event::EventType {
+    impl<T> From<(ob12event::EventKind, T)> for ob12event::EventKind {
         #[inline]
-        fn from(value: (ob12event::EventType, T)) -> Self {
+        fn from(value: (ob12event::EventKind, T)) -> Self {
             value.0
         }
     }
 
-    impl<T> From<(Heartbeat, T)> for ob12event::EventType {
+    impl<T> From<(Heartbeat, T)> for ob12event::EventKind {
         #[inline]
         fn from(value: (Heartbeat, T)) -> Self {
-            ob12event::EventType::Meta(MetaEvent {
-                sub_type: Default::default(),
-                kind: MetaKind::Heartbeat(value.0),
-            })
+            ob12event::EventKind::Meta(MetaEvent::Heartbeat(value.0))
         }
     }
 }

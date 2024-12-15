@@ -1,25 +1,26 @@
 use std::time::Duration;
 
+use ob_types_macro::__data;
+
 use super::*;
 
-use crate::compat::compat_self;
+use crate::{
+    base::{MessageChain, RawMessageSeg},
+    compat::compat_self,
+};
 
 impl<F, E, R> IntoOB11ActionAsync<F> for ob12action::SendMessage
 where
-    F: Fn(ob12::MessageSeg) -> R,
+    F: Fn(RawMessageSeg) -> R,
     E: std::error::Error,
-    R: Future<Output = Result<ob11::MessageSeg, E>>,
+    R: Future<Output = Result<RawMessageSeg, E>>,
 {
     type Output = ob11action::SendMsg;
 
     async fn into_ob11(self, msg_trans_fn: F) -> DesResult<Self::Output> {
         let message: Vec<_> = {
-            let ob12::message::MessageChain::Array(arr) = self.message else {
-                unimplemented!("cq code string")
-            };
-
             let mut transformed = vec![];
-            for ele in arr.into_iter() {
+            for ele in self.message.into_inner() {
                 transformed.push(msg_trans_fn(ele).await.map_err(DeserializerError::custom)?);
             }
 
@@ -28,7 +29,7 @@ where
 
         Ok(ob11action::SendMsg {
             target: self.target.try_into().map_err(DeserializerError::custom)?,
-            message: ob11::message::MessageChain::Array(message),
+            message: MessageChain::new(message),
         })
     }
 }
@@ -54,7 +55,7 @@ impl FromOB11Resp<Duration> for ob12action::SendMessageResp {
     }
 }
 
-#[data]
+#[__data]
 pub enum OB11GetFile {
     GetRecord(ob11action::GetRecord),
     GetImage(ob11action::GetImage),

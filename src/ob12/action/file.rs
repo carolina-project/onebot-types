@@ -1,7 +1,9 @@
-use std::{collections::HashMap, ops::{Deref, DerefMut}};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
 
 use ob_types_macro::__data;
-use ob_types_macro::{data, onebot_action};
 
 use crate::scalable_struct;
 
@@ -134,22 +136,22 @@ pub enum GetFileType {
 }
 
 scalable_struct! {
-    #[onebot_action(Uploaded)]
+    #[resp(Uploaded)]
     UploadFile = {
         #[serde(flatten)]
         file: FileOpt
     },
-    #[onebot_action(UploadFragmented)]
+    #[resp(UploadFragmented)]
     UploadFileFragmented = {
         #[serde(flatten)]
         state: UploadFileReq,
     },
-    #[onebot_action(GetFileResp)]
+    #[resp(GetFileResp)]
     GetFile = {
         file_id: String,
         r#type: GetFileType,
     },
-    #[onebot_action(GetFileFrag)]
+    #[resp(GetFileFrag)]
     GetFileFragmented = {
         file_id: String,
         #[serde(flatten)]

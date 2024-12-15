@@ -6,7 +6,7 @@ use serde_value::{DeserializerError, SerializerError, Value};
 
 pub use types::*;
 
-use crate::base::RawMessageSeg;
+use crate::base::{ext::{IntoValue, ValueExt}, RawMessageSeg};
 
 macro_rules! message_segs {
     ($($(#[$meta:meta])* $typ:ident $($doc:literal)?),* $(,)?) => {
@@ -72,42 +72,5 @@ impl TryFrom<MessageSeg> for RawMessageSeg {
     fn try_from(seg: MessageSeg) -> Result<Self, Self::Error> {
         use serde::ser::Error;
         Ok(Self::deserialize(serde_value::to_value(seg)?).map_err(Error::custom)?)
-    }
-}
-
-#[__data]
-#[serde(untagged)]
-pub enum MessageChain {
-    Array(Vec<RawMessageSeg>),
-    /// DO NOT USE, CQ code has not been implemented yet
-    String(String),
-}
-impl Default for MessageChain {
-    fn default() -> Self {
-        Self::Array(vec![])
-    }
-}
-
-impl MessageChain {
-    #[allow(unused)]
-    pub fn into_messages(self) -> Vec<RawMessageSeg> {
-        match self {
-            Self::Array(s) => s,
-            Self::String(_) => unimplemented!("cq code string"),
-        }
-    }
-
-    pub fn append<T: TryInto<RawMessageSeg>>(self, segs: Vec<T>) -> Result<Self, T::Error> {
-        match self {
-            MessageChain::Array(mut arr) => {
-                arr.extend(
-                    segs.into_iter()
-                        .map(|r| r.try_into())
-                        .collect::<Result<Vec<_>, _>>()?,
-                );
-                Ok(Self::Array(arr))
-            }
-            MessageChain::String(_) => unimplemented!("cq code string"),
-        }
     }
 }

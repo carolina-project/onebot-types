@@ -1,9 +1,10 @@
 use ob_types_macro::{OBAction, __data};
 
 use crate::{
+    base::MessageChain,
     ob11::{
         event::message::{GroupSender, PrivateSender},
-        message::{MessageChain, MessageSeg},
+        MessageSeg,
     },
     ValueMap,
 };
@@ -65,8 +66,7 @@ impl<'de> serde::Deserialize<'de> for ChatTarget {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(MessageResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = MessageResp)]
 pub struct SendMsg {
     #[serde(flatten)]
     pub target: ChatTarget,
@@ -80,8 +80,7 @@ pub struct MessageResp {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(EmptyResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = EmptyResp)]
 #[allow(unused)]
 pub struct DeleteMsg {
     pub message_id: i32,
@@ -89,8 +88,7 @@ pub struct DeleteMsg {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(GetMessageResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = GetMessageResp)]
 pub struct GetMsg {
     pub message_id: i32,
 }
@@ -207,8 +205,7 @@ mod serde_impl_get {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(GetForwardMsgResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = GetForwardMsgResp)]
 pub struct GetForwardMsg {
     pub id: String,
 }
@@ -220,8 +217,7 @@ pub struct GetForwardMsgResp {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(LoginInfo)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = LoginInfo)]
 pub struct GetLoginInfo;
 
 #[__data]
@@ -232,8 +228,7 @@ pub struct LoginInfo {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(Cookies)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = Cookies)]
 pub struct GetCookies {
     pub domain: Option<String>,
 }
@@ -245,8 +240,7 @@ pub struct Cookies {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(CSRFToken)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = CSRFToken)]
 pub struct GetCsrfToken;
 
 #[__data]
@@ -256,8 +250,7 @@ pub struct CSRFToken {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(Credentials)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = Credentials)]
 pub struct GetCredentials {
     pub domain: Option<String>,
 }
@@ -275,8 +268,7 @@ pub struct FileResp {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(FileResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = FileResp)]
 pub struct GetRecord {
     pub file: String,
     pub out_format: String,
@@ -284,8 +276,7 @@ pub struct GetRecord {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(FileResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = FileResp)]
 pub struct GetImage {
     pub file: String,
 }
@@ -297,20 +288,17 @@ pub struct IsAllowd {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(IsAllowd)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = IsAllowd)]
 pub struct CanSendImage;
 
 #[__data]
 #[derive(OBAction)]
-#[resp(IsAllowd)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = IsAllowd)]
 pub struct CanSendRecord;
 
 #[__data]
 #[derive(OBAction)]
-#[resp(Status)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = Status)]
 pub struct GetStatus;
 
 #[__data]
@@ -323,8 +311,7 @@ pub struct Status {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(VersionInfo)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = VersionInfo)]
 pub struct GetVersionInfo;
 
 #[__data]
@@ -338,14 +325,12 @@ pub struct VersionInfo {
 
 #[__data]
 #[derive(OBAction)]
-#[resp(EmptyResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = EmptyResp)]
 pub struct SetRestart {
     pub delay: i32,
 }
 
 #[__data]
 #[derive(OBAction)]
-#[resp(EmptyResp)]
-#[__oba_crate_path(crate)]
+#[action(__crate_path = crate, resp = EmptyResp)]
 pub struct CleanCache;

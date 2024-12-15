@@ -1,8 +1,8 @@
-use ob_types_macro::__data;
+use ob_types_macro::{OBEvent, __data};
 
 use crate::ob12::BotSelf;
 
-use super::EventType;
+use super::EventKind;
 
 #[__data]
 #[serde(rename_all = "snake_case")]
@@ -39,13 +39,17 @@ macro_rules! notice_kinds {
     )*} => {
         $(
             #[__data]
+            #[derive(OBEvent)]
+            #[event(__crate_path = crate, type = "notice")]
             pub struct $kind {
+                #[serde(rename = "self")]
+                pub self_: BotSelf,
                 $(pub $field: $ty,)*
                 #[serde(flatten)]
                 pub extra: crate::ValueMap,
             }
 
-            impl From<$kind> for NoticeKind {
+            impl From<$kind> for NoticeEvent {
                 fn from(kind: $kind) -> Self {
                     Self::$kind(kind)
                 }
@@ -54,7 +58,7 @@ macro_rules! notice_kinds {
 
         #[__data]
         #[serde(tag = "detail_type", rename_all = "snake_case")]
-        pub enum NoticeKind {
+        pub enum NoticeEvent {
             $(
             $kind($kind),
             )*
@@ -145,15 +149,7 @@ notice_kinds! {
     },
 }
 
-#[__data]
-pub struct NoticeEvent {
-    #[serde(rename = "self")]
-    pub self_: BotSelf,
-    #[serde(flatten)]
-    pub kind: NoticeKind,
-}
-
-impl From<NoticeEvent> for EventType {
+impl From<NoticeEvent> for EventKind {
     fn from(value: NoticeEvent) -> Self {
         Self::Notice(value)
     }

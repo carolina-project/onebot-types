@@ -1,16 +1,19 @@
 use ob_types_macro::__data;
 
-use crate::ob12::BotSelf;
-
 #[__data]
-pub struct RequestEvent {
-    #[serde(rename = "self")]
-    pub self_: BotSelf,
-    #[serde(flatten)]
-    pub kind: RequestKind,
+pub enum RequestEvent {
+    #[serde(untagged)]
+    Other(super::EventDetailed),
 }
 
-#[__data]
-pub enum RequestKind {
-    Other(super::EventDetailed),
+impl From<super::EventDetailed> for RequestEvent {
+    fn from(value: super::EventDetailed) -> Self {
+        Self::Other(value)
+    }
+}
+
+impl From<RequestEvent> for super::EventKind {
+    fn from(value: RequestEvent) -> Self {
+        Self::Request(value)
+    }
 }

@@ -1,16 +1,15 @@
 use std::time::Duration;
 
-use ob_types_base::ext::IntoValue;
-use ob_types_macro::data;
+use ob_types_macro::__data;
 use serde::Deserialize;
 use serde_value::Value;
 
-use crate::DesResult;
+use crate::{base::ext::IntoValue, DesResult};
 
 use super::*;
 
-#[data]
-#[serde(tag = "type")]
+#[__data]
+#[serde(tag = "detail_type")]
 pub enum CompatGNoticeKind {
     #[serde(rename = "ob11.group_admin")]
     GroupAdmin {
@@ -32,7 +31,7 @@ pub enum CompatGNoticeKind {
     },
 }
 
-#[data]
+#[__data]
 pub struct CompatGroupNotice {
     pub group_id: String,
     pub user_id: String,
@@ -53,17 +52,17 @@ impl CompatGroupNotice {
 
 pub mod ob11to12 {
     use ob11event::notice::*;
-    use ob_types_base::ext::IntoValue;
-    use ob_types_base::ext::ValueMapExt;
+    use ob12event::EventDetailed;
     use serde::ser::Error;
     use serde_value::SerializerError;
-    use serde_value::Value;
 
+    use crate::base::ext::ValueMapExt;
+    use crate::base::MessageChain;
     use crate::compat::compat_self;
     use crate::ob12;
+    use crate::ValueMap;
 
-    use ob12event::notice::NoticeKind as O12NoticeKind;
-    use ob12event::EventType as O12EventType;
+    use ob12event::EventKind as O12EventType;
     use ob12event::NoticeEvent as O12Notice;
 
     use super::IntoOB12Event;
@@ -83,26 +82,17 @@ pub mod ob11to12 {
         }
     }
 
-    fn group_value_map(
-        group_id: String,
-        user_id: String,
-        kind: CompatGNoticeKind,
-    ) -> SerResult<(Value, String)> {
-        if let Value::Map(mut data) = serde_value::to_value(CompatGroupNotice {
-            group_id,
-            user_id,
-            kind,
-        })? {
-            let Value::String(r#type) = data
-                .remove(&"type".into_value())
-                .ok_or_else(|| serde_value::SerializerError::custom("Missing type field"))?
-            else {
-                return Err(serde_value::SerializerError::custom("Expected a string"));
-            };
-            Ok((data.into_value(), r#type))
-        } else {
-            Err(serde_value::SerializerError::custom("Expected a map"))
+    fn group_value_map(notice: CompatGroupNotice) -> SerResult<(ValueMap, String)> {
+        #[derive(Deserialize)]
+        struct Helper {
+            detail_type: String,
+            #[serde(flatten)]
+            data: ValueMap,
         }
+
+        let value = serde_value::to_value(notice)?;
+        let helper = Helper::deserialize(value).map_err(SerializerError::custom)?;
+        Ok((helper.data, helper.detail_type))
     }
 
     #[inline]
@@ -111,15 +101,19 @@ pub mod ob11to12 {
         group_id: String,
         user_id: String,
         kind: CompatGNoticeKind,
-    ) -> SerResult<ob12event::EventType> {
-        let (data, type_) = group_value_map(group_id, user_id, kind)?;
-        Ok(ob12event::EventType::Notice(O12Notice {
-            self_: compat_self(self_id),
-            kind: O12NoticeKind::Other {
-                detail_type: type_,
-                data,
+    ) -> SerResult<ob12event::EventKind> {
+        let (mut detail, detail_type) = group_value_map(CompatGroupNotice {
+            group_id,
+            user_id,
+            kind,
+        })?;
+        detail.insert("self".into(), serde_value::to_value(compat_self(self_id))?);
+        Ok(ob12event::EventKind::Notice(O12Notice::Other(
+            EventDetailed {
+                detail_type,
+                detail,
             },
-        }))
+        )))
     }
 
     #[inline]
@@ -129,21 +123,22 @@ pub mod ob11to12 {
         user_id: String,
         message_id: String,
         upload: GroupUploadFile,
-    ) -> SerResult<ob12event::EventType> {
-        Ok(ob12event::EventType::Message(ob12event::MessageEvent {
-            self_: compat_self(self_id),
-            message_id,
-            sub_type: String::default(),
-            message: ob12::message::MessageChain::Array(vec![ob12::MessageSeg::File(
-                upload.into(),
-            )]),
-            alt_message: Some("[OneBot 11 File]".into()),
-            source: ob12::ChatTarget::Group {
-                group_id,
-                user_id: Some(user_id),
+    ) -> SerResult<ob12event::EventKind> {
+        use ob12event::message::{Group, MessageArgs, MessageEvent};
+        let event = Group {
+            group_id,
+            args: MessageArgs {
+                self_: compat_self(self_id),
+                message_id,
+                user_id,
+                sub_type: Default::default(),
+                message: MessageChain::try_from_seg(ob12::MessageSeg::File(upload.into()))?,
+                alt_message: Some("[OneBot 11 File]".into()),
+                extra: Default::default(),
             },
-            extra: Default::default(),
-        }))
+        };
+
+        Ok(ob12event::EventKind::Message(MessageEvent::Group(event)))
     }
 
     impl From<IncreaseType> for ob12event::notice::IncreaseType {
@@ -170,7 +165,7 @@ pub mod ob11to12 {
     where
         F: FnOnce(&ob11event::notice::GroupUploadFile) -> String,
     {
-        type Output = ob12event::EventType;
+        type Output = ob12event::EventKind;
 
         fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             use ob11event::notice::*;
@@ -203,9 +198,9 @@ pub mod ob11to12 {
                     user_id,
                     sub_type,
                     operator_id,
-                }) => Ok(O12EventType::Notice(O12Notice {
-                    self_: compat_self(self_id),
-                    kind: ob12event::notice::GroupMemberIncrease {
+                }) => Ok(O12EventType::Notice(
+                    ob12event::notice::GroupMemberIncrease {
+                        self_: compat_self(self_id),
                         sub_type: sub_type.into(),
                         group_id: group_id.to_string(),
                         user_id: user_id.to_string(),
@@ -213,15 +208,15 @@ pub mod ob11to12 {
                         extra: Default::default(),
                     }
                     .into(),
-                })),
+                )),
                 NoticeEvent::GroupDecrease(GroupDecrease {
                     group_id,
                     user_id,
                     sub_type,
                     operator_id,
-                }) => Ok(O12EventType::Notice(O12Notice {
-                    self_: compat_self(self_id),
-                    kind: ob12event::notice::GroupMemberDecrease {
+                }) => Ok(O12EventType::Notice(
+                    ob12event::notice::GroupMemberDecrease {
+                        self_: compat_self(self_id),
                         sub_type: sub_type.into(),
                         group_id: group_id.to_string(),
                         user_id: user_id.to_string(),
@@ -229,7 +224,7 @@ pub mod ob11to12 {
                         extra: Default::default(),
                     }
                     .into(),
-                })),
+                )),
                 NoticeEvent::GroupBan(GroupBan {
                     group_id,
                     user_id,
@@ -251,9 +246,9 @@ pub mod ob11to12 {
                     user_id,
                     operator_id,
                     message_id,
-                }) => Ok(O12EventType::Notice(O12Notice {
-                    self_: compat_self(self_id),
-                    kind: ob12event::notice::GroupMessageDelete {
+                }) => Ok(O12EventType::Notice(
+                    ob12event::notice::GroupMessageDelete {
+                        self_: compat_self(self_id),
                         sub_type: if operator_id == user_id {
                             notice::MessageDeleteType::Recall
                         } else {
@@ -266,7 +261,7 @@ pub mod ob11to12 {
                         extra: Default::default(),
                     }
                     .into(),
-                })),
+                )),
                 NoticeEvent::Poke(Poke {
                     group_id,
                     user_id,
@@ -297,33 +292,28 @@ pub mod ob11to12 {
                     user_id.to_string(),
                     CompatGNoticeKind::Honor { honor_type },
                 ),
-                NoticeEvent::FriendAdd(FriendAdd { user_id }) => {
-                    Ok(O12EventType::Notice(O12Notice {
+                NoticeEvent::FriendAdd(FriendAdd { user_id }) => Ok(O12EventType::Notice(
+                    notice::FriendIncrease {
                         self_: compat_self(self_id),
-                        kind: notice::FriendIncrease {
-                            sub_type: Default::default(),
-                            user_id: user_id.to_string(),
-                            extra: Default::default(),
-                        }
-                        .into(),
-                    }))
-                }
+                        sub_type: Default::default(),
+                        user_id: user_id.to_string(),
+                        extra: Default::default(),
+                    }
+                    .into(),
+                )),
                 NoticeEvent::FriendRecall(FriendRecall {
                     user_id,
                     message_id,
-                }) => Ok(O12EventType::Notice(O12Notice {
-                    self_: compat_self(self_id),
-                    kind: notice::PrivateMessageDelete {
+                }) => Ok(O12EventType::Notice(
+                    notice::PrivateMessageDelete {
+                        self_: compat_self(self_id),
                         sub_type: Default::default(),
                         message_id: message_id.to_string(),
                         user_id: user_id.to_string(),
                         extra: Default::default(),
                     }
                     .into(),
-                })),
-                NoticeEvent::Other(_) => {
-                    return Err(SerializerError::custom("unknown notice kind"))
-                }
+                )),
             }
         }
     }
