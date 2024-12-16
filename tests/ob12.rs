@@ -1,5 +1,12 @@
 use eyre::Context;
-use onebot_types::ob12::{action::ActionType, event::Event, message::MessageSeg};
+use onebot_types::{
+    ob12::{
+        action::ActionType,
+        event::{message, notice, Event},
+        message::MessageSeg,
+    },
+    OBEventSelector,
+};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
@@ -33,4 +40,56 @@ fn ob12_messages() {
 #[test]
 fn ob12_events() {
     let _events = parse::<Event>("event", EVENTS);
+}
+
+#[test]
+fn ob12_event_selector() {
+    #[derive(OBEventSelector)]
+    enum Message {
+        Private(message::Private),
+        Group(notice::FriendIncrease),
+    }
+    let events = r#"
+[
+    {
+        "self": {
+            "platform": "qq",
+            "user_id": "123234"
+        },
+        "time": 1632847927.599013,
+        "type": "message",
+        "detail_type": "private",
+        "sub_type": "",
+        "message_id": "6283",
+        "message": [
+            {
+                "type": "text",
+                "data": {
+                    "text": "OneBot is not a bot"
+                }
+            },
+            {
+                "type": "image",
+                "data": {
+                    "file_id": "e30f9684-3d54-4f65-b2da-db291a477f16"
+                }
+            }
+        ],
+        "alt_message": "OneBot is not a bot[图片]",
+        "user_id": "123456788"
+    },
+    {
+        "self": {
+            "platform": "qq",
+            "user_id": "123234"
+        },
+        "time": 1632847927.599013,
+        "type": "notice",
+        "detail_type": "friend_increase",
+        "sub_type": "",
+        "user_id": "123456788"
+    }
+]
+"#;
+    let _events: Vec<Message> = serde_json::from_str(events).unwrap();
 }

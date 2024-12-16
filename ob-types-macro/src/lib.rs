@@ -1,6 +1,5 @@
-use proc::{gen_selector, DeriveAttr};
+use proc::{selector, DeriveAttr, __data};
 use proc_macro::TokenStream;
-use proc_macro_error::proc_macro_error;
 use punctuated::Punctuated;
 use quote::{quote, ToTokens};
 use std::{fmt::Display, fs::OpenOptions};
@@ -20,27 +19,19 @@ fn debug_tokens(tokens: impl Display) {
     writeln!(f, "{}", tokens).unwrap();
 }
 
-#[proc_macro_error]
-#[proc_macro_derive(OBAction, attributes(action))]
-pub fn onebot_action(input: TokenStream) -> TokenStream {
-    let input: DeriveInput = parse_macro_input!(input);
+fn process_onebot_action(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     let in_name = input.ident.clone();
-
-    let attrs = DeriveAttr::<Path>::parse("action", &input.attrs, &in_name, "resp").unwrap();
-    if attrs.custom_attr.is_none() {
-        proc_macro_error::abort!(
-            input,
-            "The response type must be specified.(`#[action(resp = <Type>)]`)"
-        )
-    }
+    let attrs = DeriveAttr::<Path>::parse("action", &input.attrs, &in_name, Some("resp"))?;
 
     let full_name = attrs.full_name();
-    let DeriveAttr {
-        crate_path,
-        custom_attr,
-        ..
-    } = attrs;
-    TokenStream::from(quote! {
+    let custom_attr = attrs.custom_attr.ok_or_else(|| {
+        syn::Error::new_spanned(
+            input,
+            "The response type must be specified.(`#[action(resp = <Type>)]`)",
+        )
+    })?;
+    let crate_path = attrs.crate_path;
+    Ok(quote! {
         impl #crate_path::OBAction for #in_name {
             const ACTION: Option<&'static str> = Some(#full_name);
             type Resp = #custom_attr;
@@ -48,44 +39,74 @@ pub fn onebot_action(input: TokenStream) -> TokenStream {
     })
 }
 
-#[proc_macro_error]
-#[proc_macro_derive(OBEvent, attributes(event))]
-pub fn onebot_event(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(OBAction, attributes(action))]
+pub fn onebot_action(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
-    let in_name = input.ident.clone();
 
-    let attrs = DeriveAttr::<LitStr>::parse("event", &input.attrs, &in_name, "type").unwrap();
-    if attrs.custom_attr.is_none() {
-        proc_macro_error::abort!(
-            input,
-            "The event type must be specified.(`#[event(type = \"<Type(message, notice ...)>\")]`)"
-        )
-    }
+    process_onebot_action(input)
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
+}
+
+fn process_msg_seg(input: DeriveInput) -> Result<proc_macro2::TokenStream> {
+    let in_name = input.ident.clone();
+    let attrs = DeriveAttr::<Path>::parse("msg", &input.attrs, &in_name, None)?;
 
     let full_name = attrs.full_name();
-    let DeriveAttr {
-        crate_path,
-        custom_attr,
-        ..
-    } = attrs;
-    quote! {
+    let crate_path = attrs.crate_path;
+    Ok(quote! {
+        impl #crate_path::OBMessage for #in_name {
+            const TYPE: &'static str = #full_name;
+        }
+    })
+}
+
+#[proc_macro_derive(OBMessage, attributes(msg))]
+pub fn onebot_message(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
+
+    process_msg_seg(input)
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
+}
+
+fn process_onebot_event(input: DeriveInput) -> Result<proc_macro2::TokenStream> {
+    let in_name = input.ident.clone();
+
+    let attrs = DeriveAttr::<LitStr>::parse("event", &input.attrs, &in_name, Some("type"))?;
+
+    let full_name = attrs.full_name();
+    let custom_attr = attrs.custom_attr.ok_or_else(|| {
+        syn::Error::new_spanned(
+            input,
+            "The event type must be specified.(`#[event(type = \"<Type(message, notice ...)>\")]`)",
+        )
+    })?;
+    let crate_path = attrs.crate_path;
+    Ok(quote! {
         impl #crate_path::OBEvent for #in_name {
             const TYPE: &'static str = #custom_attr;
             const DETAIL_TYPE: &'static str = #full_name;
         }
-    }
-    .into()
+    })
 }
 
-#[proc_macro_error]
-#[proc_macro_derive(OBEventSelector)]
+#[proc_macro_derive(OBEvent, attributes(event))]
+pub fn onebot_event(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
+
+    process_onebot_event(input)
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
+}
+
+#[proc_macro_derive(OBEventSelector, attributes(selector))]
 pub fn onebot_event_selector(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
 
-    let Data::Enum(data) = input.data.clone() else {
-        proc_macro_error::abort!(input, "expected Enum")
-    };
-    gen_selector(data).unwrap().into()
+    selector::gen_selector(input)
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
 }
 
 #[proc_macro_attribute]
@@ -104,7 +125,7 @@ pub fn __data(attr: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let mut input = if str_field {
-        proc::derive_serde_process(derive, Some(Box::new(proc::str_field_append)))
+        __data::derive_serde_process(derive, Some(Box::new(__data::str_field_append)))
     } else {
         derive.into_token_stream()
     };

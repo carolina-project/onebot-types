@@ -132,7 +132,7 @@ pub mod ob11to12 {
                 message_id,
                 user_id,
                 sub_type: Default::default(),
-                message: MessageChain::try_from_seg(ob12::MessageSeg::File(upload.into()))?,
+                message: MessageChain::try_from_msg(ob12::MessageSeg::File(upload.into()))?,
                 alt_message: Some("[OneBot 11 File]".into()),
                 extra: Default::default(),
             },

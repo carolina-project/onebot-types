@@ -19,6 +19,6 @@ pub(crate) type SerResult<T> = Result<T, serde_value::SerializerError>;
 #[allow(unused)]
 pub(crate) type DesResult<T> = Result<T, serde_value::DeserializerError>;
 
-pub use base::{OBEvent, OBAction, OBEventSelector};
+pub use base::{OBAction, OBEvent, OBEventSelector, OBMessage};
 
-pub use ob_types_macro::OBAction;
+pub use ob_types_macro::{OBAction, OBEvent, OBEventSelector, OBMessage};

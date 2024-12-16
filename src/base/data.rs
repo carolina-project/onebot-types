@@ -1,12 +1,16 @@
-use std::fmt::Display;
-
 use ob_types_macro::__data;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{
+    de::{DeserializeOwned, IntoDeserializer},
+    Deserialize, Serialize,
+};
 use serde_value::{DeserializerError, SerializerError};
 
 use crate::{ob12, ValueMap};
 
-use super::trait_alias;
+use super::{
+    error::{ParseError, TypeMismatchError},
+    trait_alias,
+};
 
 /// Trait representing an OneBot action.
 pub trait OBAction: DeserializeOwned + Serialize {
@@ -54,6 +58,23 @@ pub struct RawMessageSeg {
     pub data: ValueMap,
 }
 
+impl RawMessageSeg {
+    pub fn parse<T: OBMessage>(self) -> Result<T, ParseError> {
+        if self.r#type != T::TYPE {
+            return Err(TypeMismatchError::new(T::TYPE, self.r#type).into());
+        }
+
+        Ok(T::deserialize(self.data.into_deserializer())?)
+    }
+
+    pub fn try_from_msg<T: OBMessage>(msg: T) -> Result<Self, ParseError> {
+        Ok(Self {
+            r#type: T::TYPE.into(),
+            data: Deserialize::deserialize(serde_value::to_value(msg)?)?,
+        })
+    }
+}
+
 #[__data(default)]
 pub struct MessageChain(Vec<RawMessageSeg>);
 
@@ -80,7 +101,19 @@ impl MessageChain {
         Self(segs)
     }
 
-    pub fn try_from_seg<T: TryInto<RawMessageSeg>>(seg: T) -> Result<Self, T::Error> {
+    pub fn try_from_msg_trait<T: OBMessage>(seg: T) -> Result<Self, ParseError> {
+        Ok(Self(vec![RawMessageSeg::try_from_msg(seg)?]))
+    }
+
+    pub fn try_from_trait<T: OBMessage>(segs: Vec<T>) -> Result<Self, ParseError> {
+        Ok(Self(
+            segs.into_iter()
+                .map(|r| RawMessageSeg::try_from_msg(r))
+                .collect::<Result<Vec<_>, _>>()?,
+        ))
+    }
+
+    pub fn try_from_msg<T: TryInto<RawMessageSeg>>(seg: T) -> Result<Self, T::Error> {
         Ok(Self(vec![seg.try_into()?]))
     }
 

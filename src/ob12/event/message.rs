@@ -13,12 +13,14 @@ pub struct MessageArgs {
     pub sub_type: String,
     pub message: MessageChain,
     pub alt_message: Option<String>,
+    #[serde(flatten)]
     pub extra: ValueMap,
 }
 
 #[__data]
 #[derive(OBEvent)]
 #[event(__crate_path = crate, type = "message")]
+#[serde(transparent)]
 pub struct Private(pub MessageArgs);
 
 #[__data]
