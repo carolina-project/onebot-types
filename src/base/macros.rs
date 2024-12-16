@@ -36,7 +36,7 @@ macro_rules! select_msg {
     ($input:expr, {
         $(
         $msg_ty:ty = $var_name:ident => $handler:block
-        ),*
+        ),* $(,)?
     }) => {
         match $input.r#type.as_str() {
             $(<$msg_ty as $crate::OBMessage>::TYPE => {
@@ -52,7 +52,7 @@ macro_rules! select_msg {
         $(
         $msg_ty:ty = $var_name:ident => $handler:block,
         )*
-        _ => $else_block:block $(,)?
+        else => $else_block:block $(,)?
     }) => {
         match $input.r#type.as_str() {
             $(<$msg_ty as $crate::OBMessage>::TYPE => {
@@ -64,11 +64,10 @@ macro_rules! select_msg {
     };
     ($input:expr, {
         $(
-        $msg_ty:path = $var_name:ident => $handler:block,
+        $msg_ty:ty = $var_name:ident => $handler:block,
         )*
-        _ => $else_block:block,
-        Err = $err_name:ident => $err_block:block $(,)?
-    }) => {
+        else => $else_block:block $(,)?
+    }, $err_name:ident => $err_block:block) => {
         match $input.r#type.as_str() {
             $(<$msg_ty as $crate::OBMessage>::TYPE => {
                 match $input.parse::<$msg_ty>() {
@@ -81,10 +80,9 @@ macro_rules! select_msg {
     };
     ($input:expr, {
         $(
-        $msg_ty:path = $var_name:ident => $handler:block,
+        $msg_ty:ty = $var_name:ident => $handler:block,
         )*
-        Err = $err_name:ident => $err_block:block $(,)?
-    }) => {
+    }, $err_name:ident => $err_block:block) => {
         match $input.r#type.as_str() {
             $(<$msg_ty as $crate::OBMessage>::TYPE => {
                 match $input.parse::<$msg_ty>() {
@@ -113,7 +111,12 @@ mod test {
         select_msg!(input, {
             message::Text = msg => {
                 println!("{:?}", msg);
+            },
+            else => {
+                panic!("unknown message seg: {:?}", input);
             }
+        }, e => {
+            panic!("err: {:?}", e)
         });
     }
 }

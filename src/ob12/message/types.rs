@@ -5,19 +5,23 @@ scalable_struct! {
     Text = {
         text: String
     },
+    #[msg]
     Mention = {
         user_id: String
     },
+    #[msg]
     Location = {
         latitude: f64,
         longitude: f64,
         title: String,
         content: String
     },
+    #[msg]
     Reply = {
         message_id: String,
         user_id: Option<String>,
     },
+    #[msg]
     MentionAll
 }
 
