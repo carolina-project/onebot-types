@@ -1,6 +1,7 @@
 use crate::scalable_struct;
 
 scalable_struct! {
+    #[msg]
     Text = {
         text: String
     },

@@ -14,7 +14,7 @@ base64 =  { version = "0.22", optional = true }
 default = ["ob12"]
 base64 = ["dep:base64"]
 ob11 = []
-ob12 = []
+ob12 = ["ob-types-macro/ob12"]
 compat = ["ob11", "ob12"]
 
 [dev-dependencies]

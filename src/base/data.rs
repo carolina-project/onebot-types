@@ -5,7 +5,7 @@ use serde::{
 };
 use serde_value::{DeserializerError, SerializerError};
 
-use crate::{ob12, ValueMap};
+use crate::ValueMap;
 
 use super::{
     error::{ParseError, TypeMismatchError},
@@ -36,13 +36,14 @@ pub struct EventDesc {
     pub detail_type: &'static str,
 }
 
-/// Trait for item deserializing from more than one kind of OneBot events.
+#[cfg(feature = "ob12")]
+/// Trait for item deserializing from more than one kind of OneBot 12 events.
 pub trait OBEventSelector {
-    fn deserialize_event(event: ob12::event::EventDetail) -> Result<Self, DeserializerError>
+    fn deserialize_event(event: crate::ob12::event::EventDetail) -> Result<Self, DeserializerError>
     where
         Self: Sized;
 
-    fn serialize_event(&self) -> Result<ob12::event::EventDetail, SerializerError>;
+    fn serialize_event(&self) -> Result<crate::ob12::event::EventDetail, SerializerError>;
 
     fn get_selectable() -> &'static [EventDesc];
 }
@@ -79,6 +80,7 @@ impl RawMessageSeg {
 pub struct MessageChain(Vec<RawMessageSeg>);
 
 impl From<Vec<RawMessageSeg>> for MessageChain {
+    #[inline]
     fn from(value: Vec<RawMessageSeg>) -> Self {
         Self(value)
     }
@@ -97,8 +99,19 @@ impl<T: TryFrom<RawMessageSeg>> TryFrom<MessageChain> for Vec<T> {
 }
 
 impl MessageChain {
+    #[inline]
     pub fn new(segs: Vec<RawMessageSeg>) -> Self {
         Self(segs)
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[inline]
+    pub fn remove<T: OBMessage>(&mut self, idx: usize) -> Result<T, ParseError> {
+        self.0.remove(idx).parse()
     }
 
     pub fn try_from_msg_trait<T: OBMessage>(seg: T) -> Result<Self, ParseError> {
@@ -125,10 +138,12 @@ impl MessageChain {
         ))
     }
 
+    #[inline]
     pub fn inner(&self) -> &Vec<RawMessageSeg> {
         &self.0
     }
 
+    #[inline]
     pub fn inner_mut(&mut self) -> &mut Vec<RawMessageSeg> {
         &mut self.0
     }
@@ -147,6 +162,7 @@ impl MessageChain {
         Ok(())
     }
 
+    #[inline]
     pub fn into_inner(self) -> Vec<RawMessageSeg> {
         self.0
     }

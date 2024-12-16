@@ -100,6 +100,7 @@ pub fn onebot_event(input: TokenStream) -> TokenStream {
         .into()
 }
 
+#[cfg(feature = "ob12")]
 #[proc_macro_derive(OBEventSelector, attributes(selector))]
 pub fn onebot_event_selector(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
@@ -137,7 +138,7 @@ pub fn __data(attr: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     quote! {
-        #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
+        #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
         #input
     }
     .into()

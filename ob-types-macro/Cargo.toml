@@ -9,6 +9,8 @@ quote = "*"
 proc-macro2 = "*"
 
 [features]
+default = []
+ob12 = []
 
 [lib]
 proc-macro = true

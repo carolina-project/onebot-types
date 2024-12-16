@@ -36,6 +36,32 @@ mod macros {
             }
 
         };
+        {
+            #[msg]
+            $typ:ident $(= {
+                $(
+                    $(#[$meta:meta])*
+                    $field:ident : $f_ty:ty
+                ),* $(,)?
+            })? $(, $($rest:tt)*)?
+        } => {
+            #[ob_types_macro::__data]
+            #[derive(ob_types_macro::OBMessage)]
+            #[msg(__crate_path = crate)]
+            pub struct $typ {
+                $(
+                    $(
+                        $(#[$meta])*
+                        pub $field: $f_ty,
+                    )*)?
+                #[serde(flatten)]
+                pub extra: $crate::ValueMap,
+            }
+
+            $crate::scalable_struct! {
+                $($($rest)*)?
+            }
+        };
         {} => {};
     }
 
