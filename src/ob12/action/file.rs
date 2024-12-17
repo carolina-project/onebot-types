@@ -3,9 +3,9 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use ob_types_macro::__data;
+use ob_types_macro::{OBAction, __data};
 
-use crate::scalable_struct;
+use crate::{scalable_struct, ValueMap};
 
 #[cfg(feature = "base64")]
 mod data {
@@ -52,7 +52,7 @@ impl DerefMut for UploadData {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UploadKind {
     Url {
-        headers: HashMap<String, String>,
+        headers: Option<HashMap<String, String>>,
         url: String,
     },
     Path {
@@ -72,6 +72,7 @@ pub struct FileOpt {
     #[serde(flatten)]
     pub kind: UploadKind,
     pub name: String,
+    #[serde(default)]
     pub sha256: Option<String>,
 }
 
@@ -94,23 +95,37 @@ pub enum UploadFileReq {
     Prepare {
         name: String,
         total_size: i64,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
     Transfer {
         file_id: String,
         offset: i64,
         data: UploadData,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
     Finish {
         file_id: String,
         sha256: Option<String>,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
 }
 
 #[__data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum GetFileReq {
-    Prepare,
-    Transfer { offset: i64, size: i64 },
+    Prepare {
+        #[serde(flatten)]
+        extra: ValueMap,
+    },
+    Transfer {
+        offset: i64,
+        size: i64,
+        #[serde(flatten)]
+        extra: ValueMap,
+    },
 }
 
 #[__data]
@@ -151,10 +166,13 @@ scalable_struct! {
         file_id: String,
         r#type: GetFileType,
     },
-    #[resp(GetFileFrag)]
-    GetFileFragmented = {
-        file_id: String,
-        #[serde(flatten)]
-        req: GetFileReq,
-    },
+}
+
+#[__data]
+#[derive(OBAction)]
+#[action(resp = GetFileFrag, __crate_path = crate)]
+pub struct GetFileFragmented {
+    pub file_id: String,
+    #[serde(flatten)]
+    pub req: GetFileReq,
 }

@@ -8,6 +8,7 @@ thiserror = { version = "2"}
 ob-types-macro = { path = "./ob-types-macro" }
 serde = { version = "1", features = ["derive"] }
 serde-value = { version = "0.7" }
+serde_with = "3"
 base64 =  { version = "0.22", optional = true }
 
 [features]

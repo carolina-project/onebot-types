@@ -9,6 +9,7 @@ mod macros {
     macro_rules! scalable_struct {
         {
             $(#[resp($resp:ty)])?
+            $(#[derive($($derives:path),+)])?
             $typ:ident $(= {
                 $(
                     $(#[$meta:meta])*
@@ -21,6 +22,7 @@ mod macros {
             #[derive(ob_types_macro::OBAction)]
             #[action(__crate_path = crate, resp = $resp)]
             )?
+            $(#[derive($($derives),+)])?
             pub struct $typ {
                 $(
                     $(
@@ -112,6 +114,17 @@ scalable_struct! {
     },
 }
 
+impl Default for VersionInfo {
+    fn default() -> Self {
+        Self {
+            r#impl: "ob11".into(),
+            version: env!("CARGO_PKG_VERSION").into(),
+            onebot_version: "12".into(),
+            extra: Default::default(),
+        }
+    }
+}
+
 #[__data]
 #[serde(tag = "detail_type", rename_all = "snake_case")]
 pub enum ChatTarget {
@@ -130,4 +143,14 @@ pub enum ChatTarget {
     Other {
         detail_type: String,
     },
+}
+
+impl Default for BotState {
+    fn default() -> Self {
+        BotState {
+            self_: Default::default(),
+            online: false,
+            extra: Default::default(),
+        }
+    }
 }

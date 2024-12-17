@@ -4,14 +4,14 @@ use crate::{
     base::MessageChain,
     ob11::{
         event::message::{GroupSender, PrivateSender},
-        MessageSeg,
+        MessageSeg, Status,
     },
     ValueMap,
 };
 
 use super::EmptyResp;
 
-#[derive(Debug, serde::Serialize, Clone)]
+#[derive(Debug, serde::Serialize, Clone, PartialEq, Eq)]
 #[serde(tag = "message_type", rename_all = "snake_case")]
 pub enum ChatTarget {
     Private { user_id: i64 },
@@ -300,14 +300,6 @@ pub struct CanSendRecord;
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = Status)]
 pub struct GetStatus;
-
-#[__data]
-pub struct Status {
-    pub online: bool,
-    pub good: bool,
-    #[serde(flatten)]
-    pub extra: ValueMap,
-}
 
 #[__data]
 #[derive(OBAction)]

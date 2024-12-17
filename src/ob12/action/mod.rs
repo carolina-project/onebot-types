@@ -18,7 +18,10 @@ use serde_value::{DeserializerError, Value};
 use thiserror::Error;
 pub use user::*;
 
-use crate::{base::ext::{IntoValue, ValueExt}, ValueMap};
+use crate::{
+    base::ext::{IntoValue, ValueExt},
+    ValueMap,
+};
 
 use super::scalable_struct;
 
@@ -112,7 +115,7 @@ actions!(
     GetFileFragmented,
 );
 
-#[derive(Copy, PartialEq, Eq)]
+#[derive(Copy)]
 #[__data]
 #[serde(rename_all = "lowercase")]
 pub enum RespStatus {
@@ -124,7 +127,7 @@ pub enum RespStatus {
 pub struct RespData {
     pub status: RespStatus,
     pub retcode: RetCode,
-    pub data: ValueMap,
+    pub data: Value,
     pub message: String,
     pub echo: Option<String>,
 }
@@ -168,7 +171,7 @@ scalable_struct! {
     EmptyResp
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RetCode {
     Success, // 0: 成功（OK）
 

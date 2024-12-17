@@ -4,9 +4,9 @@ use serde::{
     ser::Error as SerErr,
     Deserialize,
 };
-use serde_value::{DeserializerError, SerializerError, Value};
+use serde_value::{DeserializerError, SerializerError};
 
-use crate::ValueMap;
+use crate::{ob11::Status, ValueMap};
 
 #[__data]
 pub struct MetaDetail {
@@ -53,7 +53,7 @@ pub enum MetaEvent {
 
 #[__data]
 pub struct Heartbeat {
-    pub status: Value,
+    pub status: Status,
     pub interval: u64,
 }
 

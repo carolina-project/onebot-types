@@ -1,6 +1,4 @@
-use std::{fmt::Debug, time::Duration};
-
-use crate::base::tool::duration_secs;
+use std::fmt::Debug;
 
 pub mod message;
 pub mod meta;
@@ -19,8 +17,7 @@ use crate::ValueMap;
 
 #[__data]
 pub struct RawEvent {
-    #[serde(with = "duration_secs")]
-    pub time: Duration,
+    pub time: i64,
     pub self_id: i64,
     #[serde(flatten)]
     pub detail: EventDetail,

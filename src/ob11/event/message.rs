@@ -127,7 +127,7 @@ pub struct GroupMessage {
     pub message: Message,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgEventChain(pub MessageChain);
 impl From<MsgEventChain> for MessageChain {
     fn from(value: MsgEventChain) -> Self {

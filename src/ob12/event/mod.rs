@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use ob_types_macro::__data;
 
 pub mod message;
@@ -7,10 +5,10 @@ pub mod meta;
 pub mod notice;
 pub mod request;
 
+pub use message::MessageEvent;
 pub use meta::MetaEvent;
 pub use notice::NoticeEvent;
 pub use request::RequestEvent;
-pub use message::MessageEvent;
 use serde::Deserialize;
 use serde_value::{DeserializerError, SerializerError};
 
@@ -34,14 +32,13 @@ pub struct EventDetailed {
 #[__data]
 pub struct RawEvent {
     pub id: String,
-    #[serde(with = "crate::base::tool::duration_f64")]
-    pub time: Duration,
+    pub time: f64,
     #[serde(flatten)]
     pub event: EventDetail,
 }
 
 #[__data]
-#[derive(PartialEq, Eq, Copy)]
+#[derive(Copy, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum EventType {
     Meta,
@@ -101,10 +98,10 @@ macro_rules! impl_from_into {
 
         impl TryFrom<$typ> for super::EventDetail {
             type Error = serde_value::SerializerError;
-            
+
             fn try_from(event: $typ) -> Result<Self, Self::Error> {
                 serde_value::to_value(event)
-                    .and_then(|r| 
+                    .and_then(|r|
                         serde::Deserialize::deserialize(r)
                         .map_err(serde::ser::Error::custom)
                     )
@@ -139,7 +136,7 @@ macro_rules! impl_from_into {
 
         impl TryFrom<super::EventDetail> for $typ {
             type Error = serde_value::DeserializerError;
-        
+
             fn try_from(event: super::EventDetail) -> Result<Self, Self::Error> {
                 serde_value::to_value(event)
                     .map_err(serde::de::Error::custom)

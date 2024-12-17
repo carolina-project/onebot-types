@@ -10,9 +10,10 @@ pub(self) use crate::ob12;
 pub(self) use crate::ob12::action as ob12action;
 use ob_types_macro::__data;
 pub(self) use serde::de::Error as DeError;
+pub(self) use serde::ser::Error as SerError;
 use serde::Deserialize;
-pub(self) use serde_value::DeserializerError;
 pub(self) use serde_value::Value;
+pub(self) use serde_value::{DeserializerError, SerializerError};
 
 use crate::{DesResult, ValueMap};
 
@@ -96,14 +97,40 @@ macro_rules! compat_actions {
             }
         })*
 
+        impl TryFrom<CompatAction> for ob11action::ActionDetail {
+            type Error = SerializerError;
+
+            fn try_from(action: CompatAction) -> Result<Self, Self::Error> {
+                let (name, params) = action.into_ob11_data()?;
+                Ok(ob11action::ActionDetail {
+                    action: name.into(),
+                    params
+                })
+            }
+        }
+
         impl CompatAction {
-            pub fn into_data(self) -> Result<(&'static str, ValueMap), CompatError> {
+            pub fn into_data(self) -> Result<(&'static str, ValueMap), SerializerError> {
                 match self {
                     $(CompatAction::$ob11action(action)
                         => Ok((concat!("ob11.", $name),
                             serde_value::to_value(action)
-                            .map_err(DeserializerError::custom)
-                            .and_then(|r| ValueMap::deserialize(r))?)),
+                            .and_then(|r| {
+                                ValueMap::deserialize(r).map_err(SerializerError::custom)
+                            })?)
+                        ),
+                    )*
+                }
+            }
+
+            pub fn into_ob11_data(self) -> Result<(&'static str, ValueMap), SerializerError> {
+                match self {
+                    $(CompatAction::$ob11action(action)
+                        => Ok(($name,
+                            serde_value::to_value(action)
+                            .and_then(|r| {
+                                ValueMap::deserialize(r).map_err(SerializerError::custom)
+                            })?)),
                     )*
                 }
             }
@@ -157,7 +184,7 @@ compat_actions!(
     GetGroupHonorInfo "get_group_honor_info"
 );
 
-pub static SUPPORTED_ACTIONS: [&str; 35] = [
+pub static SUPPORTED_ACTIONS: &[&str] = &[
     "send_message",
     "delete_message",
     "ob11.get_msg",

@@ -42,7 +42,7 @@ pub struct FileRecvOpt {
     pub url: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FileOption {
     Send(FileSendOpt),
     Receive(FileRecvOpt),
@@ -81,46 +81,12 @@ impl<'de> serde::Deserialize<'de> for FileOption {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[__data(default)]
+#[serde(rename_all = "lowercase")]
 pub enum ImageType {
     Flash,
+    #[default]
     Normal,
-}
-impl Default for ImageType {
-    #[inline]
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
-mod serde_impl {
-    use serde::{Deserialize, Serialize};
-
-    use super::ImageType;
-
-    impl Serialize for ImageType {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            match self {
-                Self::Flash => serializer.serialize_str("flash"),
-                Self::Normal => serializer.serialize_none(),
-            }
-        }
-    }
-    impl<'de> Deserialize<'de> for ImageType {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-        {
-            match <&str>::deserialize(deserializer) {
-                Ok("flash") => Ok(Self::Flash),
-                Ok(_) => Err(serde::de::Error::custom("unknown image type")),
-                Err(_) => Ok(Self::default()),
-            }
-        }
-    }
 }
 
 #[__data(default, str)]
@@ -146,7 +112,7 @@ pub struct Video {
     pub option: Option<FileOption>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AtTarget {
     All,
     QQ(i64),

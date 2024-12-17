@@ -58,14 +58,14 @@ impl LifeCycle {
 }
 
 pub mod ob11to12 {
-    use crate::ob12;
+    use crate::{ob11::Status, ob12};
 
     use super::*;
     use ob11event::meta;
     use ob12event::meta::*;
 
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
-        type Output = (ob12event::MetaEvent, Option<Value>);
+        type Output = (ob12event::MetaEvent, Option<Status>);
 
         fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
             match self {
@@ -96,7 +96,7 @@ pub mod ob11to12 {
     }
 
     impl IntoOB12Event for meta::Heartbeat {
-        type Output = (Heartbeat, Value);
+        type Output = (Heartbeat, Status);
 
         #[inline]
         fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {

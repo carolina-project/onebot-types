@@ -138,7 +138,8 @@ pub fn __data(attr: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     quote! {
-        #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+        #[::serde_with::skip_serializing_none]
+        #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
         #input
     }
     .into()

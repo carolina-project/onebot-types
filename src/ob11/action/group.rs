@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use ob_types_macro::__data;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     base::{define_action, MessageChain},
@@ -83,7 +82,7 @@ define_action! {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[__data]
 #[serde(untagged)]
 pub enum AnonymousFlag {
     Sender(AnonymousSender),

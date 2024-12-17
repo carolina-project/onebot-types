@@ -6,7 +6,7 @@ use super::*;
 
 use crate::{
     base::{MessageChain, RawMessageSeg},
-    compat::compat_self,
+    compat::compat_self, ob11,
 };
 
 impl<F, E, R> IntoOB11ActionAsync<F> for ob12action::SendMessage
@@ -120,7 +120,8 @@ impl IntoOB11Action for ob12action::GetStatus {
 }
 
 impl FromOB11Resp<String> for ob12::BotState {
-    type In = ob11action::Status;
+    type In = ob11::Status;
+
     fn from_ob11(from: Self::In, self_id: String) -> DesResult<Self> {
         let extra: ValueMap = from
             .extra
