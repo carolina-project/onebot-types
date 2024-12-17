@@ -124,7 +124,7 @@ pub enum RespStatus {
 pub struct RespData {
     pub status: RespStatus,
     pub retcode: RetCode,
-    pub data: serde_value::Value,
+    pub data: ValueMap,
     pub message: String,
     pub echo: Option<String>,
 }
