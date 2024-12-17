@@ -4,7 +4,7 @@ use super::*;
 use ob12event::meta;
 use ob_types_macro::__data;
 use serde::Deserialize;
-use serde_value::Value;
+use serde_value::{SerializerError, Value};
 
 #[__data]
 pub enum LifeCycle {
@@ -34,6 +34,22 @@ impl From<CompatLifecycle> for ob12event::MetaEvent {
     }
 }
 
+impl TryFrom<CompatLifecycle> for ob12event::EventDetailed {
+    type Error = SerializerError;
+
+    fn try_from(cycle: CompatLifecycle) -> Result<Self, Self::Error> {
+        Into::<ob12event::MetaEvent>::into(cycle).try_into()
+    }
+}
+
+impl TryFrom<CompatLifecycle> for ob12event::EventDetail {
+    type Error = SerializerError;
+
+    fn try_from(cycle: CompatLifecycle) -> Result<Self, Self::Error> {
+        Into::<ob12event::MetaEvent>::into(cycle).try_into()
+    }
+}
+
 impl LifeCycle {
     #[inline]
     pub fn lifecycle_from(sub_type: impl Into<String>) -> DesResult<Self> {
@@ -46,35 +62,20 @@ pub mod ob11to12 {
 
     use super::*;
     use ob11event::meta;
-    use ob12event::{meta::*, EventType};
+    use ob12event::meta::*;
 
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
-        type Output = (ob12event::Event, Option<Value>);
+        type Output = (ob12event::MetaEvent, Option<Value>);
 
         fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
             match self {
                 meta::MetaEvent::LifeCycle(cycle) => {
                     let cycle = cycle.into_ob12(param)?;
-                    Ok((
-                        ob12event::Event {
-                            r#type: EventType::Meta,
-                            detailed: {
-                                let event: ob12event::MetaEvent = cycle.into();
-                                event.try_into()?
-                            },
-                        },
-                        None,
-                    ))
+                    Ok((cycle.into(), None))
                 }
-                ob11event::MetaEvent::Heartbeat(beat) => beat.into_ob12(()).map(|(r, s)| {
-                    Ok((
-                        ob12event::Event {
-                            r#type: EventType::Meta,
-                            detailed: ob12event::MetaEvent::Heartbeat(r).try_into()?,
-                        },
-                        Some(s),
-                    ))
-                })?,
+                ob11event::MetaEvent::Heartbeat(beat) => beat
+                    .into_ob12(())
+                    .map(|(r, s)| Ok((ob12event::MetaEvent::Heartbeat(r), Some(s))))?,
             }
         }
     }
@@ -109,17 +110,21 @@ pub mod ob11to12 {
         }
     }
 
-    impl<T> From<(ob12event::EventKind, T)> for ob12event::EventKind {
+    impl<T> TryFrom<(ob12event::MetaEvent, T)> for ob12event::EventDetail {
+        type Error = SerializerError;
+
         #[inline]
-        fn from(value: (ob12event::EventKind, T)) -> Self {
-            value.0
+        fn try_from(value: (ob12event::MetaEvent, T)) -> Result<Self, Self::Error> {
+            value.0.try_into()
         }
     }
 
-    impl<T> From<(Heartbeat, T)> for ob12event::EventKind {
+    impl<T> TryFrom<(Heartbeat, T)> for ob12event::EventDetail {
+        type Error = SerializerError;
+
         #[inline]
-        fn from(value: (Heartbeat, T)) -> Self {
-            ob12event::EventKind::Meta(MetaEvent::Heartbeat(value.0))
+        fn try_from(value: (Heartbeat, T)) -> Result<Self, Self::Error> {
+            ob12event::MetaEvent::Heartbeat(value.0).try_into()
         }
     }
 }

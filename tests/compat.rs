@@ -107,7 +107,6 @@ async fn convert(msg: RawMessageSeg) -> Result<RawMessageSeg, SerializerError> {
 async fn events_ob11_to_12() {
     let events: Vec<Value> = serde_json::from_str(OB11_EVENTS).unwrap();
 
-    let mut events_converted = Vec::<ob12::event::EventKind>::default();
     for (i, ele) in events.into_iter().enumerate() {
         println!("#{}: {}", i, serde_json::to_string_pretty(&ele).unwrap());
         let event: O11EventKind = serde_json::from_value(ele).unwrap();
@@ -123,25 +122,23 @@ async fn events_ob11_to_12() {
                     })
                     .unwrap();
                 println!("{:?}", event);
-                events_converted.push(event.0);
             }
             O11EventKind::Message(msg) => {
                 let event: ob11event::MessageEvent = msg.try_into().unwrap();
                 let event = event.into_ob12(("sadadsa".into(), convert)).await.unwrap();
                 println!("{:?}", event);
-                events_converted.push(ob12::event::EventKind::Message(event.try_into().unwrap()));
             }
             O11EventKind::Notice(notice) => {
                 let event: ob11event::NoticeEvent = notice.try_into().unwrap();
                 let event = event
                     .into_ob12(("asdaw".to_string(), |_| "asdawd".to_string()))
                     .unwrap();
-                events_converted.push(event);
+                println!("{:?}", event);
             }
             O11EventKind::Request(request) => {
                 let event: ob11event::RequestEvent = request.try_into().unwrap();
                 let event = event.into_ob12("sadwa".to_string()).unwrap();
-                events_converted.push(event);
+                println!("{:?}", event);
             }
         }
     }

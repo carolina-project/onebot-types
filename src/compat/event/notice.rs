@@ -1,10 +1,11 @@
 use std::time::Duration;
 
+use ob12event::EventType;
 use ob_types_macro::__data;
-use serde::Deserialize;
-use serde_value::Value;
+use serde::{ser::Error, Deserialize};
+use serde_value::{SerializerError, Value};
 
-use crate::{base::ext::IntoValue, DesResult};
+use crate::{base::ext::IntoValue, ob12, DesResult};
 
 use super::*;
 
@@ -33,10 +34,24 @@ pub enum CompatGNoticeKind {
 
 #[__data]
 pub struct CompatGroupNotice {
+    #[serde(rename = "self")]
+    pub self_: ob12::BotSelf,
     pub group_id: String,
     pub user_id: String,
     #[serde(flatten)]
     pub kind: CompatGNoticeKind,
+}
+
+impl TryFrom<CompatGroupNotice> for ob12event::Event {
+    type Error = SerializerError;
+
+    fn try_from(value: CompatGroupNotice) -> Result<Self, Self::Error> {
+        Ok(Self {
+            r#type: EventType::Notice,
+            detailed: serde_value::to_value(value)
+                .and_then(|r| Deserialize::deserialize(r).map_err(SerializerError::custom))?,
+        })
+    }
 }
 
 impl CompatGroupNotice {
@@ -52,18 +67,11 @@ impl CompatGroupNotice {
 
 pub mod ob11to12 {
     use ob11event::notice::*;
-    use ob12event::EventDetailed;
-    use serde::ser::Error;
-    use serde_value::SerializerError;
 
     use crate::base::ext::ValueMapExt;
     use crate::base::MessageChain;
     use crate::compat::compat_self;
     use crate::ob12;
-    use crate::ValueMap;
-
-    use ob12event::EventKind as O12EventType;
-    use ob12event::NoticeEvent as O12Notice;
 
     use super::IntoOB12Event;
     use super::*;
@@ -82,38 +90,20 @@ pub mod ob11to12 {
         }
     }
 
-    fn group_value_map(notice: CompatGroupNotice) -> SerResult<(ValueMap, String)> {
-        #[derive(Deserialize)]
-        struct Helper {
-            detail_type: String,
-            #[serde(flatten)]
-            data: ValueMap,
-        }
-
-        let value = serde_value::to_value(notice)?;
-        let helper = Helper::deserialize(value).map_err(SerializerError::custom)?;
-        Ok((helper.data, helper.detail_type))
-    }
-
     #[inline]
     fn other_group_notice_event(
         self_id: String,
         group_id: String,
         user_id: String,
         kind: CompatGNoticeKind,
-    ) -> SerResult<ob12event::EventKind> {
-        let (mut detail, detail_type) = group_value_map(CompatGroupNotice {
+    ) -> SerResult<ob12event::Event> {
+        CompatGroupNotice {
+            self_: compat_self(self_id),
             group_id,
             user_id,
             kind,
-        })?;
-        detail.insert("self".into(), serde_value::to_value(compat_self(self_id))?);
-        Ok(ob12event::EventKind::Notice(O12Notice::Other(
-            EventDetailed {
-                detail_type,
-                detail,
-            },
-        )))
+        }
+        .try_into()
     }
 
     #[inline]
@@ -123,7 +113,7 @@ pub mod ob11to12 {
         user_id: String,
         message_id: String,
         upload: GroupUploadFile,
-    ) -> SerResult<ob12event::EventKind> {
+    ) -> SerResult<ob12event::Event> {
         use ob12event::message::{Group, MessageArgs, MessageEvent};
         let event = Group {
             group_id,
@@ -138,7 +128,10 @@ pub mod ob11to12 {
             },
         };
 
-        Ok(ob12event::EventKind::Message(MessageEvent::Group(event)))
+        Ok(ob12event::Event {
+            r#type: EventType::Notice,
+            detailed: MessageEvent::Group(event).try_into()?,
+        })
     }
 
     impl From<IncreaseType> for ob12event::notice::IncreaseType {
@@ -165,7 +158,7 @@ pub mod ob11to12 {
     where
         F: FnOnce(&ob11event::notice::GroupUploadFile) -> String,
     {
-        type Output = ob12event::EventKind;
+        type Output = ob12event::Event;
 
         fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             use ob11event::notice::*;
@@ -198,33 +191,39 @@ pub mod ob11to12 {
                     user_id,
                     sub_type,
                     operator_id,
-                }) => Ok(O12EventType::Notice(
-                    ob12event::notice::GroupMemberIncrease {
-                        self_: compat_self(self_id),
-                        sub_type: sub_type.into(),
-                        group_id: group_id.to_string(),
-                        user_id: user_id.to_string(),
-                        operator_id: operator_id.to_string(),
-                        extra: Default::default(),
-                    }
-                    .into(),
-                )),
+                }) => Ok(ob12event::Event {
+                    r#type: EventType::Notice,
+                    detailed: Into::<ob12event::NoticeEvent>::into(
+                        ob12event::notice::GroupMemberIncrease {
+                            self_: compat_self(self_id),
+                            sub_type: sub_type.into(),
+                            group_id: group_id.to_string(),
+                            user_id: user_id.to_string(),
+                            operator_id: operator_id.to_string(),
+                            extra: Default::default(),
+                        },
+                    )
+                    .try_into()?,
+                }),
                 NoticeEvent::GroupDecrease(GroupDecrease {
                     group_id,
                     user_id,
                     sub_type,
                     operator_id,
-                }) => Ok(O12EventType::Notice(
-                    ob12event::notice::GroupMemberDecrease {
-                        self_: compat_self(self_id),
-                        sub_type: sub_type.into(),
-                        group_id: group_id.to_string(),
-                        user_id: user_id.to_string(),
-                        operator_id: operator_id.to_string(),
-                        extra: Default::default(),
-                    }
-                    .into(),
-                )),
+                }) => Ok(ob12event::Event {
+                    r#type: EventType::Notice,
+                    detailed: Into::<ob12event::NoticeEvent>::into(
+                        ob12event::notice::GroupMemberDecrease {
+                            self_: compat_self(self_id),
+                            sub_type: sub_type.into(),
+                            group_id: group_id.to_string(),
+                            user_id: user_id.to_string(),
+                            operator_id: operator_id.to_string(),
+                            extra: Default::default(),
+                        },
+                    )
+                    .try_into()?,
+                }),
                 NoticeEvent::GroupBan(GroupBan {
                     group_id,
                     user_id,
@@ -246,22 +245,25 @@ pub mod ob11to12 {
                     user_id,
                     operator_id,
                     message_id,
-                }) => Ok(O12EventType::Notice(
-                    ob12event::notice::GroupMessageDelete {
-                        self_: compat_self(self_id),
-                        sub_type: if operator_id == user_id {
-                            notice::MessageDeleteType::Recall
-                        } else {
-                            notice::MessageDeleteType::Delete
+                }) => Ok(ob12event::Event {
+                    r#type: EventType::Notice,
+                    detailed: Into::<ob12event::NoticeEvent>::into(
+                        ob12event::notice::GroupMessageDelete {
+                            self_: compat_self(self_id),
+                            sub_type: if operator_id == user_id {
+                                notice::MessageDeleteType::Recall
+                            } else {
+                                notice::MessageDeleteType::Delete
+                            },
+                            message_id: message_id.to_string(),
+                            group_id: group_id.to_string(),
+                            user_id: user_id.to_string(),
+                            operator_id: operator_id.to_string(),
+                            extra: Default::default(),
                         },
-                        message_id: message_id.to_string(),
-                        group_id: group_id.to_string(),
-                        user_id: user_id.to_string(),
-                        operator_id: operator_id.to_string(),
-                        extra: Default::default(),
-                    }
-                    .into(),
-                )),
+                    )
+                    .try_into()?,
+                }),
                 NoticeEvent::Poke(Poke {
                     group_id,
                     user_id,
@@ -292,28 +294,30 @@ pub mod ob11to12 {
                     user_id.to_string(),
                     CompatGNoticeKind::Honor { honor_type },
                 ),
-                NoticeEvent::FriendAdd(FriendAdd { user_id }) => Ok(O12EventType::Notice(
-                    notice::FriendIncrease {
+                NoticeEvent::FriendAdd(FriendAdd { user_id }) => Ok(ob12event::Event {
+                    r#type: EventType::Notice,
+                    detailed: Into::<ob12event::NoticeEvent>::into(notice::FriendIncrease {
                         self_: compat_self(self_id),
                         sub_type: Default::default(),
                         user_id: user_id.to_string(),
                         extra: Default::default(),
-                    }
-                    .into(),
-                )),
+                    })
+                    .try_into()?,
+                }),
                 NoticeEvent::FriendRecall(FriendRecall {
                     user_id,
                     message_id,
-                }) => Ok(O12EventType::Notice(
-                    notice::PrivateMessageDelete {
+                }) => Ok(ob12event::Event {
+                    r#type: EventType::Notice,
+                    detailed: Into::<ob12event::NoticeEvent>::into(notice::PrivateMessageDelete {
                         self_: compat_self(self_id),
                         sub_type: Default::default(),
                         message_id: message_id.to_string(),
                         user_id: user_id.to_string(),
                         extra: Default::default(),
-                    }
-                    .into(),
-                )),
+                    })
+                    .try_into()?,
+                }),
             }
         }
     }
