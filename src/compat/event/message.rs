@@ -16,7 +16,7 @@ pub mod ob11to12 {
         F: Fn(RawMessageSeg) -> R,
         R: Future<Output = Result<RawMessageSeg, SerializerError>>,
     {
-        type Output = ob12event::EventKind;
+        type Output = ob12event::MessageEvent;
 
         async fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
             use ob12event::message::{Group, MessageArgs, MessageEvent as O12MsgEvent, Private};
@@ -54,9 +54,7 @@ pub mod ob11to12 {
                         alt_message: Some(raw_message),
                         extra,
                     };
-                    Ok(ob12event::EventKind::Message(O12MsgEvent::Private(
-                        Private(args),
-                    )))
+                    Ok(O12MsgEvent::Private(Private(args)))
                 }
                 MessageEvent::Group(GroupMessage {
                     sub_type,
@@ -94,10 +92,10 @@ pub mod ob11to12 {
                         alt_message: Some(raw_message),
                         extra,
                     };
-                    Ok(ob12event::EventKind::Message(O12MsgEvent::Group(Group {
+                    Ok(O12MsgEvent::Group(Group {
                         group_id: group_id.to_string(),
                         args,
-                    })))
+                    }))
                 }
             }
         }

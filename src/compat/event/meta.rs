@@ -19,9 +19,9 @@ pub enum CompatLifecycle {
     Lifecycle(LifeCycle),
 }
 
-impl From<CompatLifecycle> for ob12event::EventKind {
+impl From<CompatLifecycle> for ob12event::MetaEvent {
     fn from(value: CompatLifecycle) -> Self {
-        Self::Meta(match value {
+        match value {
             CompatLifecycle::Connect(c) => ob12event::MetaEvent::Connect(c),
             CompatLifecycle::Lifecycle(cycle) => {
                 ob12event::MetaEvent::Other(ob12event::EventDetailed {
@@ -30,7 +30,7 @@ impl From<CompatLifecycle> for ob12event::EventKind {
                         .into_map(),
                 })
             }
-        })
+        }
     }
 }
 
@@ -46,23 +46,35 @@ pub mod ob11to12 {
 
     use super::*;
     use ob11event::meta;
-    use ob12event::meta::*;
+    use ob12event::{meta::*, EventType};
 
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
-        type Output = (ob12event::EventKind, Option<Value>);
+        type Output = (ob12event::Event, Option<Value>);
 
         fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
             match self {
                 meta::MetaEvent::LifeCycle(cycle) => {
                     let cycle = cycle.into_ob12(param)?;
-                    Ok((cycle.into(), None))
+                    Ok((
+                        ob12event::Event {
+                            r#type: EventType::Meta,
+                            detailed: {
+                                let event: ob12event::MetaEvent = cycle.into();
+                                event.try_into()?
+                            },
+                        },
+                        None,
+                    ))
                 }
                 ob11event::MetaEvent::Heartbeat(beat) => beat.into_ob12(()).map(|(r, s)| {
-                    (
-                        ob12event::EventKind::Meta(ob12event::MetaEvent::Heartbeat(r)),
+                    Ok((
+                        ob12event::Event {
+                            r#type: EventType::Meta,
+                            detailed: ob12event::MetaEvent::Heartbeat(r).try_into()?,
+                        },
                         Some(s),
-                    )
-                }),
+                    ))
+                })?,
             }
         }
     }

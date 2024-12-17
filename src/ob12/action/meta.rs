@@ -1,7 +1,7 @@
 use crate::{ob12, scalable_struct};
 
 scalable_struct! {
-    #[resp(Vec<ob12::event::Event>)]
+    #[resp(Vec<ob12::event::RawEvent>)]
     GetLatestEvents = {
         limit: i64,
         timeout: i64

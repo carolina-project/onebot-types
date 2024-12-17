@@ -1,4 +1,6 @@
-use super::EventKind;
+use super::impl_from_into;
+use super::Event;
+use super::EventType;
 use crate::ob12::{Status, VersionInfo};
 use ob_types_macro::OBEvent;
 use ob_types_macro::__data;
@@ -21,9 +23,14 @@ macro_rules! meta_kinds {
         )*
 
         $(
-            impl From<$kind> for EventKind {
-                fn from(value: $kind) -> Self {
-                    Self::Meta(MetaEvent::$kind(value))
+            impl TryFrom<$kind> for Event {
+                type Error = serde_value::SerializerError;
+
+                fn try_from(value: $kind) -> Result<Self, Self::Error> {
+                    Ok(Self {
+                        r#type: super::EventType::Meta,
+                        detailed: MetaEvent::$kind(value).try_into()?,
+                    })
                 }
             }
         )*
@@ -52,8 +59,4 @@ meta_kinds! {
     },
 }
 
-impl From<MetaEvent> for EventKind {
-    fn from(value: MetaEvent) -> Self {
-        Self::Meta(value)
-    }
-}
+impl_from_into!(MetaEvent, EventType::Meta);

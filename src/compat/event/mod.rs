@@ -12,13 +12,13 @@ use crate::SerResult;
 /// P is the type of the parameter that the OB12 event requires.
 /// The first parameter is always `self_id` in the ob11 event.
 pub trait IntoOB12Event<P = ()> {
-    type Output: TryInto<ob12event::EventKind>;
+    type Output: TryInto<ob12event::EventDetail>;
 
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
 pub trait IntoOB12EventAsync<P = ()> {
-    type Output: TryInto<ob12event::EventKind>;
+    type Output: TryInto<ob12event::EventDetail>;
 
     fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
 }

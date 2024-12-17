@@ -129,7 +129,7 @@ async fn events_ob11_to_12() {
                 let event: ob11event::MessageEvent = msg.try_into().unwrap();
                 let event = event.into_ob12(("sadadsa".into(), convert)).await.unwrap();
                 println!("{:?}", event);
-                events_converted.push(event);
+                events_converted.push(ob12::event::EventKind::Message(event.try_into().unwrap()));
             }
             O11EventKind::Notice(notice) => {
                 let event: ob11event::NoticeEvent = notice.try_into().unwrap();

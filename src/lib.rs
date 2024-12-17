@@ -13,7 +13,7 @@ pub mod ob12;
 pub mod compat;
 
 #[allow(unused)]
-pub(crate) type ValueMap = BTreeMap<String, serde_value::Value>;
+pub type ValueMap = BTreeMap<String, serde_value::Value>;
 #[allow(unused)]
 pub(crate) type SerResult<T> = Result<T, serde_value::SerializerError>;
 #[allow(unused)]

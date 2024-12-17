@@ -2,7 +2,7 @@ use ob_types_macro::{OBEvent, __data};
 
 use crate::{base::MessageChain, ob12::BotSelf, ValueMap};
 
-use super::EventDetailed;
+use super::{impl_from_into, EventDetailed, EventType};
 
 #[__data]
 pub struct MessageArgs {
@@ -52,8 +52,4 @@ pub enum MessageEvent {
     Other(EventDetailed),
 }
 
-impl From<MessageEvent> for super::EventKind {
-    fn from(value: MessageEvent) -> Self {
-        super::EventKind::Message(value)
-    }
-}
+impl_from_into!(MessageEvent, EventType::Message);

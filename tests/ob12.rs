@@ -2,7 +2,7 @@ use eyre::Context;
 use onebot_types::{
     ob12::{
         action::ActionType,
-        event::{message, notice, Event},
+        event::{message, notice, RawEvent},
         message::MessageSeg,
     },
     OBEventSelector,
@@ -39,7 +39,7 @@ fn ob12_messages() {
 
 #[test]
 fn ob12_events() {
-    let _events = parse::<Event>("event", EVENTS);
+    let _events = parse::<RawEvent>("event", EVENTS);
 }
 
 #[test]

@@ -23,7 +23,7 @@ use crate::{base::ext::{IntoValue, ValueExt}, ValueMap};
 use super::scalable_struct;
 
 #[__data]
-pub struct Action {
+pub struct RawAction {
     #[serde(flatten)]
     pub action: ActionDetail,
     pub echo: Option<String>,

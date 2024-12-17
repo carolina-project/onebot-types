@@ -17,7 +17,7 @@ pub trait OBAction: DeserializeOwned + Serialize {
     /// Static action name.
     const ACTION: Option<&'static str> = None;
     /// Response data type.
-    type Resp;
+    type Resp: DeserializeOwned;
 
     /// Get the name of the action.
     fn action_name(&self) -> &str {

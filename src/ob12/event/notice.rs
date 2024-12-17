@@ -2,7 +2,7 @@ use ob_types_macro::{OBEvent, __data};
 
 use crate::ob12::BotSelf;
 
-use super::EventKind;
+use super::{impl_from_into, EventType};
 
 #[__data]
 #[serde(rename_all = "snake_case")]
@@ -149,8 +149,4 @@ notice_kinds! {
     },
 }
 
-impl From<NoticeEvent> for EventKind {
-    fn from(value: NoticeEvent) -> Self {
-        Self::Notice(value)
-    }
-}
+impl_from_into!(NoticeEvent, EventType::Notice);
