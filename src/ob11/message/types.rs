@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, fmt::Display, str::FromStr, time::Duration};
 
 use ob_types_macro::__data;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 use crate::base::ext::ValueExt;
 
@@ -89,10 +90,11 @@ pub enum ImageType {
     Normal,
 }
 
+#[serde_as]
 #[__data(default, str)]
 pub struct Image {
     pub file: String,
-    #[serde(default)]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnNull")]
     pub r#type: ImageType,
     #[serde(flatten)]
     pub option: Option<FileOption>,

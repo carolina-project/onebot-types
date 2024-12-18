@@ -54,16 +54,24 @@ pub enum UploadKind {
     Url {
         headers: Option<HashMap<String, String>>,
         url: String,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
     Path {
         path: String,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
     Data {
         data: UploadData,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
     #[serde(untagged)]
     Other {
         r#type: String,
+        #[serde(flatten)]
+        extra: ValueMap,
     },
 }
 
@@ -151,16 +159,6 @@ pub enum GetFileType {
 }
 
 scalable_struct! {
-    #[resp(Uploaded)]
-    UploadFile = {
-        #[serde(flatten)]
-        file: FileOpt
-    },
-    #[resp(UploadFragmented)]
-    UploadFileFragmented = {
-        #[serde(flatten)]
-        state: UploadFileReq,
-    },
     #[resp(GetFileResp)]
     GetFile = {
         file_id: String,
@@ -176,3 +174,15 @@ pub struct GetFileFragmented {
     #[serde(flatten)]
     pub req: GetFileReq,
 }
+
+#[__data]
+#[derive(OBAction)]
+#[action(resp = Uploaded, __crate_path = crate)]
+#[serde(transparent)]
+pub struct UploadFile(pub FileOpt);
+
+#[__data]
+#[derive(OBAction)]
+#[action(resp = UploadFragmented, __crate_path = crate)]
+#[serde(transparent)]
+pub struct UploadFileFragmented(pub UploadFileReq);

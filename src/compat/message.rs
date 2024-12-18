@@ -3,10 +3,10 @@ pub(self) use crate::ob11::message as ob11message;
 pub(self) use crate::ob12::message as ob12message;
 use crate::{base::RawMessageSeg, ValueMap};
 use ob_types_macro::__data;
+use serde::de::IntoDeserializer;
 use serde::Deserialize;
 pub(self) use serde_value::*;
 use std::future::Future;
-use serde::de::IntoDeserializer;
 
 pub(self) use crate::{DesResult, SerResult};
 
@@ -380,8 +380,8 @@ pub mod ob12to11 {
         async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
             let img_ty = match extra.remove("type") {
-                Some(ty) => ImageType::deserialize(ty)?,
-                None => ImageType::Normal,
+                Some(Value::String(name)) => ImageType::deserialize(Value::String(name))?,
+                _ => ImageType::Normal,
             };
             let option = if extra.len() > 0 {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
