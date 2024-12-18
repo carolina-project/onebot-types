@@ -13,8 +13,8 @@ pub mod ob11to12 {
     /// Converts an OB11 MessageEvent into an OB12 MessageEvent using the provided transformation function(transform message segment).
     impl<F, R> IntoOB12EventAsync<(String, F)> for ob11event::MessageEvent
     where
-        F: Fn(RawMessageSeg) -> R,
-        R: Future<Output = Result<RawMessageSeg, SerializerError>>,
+        F: (Fn(RawMessageSeg) -> R) + Send,
+        R: Future<Output = Result<RawMessageSeg, SerializerError>> + Send,
     {
         type Output = ob12event::MessageEvent;
 

@@ -48,10 +48,10 @@ pub trait IntoOB11Action<P = ()> {
     fn into_ob11(self, param: P) -> DesResult<Self::Output>;
 }
 
-pub trait IntoOB11ActionAsync<P> {
+pub trait IntoOB11ActionAsync<P: Send = ()> {
     type Output: TryInto<ob11action::ActionType>;
 
-    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>>;
+    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>> + Send;
 }
 
 pub trait FromOB11Resp<P = ()>

@@ -131,8 +131,8 @@ async fn events_ob11_to_12() {
             O11EventKind::Notice(notice) => {
                 let event: ob11event::NoticeEvent = notice.try_into().unwrap();
                 let event = event
-                    .into_ob12(("asdaw".to_string(), |_| "asdawd".to_string()))
-                    .unwrap();
+                    .into_ob12(("asdaw".to_string(), |_| async { "sdawd".into() }))
+                    .await;
                 println!("{:?}", event);
             }
             O11EventKind::Request(request) => {

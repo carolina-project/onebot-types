@@ -6,14 +6,15 @@ use super::*;
 
 use crate::{
     base::{MessageChain, RawMessageSeg},
-    compat::compat_self, ob11,
+    compat::compat_self,
+    ob11,
 };
 
 impl<F, E, R> IntoOB11ActionAsync<F> for ob12action::SendMessage
 where
-    F: Fn(RawMessageSeg) -> R,
+    F: (Fn(RawMessageSeg) -> R) + Send,
     E: std::error::Error,
-    R: Future<Output = Result<RawMessageSeg, E>>,
+    R: Future<Output = Result<RawMessageSeg, E>> + Send,
 {
     type Output = ob11action::SendMsg;
 
@@ -83,8 +84,8 @@ pub enum OB11File {
 
 impl<F, R> IntoOB11ActionAsync<F> for ob12action::GetFile
 where
-    F: FnOnce(&str) -> R,
-    R: Future<Output = Option<OB11File>>,
+    F: (FnOnce(&str) -> R) + Send,
+    R: Future<Output = Option<OB11File>> + Send,
 {
     type Output = OB11GetFile;
 

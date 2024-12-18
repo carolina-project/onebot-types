@@ -155,8 +155,8 @@ pub mod ob11to12 {
     /// (String, F): self id and message_id provider(from GroupUpload)
     impl<F, R> IntoOB12EventAsync<(String, F)> for ob11event::NoticeEvent
     where
-        F: FnOnce(&ob11event::notice::GroupUploadFile) -> R,
-        R: Future<Output = String>,
+        F: (FnOnce(&ob11event::notice::GroupUploadFile) -> R) + Send,
+        R: Future<Output = String> + Send,
     {
         type Output = ob12event::Event;
 

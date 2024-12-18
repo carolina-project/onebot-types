@@ -23,10 +23,10 @@ pub trait IntoOB12Seg<P = ()> {
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
-pub trait IntoOB12SegAsync<P = ()> {
+pub trait IntoOB12SegAsync<P: Send = ()> {
     type Output: TryInto<ob12message::MessageSeg>;
 
-    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
+    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>> + Send;
 }
 
 pub trait IntoOB11Seg {
@@ -35,10 +35,10 @@ pub trait IntoOB11Seg {
     fn into_ob11(self) -> DesResult<Self::Output>;
 }
 
-pub trait IntoOB11SegAsync<P> {
+pub trait IntoOB11SegAsync<P: Send = ()> {
     type Output: TryInto<ob11message::MessageSeg>;
 
-    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>>;
+    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>> + Send;
 }
 
 macro_rules! define_compat_types {
@@ -213,8 +213,8 @@ pub mod ob11to12 {
 
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Image
     where
-        F: FnOnce(FileSeg) -> R,
-        R: Future<Output = SerResult<String>>,
+        F: (FnOnce(FileSeg) -> R) + Send,
+        R: Future<Output = SerResult<String>> + Send,
     {
         type Output = Image;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
@@ -233,8 +233,8 @@ pub mod ob11to12 {
 
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Record
     where
-        F: FnOnce(FileSeg) -> R,
-        R: Future<Output = SerResult<String>>,
+        F: (FnOnce(FileSeg) -> R) + Send,
+        R: Future<Output = SerResult<String>> + Send,
     {
         type Output = Voice;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
@@ -251,8 +251,8 @@ pub mod ob11to12 {
 
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Video
     where
-        F: FnOnce(FileSeg) -> R,
-        R: Future<Output = SerResult<String>>,
+        F: (FnOnce(FileSeg) -> R) + Send,
+        R: Future<Output = SerResult<String>> + Send,
     {
         type Output = Video;
         async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
@@ -372,8 +372,8 @@ pub mod ob12to11 {
     /// get file from cache by file id
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Image
     where
-        F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<String>>,
+        F: (FnOnce(String) -> R) + Send,
+        R: Future<Output = DesResult<String>> + Send,
     {
         type Output = Image;
 
@@ -400,8 +400,8 @@ pub mod ob12to11 {
 
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Voice
     where
-        F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<String>>,
+        F: (FnOnce(String) -> R) + Send,
+        R: Future<Output = DesResult<String>> + Send,
     {
         type Output = Record;
 
@@ -428,8 +428,8 @@ pub mod ob12to11 {
 
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Audio
     where
-        F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<String>>,
+        F: (FnOnce(String) -> R) + Send,
+        R: Future<Output = DesResult<String>> + Send,
     {
         type Output = Record;
 
@@ -456,8 +456,8 @@ pub mod ob12to11 {
 
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Video
     where
-        F: FnOnce(String) -> R,
-        R: Future<Output = DesResult<String>>,
+        F: (FnOnce(String) -> R) + Send,
+        R: Future<Output = DesResult<String>> + Send,
     {
         type Output = Video;
 

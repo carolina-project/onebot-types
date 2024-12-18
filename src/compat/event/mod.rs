@@ -17,8 +17,8 @@ pub trait IntoOB12Event<P = ()> {
     fn into_ob12(self, param: P) -> SerResult<Self::Output>;
 }
 
-pub trait IntoOB12EventAsync<P = ()> {
+pub trait IntoOB12EventAsync<P: Send = ()> {
     type Output: TryInto<ob12event::EventDetail>;
 
-    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>>;
+    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>> + Send;
 }
