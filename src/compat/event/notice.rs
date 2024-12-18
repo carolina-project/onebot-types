@@ -73,7 +73,6 @@ pub mod ob11to12 {
     use crate::compat::compat_self;
     use crate::ob12;
 
-    use super::IntoOB12Event;
     use super::*;
 
     impl From<GroupUploadFile> for ob12::message::File {
@@ -154,16 +153,17 @@ pub mod ob11to12 {
     }
 
     /// (String, F): self id and message_id provider(from GroupUpload)
-    impl<F> IntoOB12Event<(String, F)> for ob11event::NoticeEvent
+    impl<F, R> IntoOB12EventAsync<(String, F)> for ob11event::NoticeEvent
     where
-        F: FnOnce(&ob11event::notice::GroupUploadFile) -> String,
+        F: FnOnce(&ob11event::notice::GroupUploadFile) -> R,
+        R: Future<Output = String>,
     {
         type Output = ob12event::Event;
 
-        fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
+        async fn into_ob12(self, params: (String, F)) -> SerResult<Self::Output> {
             use ob11event::notice::*;
             use ob12event::notice;
-            let (self_id, msg_id_provider) = param;
+            let (self_id, msg_id_provider) = params;
             match self {
                 NoticeEvent::GroupUpload(GroupUpload {
                     group_id,
@@ -173,7 +173,7 @@ pub mod ob11to12 {
                     self_id,
                     group_id.to_string(),
                     user_id.to_string(),
-                    msg_id_provider(&file),
+                    msg_id_provider(&file).await,
                     file,
                 ),
                 NoticeEvent::GroupAdmin(GroupAdmin {
