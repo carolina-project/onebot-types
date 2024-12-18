@@ -263,7 +263,7 @@ fn remove_field_or<'a, T: serde::Deserialize<'a>>(
 #[__data]
 pub enum UserInfoResp {
     LoginInfo(ob11action::LoginInfo),
-    StrangerInfo(ob11action::StrangerInfoResp),
+    StrangerInfo(ob11action::StrangerInfo),
     FriendInfo(ob11action::FriendInfo),
     GroupMemberInfo(ob11action::GroupMemberInfo),
 }
@@ -286,7 +286,7 @@ impl FromOB11Resp for ob12::UserInfo {
                     extra: Default::default(),
                 })
             }
-            UserInfoResp::StrangerInfo(ob11action::StrangerInfoResp {
+            UserInfoResp::StrangerInfo(ob11action::StrangerInfo {
                 user_id,
                 nickname: user_display_name,
                 sex,

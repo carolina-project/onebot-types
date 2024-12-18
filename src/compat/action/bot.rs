@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use ob_types_macro::__data;
 
 use super::*;
@@ -44,10 +42,10 @@ impl IntoOB11Action for ob12action::DeleteMessage {
     }
 }
 
-impl FromOB11Resp<Duration> for ob12action::SendMessageResp {
+impl FromOB11Resp<f64> for ob12action::SendMessageResp {
     type In = ob11action::MessageResp;
 
-    fn from_ob11(from: Self::In, time: Duration) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, time: f64) -> DesResult<Self> {
         Ok(Self {
             message_id: from.message_id.to_string(),
             time,

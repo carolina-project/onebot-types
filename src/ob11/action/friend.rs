@@ -11,7 +11,7 @@ const fn true_value() -> bool {
 }
 
 #[__data]
-pub struct StrangerInfoResp {
+pub struct StrangerInfo {
     pub user_id: i64,
     pub nickname: String,
     pub sex: Sex,
@@ -44,7 +44,7 @@ define_action! {
         #[serde(default)]
         pub remark: Option<String>,
     }
-    #[resp(StrangerInfoResp)]
+    #[resp(StrangerInfo)]
     pub struct GetStrangerInfo {
         pub user_id: i64,
         #[serde(default)]

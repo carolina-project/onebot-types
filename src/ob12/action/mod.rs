@@ -145,6 +145,16 @@ pub struct RespError {
     pub echo: Option<String>,
 }
 
+impl RespError {
+    pub fn new(retcode: RetCode, msg: impl Display) -> Self {
+        Self {
+            retcode,
+            message: msg.to_string(),
+            echo: None,
+        }
+    }
+}
+
 impl From<RespData> for RespError {
     fn from(value: RespData) -> Self {
         Self {

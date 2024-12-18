@@ -9,7 +9,10 @@ use ob_types_macro::__data;
 use serde::{ser::Error, Deserialize};
 use serde_value::{DeserializerError, SerializerError, Value};
 
-use crate::{base::ext::{IntoValue, ValueExt}, ValueMap};
+use crate::{
+    base::ext::{IntoValue, ValueExt},
+    ValueMap,
+};
 
 pub(crate) type EmptyResp = ();
 
@@ -126,4 +129,10 @@ pub struct RespData {
     pub retcode: i64,
     pub data: serde_value::Value,
     pub echo: Option<String>,
+}
+
+impl RespData {
+    pub fn is_success(&self) -> bool {
+        matches!(self.status, RespStatus::Async | RespStatus::Ok)
+    }
 }

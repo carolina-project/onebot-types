@@ -6,9 +6,21 @@ impl From<ob11action::LoginInfo> for UserInfoResp {
     }
 }
 
-impl From<ob11action::StrangerInfoResp> for UserInfoResp {
-    fn from(value: ob11action::StrangerInfoResp) -> Self {
+impl From<ob11action::StrangerInfo> for UserInfoResp {
+    fn from(value: ob11action::StrangerInfo) -> Self {
         Self::StrangerInfo(value)
+    }
+}
+
+impl From<ob11action::FriendInfo> for UserInfoResp {
+    fn from(value: ob11action::FriendInfo) -> Self {
+        Self::FriendInfo(value)
+    }
+}
+
+impl From<ob11action::GroupMemberInfo> for UserInfoResp {
+    fn from(value: ob11action::GroupMemberInfo) -> Self {
+        Self::GroupMemberInfo(value)
     }
 }
 
