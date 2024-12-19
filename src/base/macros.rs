@@ -1,3 +1,4 @@
+#[allow(unused)]
 macro_rules! define_action {
     {$(
         #[resp($resp:ty)]
