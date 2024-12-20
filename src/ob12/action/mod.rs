@@ -28,7 +28,7 @@ use super::scalable_struct;
 #[__data]
 pub struct RawAction {
     #[serde(flatten)]
-    pub action: ActionDetail,
+    pub detail: ActionDetail,
     pub echo: Option<String>,
     #[serde(rename = "self")]
     pub self_: Option<super::BotSelf>,
