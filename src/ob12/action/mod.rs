@@ -136,6 +136,26 @@ impl RespData {
     pub fn is_success(&self) -> bool {
         matches!(self.status, RespStatus::Ok)
     }
+
+    pub fn success(data: Value, echo: Option<String>) -> Self {
+        Self {
+            status: RespStatus::Ok,
+            retcode: RetCode::Success,
+            data,
+            message: "".to_owned(),
+            echo,
+        }
+    }
+
+    pub fn failed(retcode: RetCode, msg: impl Into<String>, echo: Option<String>) -> Self {
+        Self {
+            status: RespStatus::Failed,
+            retcode,
+            data: Value::Option(None),
+            message: msg.into(),
+            echo,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Error)]

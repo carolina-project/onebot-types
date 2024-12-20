@@ -135,4 +135,13 @@ impl RespData {
     pub fn is_success(&self) -> bool {
         matches!(self.status, RespStatus::Async | RespStatus::Ok)
     }
+
+    pub fn success(data: Value, echo: Option<String>) -> Self {
+        Self {
+            status: RespStatus::Ok,
+            retcode: 0,
+            data,
+            echo,
+        }
+    }
 }
