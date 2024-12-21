@@ -5,7 +5,7 @@ use ob_types_macro::__data;
 use serde::{ser::Error, Deserialize};
 use serde_value::{SerializerError, Value};
 
-use crate::{base::ext::IntoValue, ob12, DesResult};
+use crate::{base::ext::IntoValue, compat::CompatError, ob12, DesResult};
 
 use super::*;
 
@@ -43,7 +43,7 @@ pub struct CompatGroupNotice {
 }
 
 impl TryFrom<CompatGroupNotice> for ob12event::Event {
-    type Error = SerializerError;
+    type Error = CompatError;
 
     fn try_from(value: CompatGroupNotice) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -95,7 +95,7 @@ pub mod ob11to12 {
         group_id: String,
         user_id: String,
         kind: CompatGNoticeKind,
-    ) -> SerResult<ob12event::Event> {
+    ) -> CompatResult<ob12event::Event> {
         CompatGroupNotice {
             self_: compat_self(self_id),
             group_id,
@@ -112,7 +112,7 @@ pub mod ob11to12 {
         user_id: String,
         message_id: String,
         upload: GroupUploadFile,
-    ) -> SerResult<ob12event::Event> {
+    ) -> CompatResult<ob12event::Event> {
         use ob12event::message::{Group, MessageArgs, MessageEvent};
         let event = Group {
             group_id,
@@ -160,7 +160,7 @@ pub mod ob11to12 {
     {
         type Output = ob12event::Event;
 
-        async fn into_ob12(self, params: (String, F)) -> SerResult<Self::Output> {
+        async fn into_ob12(self, params: (String, F)) -> CompatResult<Self::Output> {
             use ob11event::notice::*;
             use ob12event::notice;
             let (self_id, msg_id_provider) = params;

@@ -2,10 +2,10 @@ use super::*;
 
 impl IntoOB11Action for ob12action::LeaveGroup {
     type Output = ob11action::SetGroupLeave;
-    fn into_ob11(self, _: ()) -> crate::DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         let mut map = self.extra;
         Ok(ob11action::SetGroupLeave {
-            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
+            group_id: self.group_id.parse().map_err(CompatError::other)?,
             is_dismiss: remove_field_or_default(&mut map, "ob11.is_dismiss")?,
         })
     }
@@ -14,10 +14,10 @@ impl IntoOB11Action for ob12action::LeaveGroup {
 impl IntoOB11Action for ob12action::GetGroupInfo {
     type Output = ob11action::GetGroupInfo;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         let mut map = self.extra;
         Ok(ob11action::GetGroupInfo {
-            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
+            group_id: self.group_id.parse().map_err(CompatError::other)?,
             no_cache: remove_field_or_default(&mut map, "ob11.no_cache")?,
         })
     }
@@ -26,7 +26,7 @@ impl IntoOB11Action for ob12action::GetGroupInfo {
 impl FromOB11Resp for ob12::GroupInfo {
     type In = ob11action::GroupInfo;
 
-    fn from_ob11(from: Self::In, _: ()) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, _: ()) -> CompatResult<Self> {
         let ob11action::GroupInfo {
             group_id,
             group_name,
@@ -49,7 +49,7 @@ impl FromOB11Resp for ob12::GroupInfo {
 impl IntoOB11Action for ob12action::GetGroupList {
     type Output = ob11action::GetGroupList;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::GetGroupList {})
     }
 }
@@ -57,7 +57,7 @@ impl IntoOB11Action for ob12action::GetGroupList {
 impl FromOB11Resp for Vec<ob12::GroupInfo> {
     type In = Vec<ob11action::GroupInfo>;
 
-    fn from_ob11(from: Self::In, param: ()) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, param: ()) -> CompatResult<Self> {
         from.into_iter()
             .map(|r| ob12::GroupInfo::from_ob11(r, param))
             .collect()
@@ -67,9 +67,9 @@ impl FromOB11Resp for Vec<ob12::GroupInfo> {
 impl IntoOB11Action for ob12action::SetGroupName {
     type Output = ob11action::SetGroupName;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::SetGroupName {
-            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
+            group_id: self.group_id.parse().map_err(CompatError::other)?,
             group_name: self.group_name,
         })
     }
@@ -78,11 +78,11 @@ impl IntoOB11Action for ob12action::SetGroupName {
 impl IntoOB11Action for ob12action::GetGroupMemberInfo {
     type Output = ob11action::GetGroupMemberInfo;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         let mut map = self.extra;
         Ok(ob11action::GetGroupMemberInfo {
-            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
-            user_id: self.user_id.parse().map_err(DeserializerError::custom)?,
+            group_id: self.group_id.parse().map_err(CompatError::other)?,
+            user_id: self.user_id.parse().map_err(CompatError::other)?,
             no_cache: remove_field_or_default(&mut map, "ob11.no_cache")?,
         })
     }
@@ -91,9 +91,9 @@ impl IntoOB11Action for ob12action::GetGroupMemberInfo {
 impl IntoOB11Action for ob12action::GetGroupMemberList {
     type Output = ob11action::GetGroupMemberList;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::GetGroupMemberList {
-            group_id: self.group_id.parse().map_err(DeserializerError::custom)?,
+            group_id: self.group_id.parse().map_err(CompatError::other)?,
         })
     }
 }

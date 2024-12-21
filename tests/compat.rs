@@ -5,13 +5,12 @@ use onebot_types::compat::event::IntoOB12EventAsync;
 use onebot_types::compat::message::{
     CompatSegment, IntoOB11Seg, IntoOB11SegAsync, IntoOB12Seg, IntoOB12SegAsync,
 };
+use onebot_types::compat::CompatError;
 use onebot_types::ob11::{self, action as ob11action, event as ob11event};
 use onebot_types::ob12::action as ob12action;
 use onebot_types::{compat::event::IntoOB12Event, ob11::event::EventKind as O11EventKind, ob12};
-use serde::ser::Error;
 use serde::Deserialize;
 use serde_json::Value;
-use serde_value::{DeserializerError, SerializerError};
 
 static OB11_MESSAGES: &str = include_str!("ob11_messages.json");
 static OB11_EVENTS: &str = include_str!("ob11_events.json");
@@ -20,7 +19,7 @@ static OB12_MESSAGES: &str = include_str!("ob12_messages.json");
 static OB12_ACTIONS: &str = include_str!("ob12_actions.json");
 
 async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
-    async fn id_provider<T>(_: T) -> Result<String, SerializerError> {
+    async fn id_provider<T>(_: T) -> Result<String, CompatError> {
         Ok("sadwawd".into())
     }
     match seg {
@@ -48,7 +47,7 @@ async fn msg_ob11_to_12(seg: ob11::MessageSeg) -> ob12::MessageSeg {
 }
 
 async fn msg_ob12_to_11(msg: ob12::MessageSeg) -> Option<ob11::MessageSeg> {
-    async fn file_provider(_: String) -> Result<String, DeserializerError> {
+    async fn file_provider(_: String) -> Result<String, CompatError> {
         Ok(String::default())
     }
     Some(match msg {
@@ -95,9 +94,9 @@ async fn messages_ob11_to_12() {
     }
 }
 
-async fn convert(msg: RawMessageSeg) -> Result<RawMessageSeg, SerializerError> {
+async fn convert(msg: RawMessageSeg) -> Result<RawMessageSeg, CompatError> {
     Ok(
-        msg_ob11_to_12(msg.try_into().map_err(SerializerError::custom)?)
+        msg_ob11_to_12(msg.try_into()?)
             .await
             .try_into()?,
     )

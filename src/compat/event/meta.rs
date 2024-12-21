@@ -67,7 +67,7 @@ pub mod ob11to12 {
     impl IntoOB12Event<&ob12::VersionInfo> for ob11event::MetaEvent {
         type Output = (ob12event::MetaEvent, Option<Status>);
 
-        fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
+        fn into_ob12(self, param: &ob12::VersionInfo) -> CompatResult<Self::Output> {
             match self {
                 meta::MetaEvent::LifeCycle(cycle) => {
                     let cycle = cycle.into_ob12(param)?;
@@ -83,7 +83,7 @@ pub mod ob11to12 {
     impl IntoOB12Event<&ob12::VersionInfo> for meta::LifeCycle {
         type Output = CompatLifecycle;
 
-        fn into_ob12(self, param: &ob12::VersionInfo) -> SerResult<Self::Output> {
+        fn into_ob12(self, param: &ob12::VersionInfo) -> CompatResult<Self::Output> {
             Ok(match self {
                 meta::LifeCycle::Enable => CompatLifecycle::Lifecycle(LifeCycle::Enable),
                 meta::LifeCycle::Disable => CompatLifecycle::Lifecycle(LifeCycle::Disable),
@@ -99,7 +99,7 @@ pub mod ob11to12 {
         type Output = (Heartbeat, Status);
 
         #[inline]
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        fn into_ob12(self, _param: ()) -> CompatResult<Self::Output> {
             Ok((
                 Heartbeat {
                     interval: self.interval,

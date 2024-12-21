@@ -6,7 +6,8 @@ use std::future::Future;
 
 pub(self) use crate::ob11::event as ob11event;
 pub(self) use crate::ob12::event as ob12event;
-use crate::SerResult;
+
+use super::CompatResult;
 
 /// Trait to convert an OB11 event to an OB12 event.
 /// P is the type of the parameter that the OB12 event requires.
@@ -14,11 +15,11 @@ use crate::SerResult;
 pub trait IntoOB12Event<P = ()> {
     type Output: TryInto<ob12event::EventDetail>;
 
-    fn into_ob12(self, param: P) -> SerResult<Self::Output>;
+    fn into_ob12(self, param: P) -> CompatResult<Self::Output>;
 }
 
 pub trait IntoOB12EventAsync<P: Send = ()> {
     type Output: TryInto<ob12event::EventDetail>;
 
-    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>> + Send;
+    fn into_ob12(self, param: P) -> impl Future<Output = CompatResult<Self::Output>> + Send;
 }

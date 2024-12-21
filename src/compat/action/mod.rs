@@ -45,13 +45,13 @@ impl TryFrom<ob12::ChatTarget> for ob11action::ChatTarget {
 pub trait IntoOB11Action<P = ()> {
     type Output: TryInto<ob11action::ActionType>;
 
-    fn into_ob11(self, param: P) -> DesResult<Self::Output>;
+    fn into_ob11(self, param: P) -> CompatResult<Self::Output>;
 }
 
 pub trait IntoOB11ActionAsync<P: Send = ()> {
     type Output: TryInto<ob11action::ActionType>;
 
-    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>> + Send;
+    fn into_ob11(self, param: P) -> impl Future<Output = CompatResult<Self::Output>> + Send;
 }
 
 pub trait FromOB11Resp<P = ()>
@@ -60,7 +60,7 @@ where
 {
     type In: RespData;
 
-    fn from_ob11(from: Self::In, param: P) -> DesResult<Self>;
+    fn from_ob11(from: Self::In, param: P) -> CompatResult<Self>;
 }
 
 pub trait FromOB11RespAsync<P = ()>
@@ -81,7 +81,7 @@ macro_rules! compat_actions {
         impl IntoOB11Action for CompatAction {
             type Output = ob11action::ActionType;
 
-            fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+            fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
                 Ok(match self {$(
                     CompatAction::$ob11action(action)
                         => ob11action::ActionType::$ob11action(action),
@@ -137,10 +137,12 @@ macro_rules! compat_actions {
 
             pub fn from_data(name: impl AsRef<str>, data: ValueMap) -> Result<CompatAction, CompatError> {
                 match name.as_ref() {
-                    $(concat!("ob11.", $name)
+                    $(concat!("ob11.", $name) | $name
                         => Ok(Deserialize::deserialize(
                                 data.into_deserializer()
-                            ).map(CompatAction::$ob11action).map_err(DeserializerError::custom)?),)*
+                            ).map(CompatAction::$ob11action).map_err(
+                                |e| DeserializerError::custom(format!("onebot 11 action parse err, {e}"))
+                            )?),)*
                     name => Err(CompatError::UnknownCompat(name.into())),
                 }
             }
@@ -271,7 +273,7 @@ pub enum UserInfoResp {
 impl FromOB11Resp for ob12::UserInfo {
     type In = UserInfoResp;
 
-    fn from_ob11(from: Self::In, _: ()) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, _: ()) -> CompatResult<Self> {
         match from {
             UserInfoResp::LoginInfo(ob11action::LoginInfo {
                 user_id,

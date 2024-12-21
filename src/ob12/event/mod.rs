@@ -100,6 +100,7 @@ macro_rules! impl_from_into {
             type Error = serde_value::SerializerError;
 
             fn try_from(event: $typ) -> Result<Self, Self::Error> {
+                let event: super::Event = event.try_into()?;
                 serde_value::to_value(event)
                     .and_then(|r|
                         serde::Deserialize::deserialize(r)

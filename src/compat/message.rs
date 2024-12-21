@@ -8,8 +8,6 @@ use serde::Deserialize;
 pub(self) use serde_value::*;
 use std::future::Future;
 
-pub(self) use crate::{DesResult, SerResult};
-
 /// Represents a file message segment's common fields.
 #[__data(default)]
 pub struct FileSeg {
@@ -20,25 +18,25 @@ pub struct FileSeg {
 pub trait IntoOB12Seg<P = ()> {
     type Output: TryInto<ob12message::MessageSeg>;
 
-    fn into_ob12(self, param: P) -> SerResult<Self::Output>;
+    fn into_ob12(self, param: P) -> CompatResult<Self::Output>;
 }
 
 pub trait IntoOB12SegAsync<P: Send = ()> {
     type Output: TryInto<ob12message::MessageSeg>;
 
-    fn into_ob12(self, param: P) -> impl Future<Output = SerResult<Self::Output>> + Send;
+    fn into_ob12(self, param: P) -> impl Future<Output = CompatResult<Self::Output>> + Send;
 }
 
 pub trait IntoOB11Seg {
     type Output: TryInto<ob11message::MessageSeg>;
 
-    fn into_ob11(self) -> DesResult<Self::Output>;
+    fn into_ob11(self) -> CompatResult<Self::Output>;
 }
 
 pub trait IntoOB11SegAsync<P: Send = ()> {
     type Output: TryInto<ob11message::MessageSeg>;
 
-    fn into_ob11(self, param: P) -> impl Future<Output = DesResult<Self::Output>> + Send;
+    fn into_ob11(self, param: P) -> impl Future<Output = CompatResult<Self::Output>> + Send;
 }
 
 macro_rules! define_compat_types {
@@ -52,7 +50,7 @@ macro_rules! define_compat_types {
                 type Output = CompatSegment;
 
                 #[inline]
-                fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+                fn into_ob12(self, _param: ()) -> CompatResult<Self::Output> {
                     Ok(CompatSegment::$typ(self))
                 }
             }
@@ -70,7 +68,7 @@ macro_rules! define_compat_types {
             /// parse from name and data(ob11 messages that transformed into ob12)
             pub fn parse_data(
                 name: impl AsRef<str>, data: ValueMap
-            ) -> Result<Self, CompatError> {
+            ) -> CompatResult<Self> {
                 match name.as_ref() {
                     $(concat!("ob11.", $name) => {
                         Ok(CompatSegment::$typ(ob11message::$typ::deserialize(data.into_deserializer())?))
@@ -150,19 +148,22 @@ pub mod ob11to12 {
             .map(|(k, v)| ("ob11.".to_owned() + &k, v))
             .collect::<ValueMap>()
     }
-    fn serialize_into_map<T: serde::Serialize>(value: T) -> SerResult<ValueMap> {
+    fn serialize_into_map<T: serde::Serialize>(value: T) -> CompatResult<ValueMap> {
         let v = serde_value::to_value(value)?;
         if let Value::Map(map) = v {
             map.into_iter()
                 .map(|(k, v)| {
                     let Value::String(k) = k else {
-                        return Err(serde_value::SerializerError::custom("expected string key"));
+                        return Err(serde_value::SerializerError::custom(format!(
+                            "expected string key({k:?})"
+                        ))
+                        .into());
                     };
                     Ok((k, v))
                 })
                 .collect()
         } else {
-            Err(SerializerError::custom("expected map"))
+            Err(SerializerError::custom(format!("expected map({v:?})")).into())
         }
     }
 
@@ -185,7 +186,7 @@ pub mod ob11to12 {
     impl IntoOB12Seg for ob11message::Text {
         type Output = Text;
 
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        fn into_ob12(self, _param: ()) -> CompatResult<Self::Output> {
             Ok(Text {
                 text: self.text,
                 extra: Default::default(),
@@ -196,7 +197,7 @@ pub mod ob11to12 {
     fn extract_file_opt(
         option: Option<ob11message::FileOption>,
         append: impl IntoIterator<Item = (String, Value)>,
-    ) -> SerResult<(Option<String>, ValueMap)> {
+    ) -> CompatResult<(Option<String>, ValueMap)> {
         use ob11message::FileOption;
         let (url, mut extra) = if let Some(opt) = option {
             match opt {
@@ -214,10 +215,10 @@ pub mod ob11to12 {
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Image
     where
         F: (FnOnce(FileSeg) -> R) + Send,
-        R: Future<Output = SerResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Image;
-        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> CompatResult<Self::Output> {
             let (url, extra) = extract_file_opt(
                 self.option,
                 [("type".into(), serde_value::to_value(self.r#type)?)],
@@ -234,10 +235,10 @@ pub mod ob11to12 {
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Record
     where
         F: (FnOnce(FileSeg) -> R) + Send,
-        R: Future<Output = SerResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Voice;
-        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> CompatResult<Self::Output> {
             let (url, extra) =
                 extract_file_opt(self.option, [("magic".into(), self.magic.into_value())])?;
             let file_id = trans_fn(FileSeg {
@@ -252,10 +253,10 @@ pub mod ob11to12 {
     impl<F, R> IntoOB12SegAsync<F> for ob11message::Video
     where
         F: (FnOnce(FileSeg) -> R) + Send,
-        R: Future<Output = SerResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Video;
-        async fn into_ob12(self, trans_fn: F) -> SerResult<Self::Output> {
+        async fn into_ob12(self, trans_fn: F) -> CompatResult<Self::Output> {
             let (url, extra) = extract_file_opt(self.option, [])?;
             let file_id = trans_fn(FileSeg {
                 file: self.file,
@@ -268,7 +269,7 @@ pub mod ob11to12 {
 
     impl IntoOB12Seg for ob11message::At {
         type Output = OB12Mention;
-        fn into_ob12(self, param: ()) -> SerResult<Self::Output> {
+        fn into_ob12(self, param: ()) -> CompatResult<Self::Output> {
             self.qq.into_ob12(param)
         }
     }
@@ -276,7 +277,7 @@ pub mod ob11to12 {
     impl IntoOB12Seg for ob11message::AtTarget {
         type Output = OB12Mention;
 
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        fn into_ob12(self, _param: ()) -> CompatResult<Self::Output> {
             Ok(match self {
                 ob11message::AtTarget::QQ(id) => OB12Mention::Mention(ob12message::Mention {
                     user_id: id.to_string(),
@@ -290,7 +291,7 @@ pub mod ob11to12 {
     impl IntoOB12Seg for ob11message::Location {
         type Output = Location;
 
-        fn into_ob12(self, _param: ()) -> SerResult<Self::Output> {
+        fn into_ob12(self, _param: ()) -> CompatResult<Self::Output> {
             Ok(Location {
                 latitude: self.lat,
                 longitude: self.lon,
@@ -304,7 +305,7 @@ pub mod ob11to12 {
     impl IntoOB12Seg<Option<String>> for ob11message::Reply {
         type Output = Reply;
 
-        fn into_ob12(self, param: Option<String>) -> SerResult<Self::Output> {
+        fn into_ob12(self, param: Option<String>) -> CompatResult<Self::Output> {
             Ok(ob12message::Reply {
                 message_id: self.id.to_string(),
                 user_id: param,
@@ -321,14 +322,6 @@ pub mod ob12to11 {
     use ob11message::*;
     use serde::de::{Error, IntoDeserializer};
 
-    #[inline]
-    #[allow(unused)]
-    fn remove_field<'a, T: Deserialize<'a>>(map: &mut ValueMap, key: &str) -> DesResult<T> {
-        map.remove(key)
-            .ok_or_else(|| serde_value::DeserializerError::custom(format!("missing field {}", key)))
-            .and_then(|r| T::deserialize(r))
-    }
-
     fn rename_ob12_field(map: ValueMap) -> ValueMap {
         map.into_iter()
             .map(|(k, v)| {
@@ -344,7 +337,7 @@ pub mod ob12to11 {
     impl IntoOB11Seg for ob12message::Text {
         type Output = Text;
 
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        fn into_ob11(self) -> CompatResult<Self::Output> {
             Ok(Text { text: self.text })
         }
     }
@@ -353,7 +346,7 @@ pub mod ob12to11 {
         type Output = At;
 
         #[inline]
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        fn into_ob11(self) -> CompatResult<Self::Output> {
             Ok(At {
                 qq: AtTarget::QQ(self.user_id.parse().map_err(DeserializerError::custom)?),
             })
@@ -364,7 +357,7 @@ pub mod ob12to11 {
         type Output = At;
 
         #[inline]
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        fn into_ob11(self) -> CompatResult<Self::Output> {
             Ok(At { qq: AtTarget::All })
         }
     }
@@ -373,11 +366,11 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Image
     where
         F: (FnOnce(String) -> R) + Send,
-        R: Future<Output = DesResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Image;
 
-        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> CompatResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
             let img_ty = match extra.remove("type") {
                 Some(Value::String(name)) => ImageType::deserialize(Value::String(name))?,
@@ -401,11 +394,11 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Voice
     where
         F: (FnOnce(String) -> R) + Send,
-        R: Future<Output = DesResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Record;
 
-        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> CompatResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
             let magic = match extra.remove("magic") {
                 Some(r) => tool::str_bool::deserialize(r)?,
@@ -429,11 +422,11 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Audio
     where
         F: (FnOnce(String) -> R) + Send,
-        R: Future<Output = DesResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Record;
 
-        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> CompatResult<Self::Output> {
             let mut extra = rename_ob12_field(self.extra);
             let magic = match extra.remove("magic") {
                 Some(r) => tool::str_bool::deserialize(r)?,
@@ -457,11 +450,11 @@ pub mod ob12to11 {
     impl<F, R> IntoOB11SegAsync<F> for ob12message::Video
     where
         F: (FnOnce(String) -> R) + Send,
-        R: Future<Output = DesResult<String>> + Send,
+        R: Future<Output = CompatResult<String>> + Send,
     {
         type Output = Video;
 
-        async fn into_ob11(self, trans_fn: F) -> DesResult<Self::Output> {
+        async fn into_ob11(self, trans_fn: F) -> CompatResult<Self::Output> {
             let extra = rename_ob12_field(self.extra);
             let option = if extra.len() > 0 {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
@@ -481,7 +474,7 @@ pub mod ob12to11 {
         type Output = Location;
 
         #[inline]
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        fn into_ob11(self) -> CompatResult<Self::Output> {
             Ok(Location {
                 lat: self.latitude,
                 lon: self.longitude,
@@ -495,7 +488,7 @@ pub mod ob12to11 {
         type Output = Reply;
 
         #[inline]
-        fn into_ob11(self) -> DesResult<Self::Output> {
+        fn into_ob11(self) -> CompatResult<Self::Output> {
             Ok(Reply {
                 id: self.message_id.parse().map_err(DeserializerError::custom)?,
             })

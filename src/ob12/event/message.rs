@@ -43,7 +43,7 @@ pub struct Channel {
 }
 
 #[__data]
-#[serde(tag = "detail_type")]
+#[serde(tag = "detail_type", rename_all = "snake_case")]
 pub enum MessageEvent {
     Private(Private),
     Group(Group),

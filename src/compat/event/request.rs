@@ -1,9 +1,8 @@
 use ob12event::EventDetailed;
 use ob_types_macro::__data;
 use serde::Deserialize;
-use serde_value::SerializerError;
 
-use crate::ob12;
+use crate::{compat::CompatError, ob12};
 
 use super::*;
 
@@ -25,11 +24,10 @@ pub struct CompatRequest {
 }
 
 impl TryFrom<CompatRequest> for EventDetailed {
-    type Error = SerializerError;
+    type Error = CompatError;
 
     fn try_from(value: CompatRequest) -> Result<Self, Self::Error> {
-        serde_value::to_value(value)
-            .and_then(|r| Deserialize::deserialize(r).map_err(serde::ser::Error::custom))
+        Ok(Deserialize::deserialize(serde_value::to_value(value)?)?)
     }
 }
 
@@ -43,7 +41,7 @@ pub mod ob11to12 {
     impl IntoOB12Event<String> for RequestEvent {
         type Output = ob12event::RequestEvent;
 
-        fn into_ob12(self, self_id: String) -> SerResult<Self::Output> {
+        fn into_ob12(self, self_id: String) -> CompatResult<Self::Output> {
             let compat = match self {
                 RequestEvent::Friend(req) => CompatRequestKind::Friend(req),
                 RequestEvent::Group(req) => CompatRequestKind::Group(req),

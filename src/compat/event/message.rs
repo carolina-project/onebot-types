@@ -2,23 +2,22 @@ use super::*;
 
 pub mod ob11to12 {
 
-    use crate::compat::compat_self;
+    use crate::compat::{compat_self, CompatError};
 
     use super::*;
     use crate::base::ext::{IntoValue, ValueMapExt};
     use crate::base::{tool, MessageChain, RawMessageSeg};
     use ob11event::message::*;
-    use serde_value::SerializerError;
 
     /// Converts an OB11 MessageEvent into an OB12 MessageEvent using the provided transformation function(transform message segment).
     impl<F, R> IntoOB12EventAsync<(String, F)> for ob11event::MessageEvent
     where
         F: (Fn(RawMessageSeg) -> R) + Send,
-        R: Future<Output = Result<RawMessageSeg, SerializerError>> + Send,
+        R: Future<Output = Result<RawMessageSeg, CompatError>> + Send,
     {
         type Output = ob12event::MessageEvent;
 
-        async fn into_ob12(self, param: (String, F)) -> SerResult<Self::Output> {
+        async fn into_ob12(self, param: (String, F)) -> CompatResult<Self::Output> {
             use ob12event::message::{Group, MessageArgs, MessageEvent as O12MsgEvent, Private};
 
             let (self_id, trans_fn) = param;

@@ -16,7 +16,7 @@ where
 {
     type Output = ob11action::SendMsg;
 
-    async fn into_ob11(self, msg_trans_fn: F) -> DesResult<Self::Output> {
+    async fn into_ob11(self, msg_trans_fn: F) -> CompatResult<Self::Output> {
         let message: Vec<_> = {
             let mut transformed = vec![];
             for ele in self.message.into_inner() {
@@ -35,7 +35,7 @@ where
 
 impl IntoOB11Action for ob12action::DeleteMessage {
     type Output = ob11action::DeleteMsg;
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::DeleteMsg {
             message_id: self.message_id.parse().map_err(DeserializerError::custom)?,
         })
@@ -45,7 +45,7 @@ impl IntoOB11Action for ob12action::DeleteMessage {
 impl FromOB11Resp<f64> for ob12action::SendMessageResp {
     type In = ob11action::MessageResp;
 
-    fn from_ob11(from: Self::In, time: f64) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, time: f64) -> CompatResult<Self> {
         Ok(Self {
             message_id: from.message_id.to_string(),
             time,
@@ -87,17 +87,14 @@ where
 {
     type Output = OB11GetFile;
 
-    async fn into_ob11(self, find_fn: F) -> DesResult<Self::Output> {
+    async fn into_ob11(self, find_fn: F) -> CompatResult<Self::Output> {
         let ob12action::GetFile {
             file_id,
             r#type: _,
             mut extra,
         } = self;
         let Some(ty) = find_fn(&file_id).await else {
-            return Err(DeserializerError::custom(format!(
-                "cannot find file {}",
-                file_id
-            )));
+            return Err(CompatError::other(format!("cannot find file {}", file_id)));
         };
 
         Ok(match ty {
@@ -113,7 +110,7 @@ where
 
 impl IntoOB11Action for ob12action::GetStatus {
     type Output = ob11action::GetStatus;
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::GetStatus {})
     }
 }
@@ -121,7 +118,7 @@ impl IntoOB11Action for ob12action::GetStatus {
 impl FromOB11Resp<String> for ob12::BotState {
     type In = ob11::Status;
 
-    fn from_ob11(from: Self::In, self_id: String) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, self_id: String) -> CompatResult<Self> {
         let extra: ValueMap = from
             .extra
             .into_iter()
@@ -138,7 +135,7 @@ impl FromOB11Resp<String> for ob12::BotState {
 impl IntoOB11Action for ob12action::GetVersion {
     type Output = ob11action::GetVersionInfo;
 
-    fn into_ob11(self, _: ()) -> DesResult<Self::Output> {
+    fn into_ob11(self, _: ()) -> CompatResult<Self::Output> {
         Ok(ob11action::GetVersionInfo {})
     }
 }
@@ -146,7 +143,7 @@ impl IntoOB11Action for ob12action::GetVersion {
 impl FromOB11Resp for ob12::VersionInfo {
     type In = ob11action::VersionInfo;
 
-    fn from_ob11(from: Self::In, _: ()) -> DesResult<Self> {
+    fn from_ob11(from: Self::In, _: ()) -> CompatResult<Self> {
         let extra: ValueMap = from
             .extra
             .into_iter()
