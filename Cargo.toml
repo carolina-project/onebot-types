@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    ".", "./ob-types-macro"
+]
+resolver = "2"
+
 [package]
 name = "onebot-types"
 version = "0.1.0"
