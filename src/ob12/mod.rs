@@ -133,7 +133,6 @@ pub enum ChatTarget {
     },
     Group {
         group_id: String,
-        user_id: Option<String>,
     },
     Channel {
         guild_id: String,

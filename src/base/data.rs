@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use ob_types_macro::__data;
 use serde::{
     de::{DeserializeOwned, IntoDeserializer},
@@ -79,6 +81,19 @@ impl RawMessageSeg {
 #[__data(default)]
 pub struct MessageChain(Vec<RawMessageSeg>);
 
+impl Index<usize> for MessageChain {
+    type Output = RawMessageSeg;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+impl IndexMut<usize> for MessageChain {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
+    }
+}
+
 impl From<Vec<RawMessageSeg>> for MessageChain {
     #[inline]
     fn from(value: Vec<RawMessageSeg>) -> Self {
@@ -112,6 +127,11 @@ impl MessageChain {
     #[inline]
     pub fn remove<T: OBMessage>(&mut self, idx: usize) -> Result<T, ParseError> {
         self.0.remove(idx).parse()
+    }
+
+    #[inline]
+    pub fn remove_raw(&mut self, idx: usize) -> RawMessageSeg {
+        self.0.remove(idx)
     }
 
     pub fn try_from_msg_trait<T: OBMessage>(seg: T) -> Result<Self, ParseError> {

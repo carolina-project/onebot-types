@@ -31,8 +31,8 @@ macro_rules! err_handle {
     }};
 }
 
-#[macro_export]
 /// Macro to select a message type and execute the corresponding handler.
+#[macro_export]
 macro_rules! select_msg {
     ($input:expr, {
         $(

@@ -29,10 +29,9 @@ impl TryFrom<ob12::ChatTarget> for ob11action::ChatTarget {
             ob12::ChatTarget::Private { user_id } => {
                 user_id.parse().map(|r| Self::Private { user_id: r })
             }
-            ob12::ChatTarget::Group {
-                group_id,
-                user_id: _,
-            } => group_id.parse().map(|r| Self::Group { group_id: r }),
+            ob12::ChatTarget::Group { group_id } => {
+                group_id.parse().map(|r| Self::Group { group_id: r })
+            }
             ob12::ChatTarget::Channel {
                 guild_id: _,
                 channel_id: _,

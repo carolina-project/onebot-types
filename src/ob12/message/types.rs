@@ -36,3 +36,12 @@ macro_rules! file_msgs {
 }
 
 file_msgs!(Image, Voice, Audio, Video, File);
+
+impl Text {
+    pub fn new(text: impl Into<String>) -> Self {
+        Text {
+            text: text.into(),
+            extra: Default::default(),
+        }
+    }
+}

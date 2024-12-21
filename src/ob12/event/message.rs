@@ -1,6 +1,10 @@
 use ob_types_macro::{OBEvent, __data};
 
-use crate::{base::MessageChain, ob12::BotSelf, ValueMap};
+use crate::{
+    base::MessageChain,
+    ob12::{BotSelf, ChatTarget},
+    ValueMap,
+};
 
 use super::{impl_from_into, EventDetailed, EventType};
 
@@ -50,6 +54,46 @@ pub enum MessageEvent {
     Channel(Channel),
     #[serde(untagged)]
     Other(EventDetailed),
+}
+
+impl MessageEvent {
+    pub fn messages(&self) -> Option<&MessageChain> {
+        Some(match self {
+            MessageEvent::Private(private) => &private.0.message,
+            MessageEvent::Group(group) => &group.args.message,
+            MessageEvent::Channel(channel) => &channel.args.message,
+            MessageEvent::Other(_) => return None,
+        })
+    }
+
+    pub fn messages_mut(&mut self) -> Option<&mut MessageChain> {
+        Some(match self {
+            MessageEvent::Private(private) => &mut private.0.message,
+            MessageEvent::Group(group) => &mut group.args.message,
+            MessageEvent::Channel(channel) => &mut channel.args.message,
+            MessageEvent::Other(_) => return None,
+        })
+    }
+
+    pub fn get_chat_target(&self) -> Option<ChatTarget> {
+        Some(match self {
+            MessageEvent::Private(Private(args)) => ChatTarget::Private {
+                user_id: args.user_id.clone(),
+            },
+            MessageEvent::Group(Group { group_id, .. }) => ChatTarget::Group {
+                group_id: group_id.clone(),
+            },
+            MessageEvent::Channel(Channel {
+                guild_id,
+                channel_id,
+                ..
+            }) => ChatTarget::Channel {
+                guild_id: guild_id.clone(),
+                channel_id: channel_id.clone(),
+            },
+            MessageEvent::Other(_) => return None,
+        })
+    }
 }
 
 impl_from_into!(MessageEvent, EventType::Message);

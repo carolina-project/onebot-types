@@ -95,6 +95,7 @@ pub enum ImageType {
 pub struct Image {
     pub file: String,
     #[serde_as(deserialize_as = "serde_with::DefaultOnNull")]
+    #[serde(default)]
     pub r#type: ImageType,
     #[serde(flatten)]
     pub option: Option<FileOption>,
