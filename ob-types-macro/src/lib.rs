@@ -110,6 +110,7 @@ pub fn onebot_event_selector(input: TokenStream) -> TokenStream {
         .into()
 }
 
+#[doc(hidden)]
 #[proc_macro_attribute]
 pub fn __data(attr: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attr with Punctuated::<Meta, syn::Token![,]>::parse_terminated);
