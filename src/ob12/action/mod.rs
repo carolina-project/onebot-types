@@ -14,13 +14,13 @@ pub use message::*;
 pub use meta::*;
 use ob_types_macro::__data;
 use serde::Deserialize;
-use serde_value::{DeserializerError, Value};
+use serde_value::{DeserializerError, SerializerError, Value};
 use thiserror::Error;
 pub use user::*;
 
 use crate::{
     base::ext::{IntoValue, ValueExt},
-    ValueMap,
+    OBAction, ValueMap,
 };
 
 use super::scalable_struct;
@@ -52,6 +52,18 @@ impl TryFrom<ActionDetail> for ActionType {
             ]
             .into(),
         ))
+    }
+}
+
+impl ActionDetail {
+    pub fn from_acton(action: impl OBAction) -> Result<Self, SerializerError> {
+        let action_name = action.action_name().to_owned();
+        serde_value::to_value(action)
+            .and_then(|r| ValueMap::deserialize(r).map_err(serde::ser::Error::custom))
+            .map(|r| ActionDetail {
+                action: action_name,
+                params: r,
+            })
     }
 }
 

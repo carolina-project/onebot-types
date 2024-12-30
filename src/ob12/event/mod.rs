@@ -30,11 +30,11 @@ pub struct EventDetailed {
 }
 
 #[__data]
-pub struct RawEvent {
+pub struct RawEvent<T = EventDetail> {
     pub id: String,
     pub time: f64,
     #[serde(flatten)]
-    pub event: EventDetail,
+    pub event: T,
 }
 
 #[__data]
@@ -147,4 +147,4 @@ macro_rules! impl_from_into {
     };
 }
 
-pub(self) use impl_from_into;
+use impl_from_into;

@@ -2,6 +2,7 @@ pub mod action;
 pub mod event;
 pub mod message;
 
+pub use action::{ActionDetail, ActionType, RawAction};
 pub use event::{MessageEvent, MetaEvent, NoticeEvent, RequestEvent};
 pub use message::MessageSeg;
 
