@@ -51,6 +51,6 @@ impl TryFrom<MessageSeg> for RawMessageSeg {
 
     fn try_from(seg: MessageSeg) -> Result<Self, Self::Error> {
         use serde::ser::Error;
-        Ok(Self::deserialize(serde_value::to_value(seg)?).map_err(Error::custom)?)
+        Self::deserialize(serde_value::to_value(seg)?).map_err(Error::custom)
     }
 }

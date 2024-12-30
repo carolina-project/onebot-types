@@ -2,6 +2,7 @@ pub mod action;
 pub mod event;
 pub mod message;
 
+pub use event::{MessageEvent, MetaEvent, NoticeEvent, RequestEvent};
 pub use message::MessageSeg;
 
 mod macros {
@@ -70,7 +71,7 @@ mod macros {
     pub use scalable_struct;
 }
 
-pub(self) use macros::scalable_struct;
+pub use macros::scalable_struct;
 use ob_types_macro::__data;
 
 #[__data(default)]
@@ -80,6 +81,7 @@ pub struct BotSelf {
 }
 
 scalable_struct! {
+    #[derive(Default)]
     BotState = {
         #[serde(rename = "self")]
         self_: BotSelf,
@@ -142,14 +144,4 @@ pub enum ChatTarget {
     Other {
         detail_type: String,
     },
-}
-
-impl Default for BotState {
-    fn default() -> Self {
-        BotState {
-            self_: Default::default(),
-            online: false,
-            extra: Default::default(),
-        }
-    }
 }

@@ -94,6 +94,15 @@ impl MessageEvent {
             MessageEvent::Other(_) => return None,
         })
     }
+
+    pub fn get_self(&self) -> Option<&BotSelf> {
+        match self {
+            MessageEvent::Private(private) => Some(&private.0.self_),
+            MessageEvent::Group(group) => Some(&group.args.self_),
+            MessageEvent::Channel(channel) => Some(&channel.args.self_),
+            MessageEvent::Other(_) => None,
+        }
+    }
 }
 
 impl_from_into!(MessageEvent, EventType::Message);
