@@ -4,8 +4,8 @@ pub mod notice;
 pub mod request;
 use std::future::Future;
 
-pub(self) use crate::ob11::event as ob11event;
-pub(self) use crate::ob12::event as ob12event;
+use crate::ob11::event as ob11event;
+use crate::ob12::event as ob12event;
 
 use super::CompatResult;
 

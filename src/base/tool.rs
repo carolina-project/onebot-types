@@ -65,7 +65,7 @@ pub mod duration_str {
         let seconds: &str = serde::Deserialize::deserialize(deserializer)?;
         seconds
             .parse::<u64>()
-            .map(|s| Duration::from_secs(s))
+            .map(Duration::from_secs)
             .map_err(serde::de::Error::custom)
     }
 
@@ -85,10 +85,10 @@ pub mod duration_str_opt {
         D: serde::Deserializer<'de>,
     {
         let seconds: Option<&str> = serde::Deserialize::deserialize(deserializer)?;
-        Ok(seconds
+        seconds
             .map(|s| s.parse::<u64>().map(Duration::from_secs))
             .transpose()
-            .map_err(serde::de::Error::custom)?)
+            .map_err(serde::de::Error::custom)
     }
 
     pub fn serialize<S>(duration: &Option<Duration>, serializer: S) -> Result<S::Ok, S::Error>
@@ -123,7 +123,7 @@ pub mod from_str {
     }
 
     #[inline]
-    pub fn serialize<'de, V, S>(value: V, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<V, S>(value: V, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
         V: Display,

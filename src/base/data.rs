@@ -124,6 +124,11 @@ impl MessageChain {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     #[inline]
     pub fn remove<T: OBMessage>(&mut self, idx: usize) -> Result<T, ParseError> {
         self.0.remove(idx).parse()

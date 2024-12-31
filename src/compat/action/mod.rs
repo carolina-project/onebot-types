@@ -1,19 +1,19 @@
-pub(self) use super::*;
+use super::*;
 
 use serde::de::IntoDeserializer;
 use std::{future::Future, num::ParseIntError};
 
 use crate::base::ext::{IntoValue, ValueMapExt};
 use crate::base::RespData;
-pub(self) use crate::ob11::action as ob11action;
-pub(self) use crate::ob12;
-pub(self) use crate::ob12::action as ob12action;
+use crate::ob11::action as ob11action;
+use crate::ob12;
+use crate::ob12::action as ob12action;
 use ob_types_macro::__data;
-pub(self) use serde::de::Error as DeError;
-pub(self) use serde::ser::Error as SerError;
+use serde::de::Error as DeError;
+use serde::ser::Error as SerError;
 use serde::Deserialize;
-pub(self) use serde_value::Value;
-pub(self) use serde_value::{DeserializerError, SerializerError};
+use serde_value::Value;
+use serde_value::{DeserializerError, SerializerError};
 
 use crate::{DesResult, ValueMap};
 
@@ -228,7 +228,7 @@ fn remove_field_or_default<'a, T: serde::Deserialize<'a> + Default>(
     map: &mut ValueMap,
     key: &str,
 ) -> DesResult<T> {
-    if let Some(r) = map.remove(key.into()) {
+    if let Some(r) = map.remove(key) {
         T::deserialize(r)
     } else {
         Ok(T::default())
@@ -241,11 +241,7 @@ fn remove_field<'a, T: serde::Deserialize<'a>>(
     map: &mut ValueMap,
     key: &str,
 ) -> Option<DesResult<T>> {
-    if let Some(r) = map.remove(key.into()) {
-        Some(T::deserialize(r))
-    } else {
-        None
-    }
+    map.remove(key).map(T::deserialize)
 }
 
 #[inline]
@@ -254,7 +250,7 @@ fn remove_field_or<'a, T: serde::Deserialize<'a>>(
     key: &str,
     or: impl FnOnce() -> T,
 ) -> DesResult<T> {
-    if let Some(r) = map.remove(key.into()) {
+    if let Some(r) = map.remove(key) {
         T::deserialize(r)
     } else {
         Ok(or())

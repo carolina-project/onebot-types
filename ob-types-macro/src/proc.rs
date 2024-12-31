@@ -46,13 +46,16 @@ pub(crate) mod __data {
         attrs
     }
 
+    type EAttrGetter = Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>;
+    type ProcFn = Option<Box<dyn Fn(&Field) -> Field>>;
+
     pub fn enum_fields_process(
         vis: Visibility,
         name: Ident,
         generics: Generics,
         data: DataEnum,
-        extra_attrs_getter: Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>,
-        proc_fn: Option<Box<dyn Fn(&Field) -> Field>>,
+        extra_attrs_getter: EAttrGetter,
+        proc_fn: ProcFn,
     ) -> proc_macro2::TokenStream {
         let vars = data.variants.into_iter().map(|v| {
             let v_name = v.ident;
@@ -100,8 +103,8 @@ pub(crate) mod __data {
         name: Ident,
         generics: Generics,
         data: DataStruct,
-        extra_attrs_getter: Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>,
-        proc_fn: Option<Box<dyn Fn(&Field) -> Field>>,
+        extra_attrs_getter: EAttrGetter,
+        proc_fn: ProcFn,
     ) -> proc_macro2::TokenStream {
         let field_proc = |mut def: Field| {
             if let Some(f) = extra_attrs_getter.as_ref() {
@@ -113,10 +116,7 @@ pub(crate) mod __data {
                 def
             }
         };
-        let is_unit = match data.fields {
-            Fields::Unnamed(_) => true,
-            _ => false,
-        };
+        let is_unit = matches!(data.fields, Fields::Unnamed(_));
         let field_defs = data.fields.into_iter().map(field_proc);
 
         if is_unit {
@@ -136,7 +136,7 @@ pub(crate) mod __data {
 
     pub fn derive_serde_process(
         input: DeriveInput,
-        extra_attrs_getter: Option<Box<dyn Fn(&Field) -> Vec<Attribute>>>,
+        extra_attrs_getter: EAttrGetter,
     ) -> proc_macro2::TokenStream {
         let attrs = &input.attrs;
         let data = match input.data {

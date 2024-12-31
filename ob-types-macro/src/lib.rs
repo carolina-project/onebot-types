@@ -11,7 +11,6 @@ mod proc;
 fn debug_tokens(tokens: impl Display) {
     use std::io::Write;
     let mut f = OpenOptions::new()
-        .write(true)
         .append(true)
         .create(true)
         .open("/tmp/macro_debug")

@@ -25,7 +25,7 @@ impl TryFrom<NoticeDetail> for NoticeEvent {
         } = detail;
         detail.insert("notice_type".into(), notice_type.into_value());
 
-        Ok(Deserialize::deserialize(detail.into_deserializer())?)
+        Deserialize::deserialize(detail.into_deserializer())
     }
 }
 

@@ -1,11 +1,11 @@
 use super::*;
-pub(self) use crate::ob11::message as ob11message;
-pub(self) use crate::ob12::message as ob12message;
+use crate::ob11::message as ob11message;
+use crate::ob12::message as ob12message;
 use crate::{base::RawMessageSeg, ValueMap};
 use ob_types_macro::__data;
 use serde::de::IntoDeserializer;
 use serde::Deserialize;
-pub(self) use serde_value::*;
+use serde_value::*;
 use std::future::Future;
 
 /// Represents a file message segment's common fields.
@@ -325,8 +325,8 @@ pub mod ob12to11 {
     fn rename_ob12_field(map: ValueMap) -> ValueMap {
         map.into_iter()
             .map(|(k, v)| {
-                if k.starts_with("ob11.") {
-                    (k[5..].to_owned(), v)
+                if let Some(key) = k.strip_suffix("ob11.") {
+                    (key.to_owned(), v)
                 } else {
                     (k, v)
                 }
@@ -376,7 +376,7 @@ pub mod ob12to11 {
                 Some(Value::String(name)) => ImageType::deserialize(Value::String(name))?,
                 _ => ImageType::Normal,
             };
-            let option = if extra.len() > 0 {
+            let option = if !extra.is_empty() {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
             } else {
                 None
@@ -404,7 +404,7 @@ pub mod ob12to11 {
                 Some(r) => tool::str_bool::deserialize(r)?,
                 None => false,
             };
-            let option = if extra.len() > 0 {
+            let option = if !extra.is_empty() {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
             } else {
                 None
@@ -432,7 +432,7 @@ pub mod ob12to11 {
                 Some(r) => tool::str_bool::deserialize(r)?,
                 None => false,
             };
-            let option = if extra.len() > 0 {
+            let option = if !extra.is_empty() {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
             } else {
                 None
@@ -456,7 +456,7 @@ pub mod ob12to11 {
 
         async fn into_ob11(self, trans_fn: F) -> CompatResult<Self::Output> {
             let extra = rename_ob12_field(self.extra);
-            let option = if extra.len() > 0 {
+            let option = if !extra.is_empty() {
                 Some(FileOption::deserialize(extra.into_deserializer())?)
             } else {
                 None

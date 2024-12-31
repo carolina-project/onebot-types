@@ -96,6 +96,8 @@ macro_rules! select_msg {
     };
 }
 
+pub(crate) use {define_action, trait_alias};
+
 #[cfg(test)]
 mod test {
     use crate::base::RawMessageSeg;
@@ -121,5 +123,3 @@ mod test {
         });
     }
 }
-
-pub(crate) use {define_action, trait_alias};

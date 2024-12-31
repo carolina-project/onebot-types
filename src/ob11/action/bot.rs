@@ -52,14 +52,12 @@ impl<'de> serde::Deserialize<'de> for ChatTarget {
                         .ok_or_else(|| serde::de::Error::missing_field("group_id"))?,
                 }),
             }
+        } else if let Some(user_id) = user_id {
+            Ok(ChatTarget::Private { user_id })
+        } else if let Some(group_id) = group_id {
+            Ok(ChatTarget::Group { group_id })
         } else {
-            if let Some(user_id) = user_id {
-                Ok(ChatTarget::Private { user_id })
-            } else if let Some(group_id) = group_id {
-                Ok(ChatTarget::Group { group_id })
-            } else {
-                Err(serde::de::Error::missing_field("message_type or *_id"))
-            }
+            Err(serde::de::Error::missing_field("message_type or *_id"))
         }
     }
 }
@@ -102,8 +100,8 @@ pub enum MessageSender {
 impl MessageSender {
     pub fn user_id(&self) -> Option<i64> {
         match self {
-            MessageSender::Private(sender) => sender.user_id.clone(),
-            MessageSender::Group(sender) => sender.user_id.clone(),
+            MessageSender::Private(sender) => sender.user_id,
+            MessageSender::Group(sender) => sender.user_id,
         }
     }
 }
