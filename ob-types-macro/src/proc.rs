@@ -166,7 +166,7 @@ pub(crate) mod __data {
 }
 
 pub(crate) struct DeriveAttr<T: Parse> {
-    pub imp: Option<syn::LitStr>,
+    pub prefix: Option<syn::LitStr>,
     pub name: syn::LitStr,
     pub crate_path: syn::Path,
     pub custom_attr: Option<T>,
@@ -196,7 +196,7 @@ impl<T: Parse> DeriveAttr<T> {
                     };
                     if meta.path.is_ident("__crate_path") {
                         crate_path = meta.value()?.parse()?;
-                    } else if meta.path.is_ident("imp") {
+                    } else if meta.path.is_ident("prefix") {
                         imp = meta.value()?.parse()?;
                     } else if meta.path.is_ident("rename") {
                         name = meta.value()?.parse()?;
@@ -208,7 +208,7 @@ impl<T: Parse> DeriveAttr<T> {
         }
 
         Ok(Self {
-            imp,
+            prefix: imp,
             name,
             crate_path,
             custom_attr: custom,
@@ -216,7 +216,7 @@ impl<T: Parse> DeriveAttr<T> {
     }
 
     pub fn full_name(&self) -> String {
-        if let Some(imp) = &self.imp {
+        if let Some(imp) = &self.prefix {
             format!("{}.{}", imp.value(), self.name.value())
         } else {
             self.name.value()
