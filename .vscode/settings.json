@@ -1,7 +1,7 @@
 {
     "rust-analyzer": {
         "cargo": {
-            "features": ["compat"]
+            "allFeatures": true
         }
     }
 }

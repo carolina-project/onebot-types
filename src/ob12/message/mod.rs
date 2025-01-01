@@ -26,6 +26,17 @@ macro_rules! message_seg {
                 }
             }
         )*
+
+        impl crate::base::IntoMessage for MessageSeg {
+            type Error = crate::base::error::ParseError;
+
+            fn into_raw_msg(self) -> Result<RawMessageSeg, Self::Error> {
+                match self {
+                    $(Self::$sg(seg) => seg.into_raw_msg(),)*
+                    Self::Other(seg) => Ok(seg),
+                }
+            }
+        }
     };
 }
 

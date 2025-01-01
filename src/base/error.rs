@@ -29,4 +29,6 @@ pub enum ParseError {
     Serialize(#[from] serde_value::SerializerError),
     #[error(transparent)]
     Deserialize(#[from] serde_value::DeserializerError),
+    #[error("no element at {0}")]
+    NotFound(usize)
 }

@@ -1,4 +1,8 @@
-use std::ops::{Index, IndexMut};
+use std::{
+    collections::VecDeque,
+    convert::Infallible,
+    ops::{Index, IndexMut},
+};
 
 use ob_types_macro::__data;
 use serde::{
@@ -69,17 +73,43 @@ impl RawMessageSeg {
 
         Ok(T::deserialize(self.data.into_deserializer())?)
     }
+}
 
-    pub fn try_from_msg<T: OBMessage>(msg: T) -> Result<Self, ParseError> {
-        Ok(Self {
+pub trait IntoMessage {
+    type Error;
+
+    fn into_raw_msg(self) -> Result<RawMessageSeg, Self::Error>;
+
+    fn into_msg_chain(self) -> Result<MessageChain, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(self.into_raw_msg()?.into())
+    }
+}
+
+impl IntoMessage for RawMessageSeg {
+    type Error = Infallible;
+
+    #[inline]
+    fn into_raw_msg(self) -> Result<RawMessageSeg, Self::Error> {
+        Ok(self)
+    }
+}
+
+impl<T: OBMessage> IntoMessage for T {
+    type Error = ParseError;
+
+    fn into_raw_msg(self) -> Result<RawMessageSeg, Self::Error> {
+        Ok(RawMessageSeg {
             r#type: T::TYPE.into(),
-            data: Deserialize::deserialize(serde_value::to_value(msg)?)?,
+            data: Deserialize::deserialize(serde_value::to_value(self)?)?,
         })
     }
 }
 
 #[__data(default)]
-pub struct MessageChain(Vec<RawMessageSeg>);
+pub struct MessageChain(VecDeque<RawMessageSeg>);
 
 impl Index<usize> for MessageChain {
     type Output = RawMessageSeg;
@@ -94,10 +124,16 @@ impl IndexMut<usize> for MessageChain {
     }
 }
 
-impl From<Vec<RawMessageSeg>> for MessageChain {
+impl<T: IntoIterator<Item = RawMessageSeg>> From<T> for MessageChain {
     #[inline]
-    fn from(value: Vec<RawMessageSeg>) -> Self {
-        Self(value)
+    fn from(value: T) -> Self {
+        Self(value.into_iter().collect())
+    }
+}
+
+impl From<RawMessageSeg> for MessageChain {
+    fn from(value: RawMessageSeg) -> Self {
+        Self([value].into())
     }
 }
 
@@ -113,9 +149,27 @@ impl<T: TryFrom<RawMessageSeg>> TryFrom<MessageChain> for Vec<T> {
     }
 }
 
+pub trait IntoMessageChain {
+    type Error;
+
+    fn into_msg_chain(self) -> Result<MessageChain, Self::Error>;
+}
+
+impl<T: IntoMessage, I: IntoIterator<Item = T>> IntoMessageChain for I {
+    type Error = T::Error;
+
+    fn into_msg_chain(self) -> Result<MessageChain, Self::Error> {
+        Ok(MessageChain(
+            self.into_iter()
+                .map(|r| r.into_raw_msg())
+                .collect::<Result<_, _>>()?,
+        ))
+    }
+}
+
 impl MessageChain {
     #[inline]
-    pub fn new(segs: Vec<RawMessageSeg>) -> Self {
+    pub fn new(segs: VecDeque<RawMessageSeg>) -> Self {
         Self(segs)
     }
 
@@ -131,64 +185,49 @@ impl MessageChain {
 
     #[inline]
     pub fn remove<T: OBMessage>(&mut self, idx: usize) -> Result<T, ParseError> {
-        self.0.remove(idx).parse()
+        self.0
+            .remove(idx)
+            .ok_or(ParseError::NotFound(idx))?
+            .parse()
     }
 
     #[inline]
-    pub fn remove_raw(&mut self, idx: usize) -> RawMessageSeg {
+    pub fn remove_raw(&mut self, idx: usize) -> Option<RawMessageSeg> {
         self.0.remove(idx)
     }
 
-    pub fn try_from_msg_trait<T: OBMessage>(seg: T) -> Result<Self, ParseError> {
-        Ok(Self(vec![RawMessageSeg::try_from_msg(seg)?]))
-    }
-
-    pub fn try_from_trait<T: OBMessage>(segs: Vec<T>) -> Result<Self, ParseError> {
-        Ok(Self(
-            segs.into_iter()
-                .map(|r| RawMessageSeg::try_from_msg(r))
-                .collect::<Result<Vec<_>, _>>()?,
-        ))
-    }
-
-    pub fn try_from_msg<T: TryInto<RawMessageSeg>>(seg: T) -> Result<Self, T::Error> {
-        Ok(Self(vec![seg.try_into()?]))
-    }
-
-    pub fn try_from<T: TryInto<RawMessageSeg>>(segs: Vec<T>) -> Result<Self, T::Error> {
-        Ok(Self(
-            segs.into_iter()
-                .map(|r| r.try_into())
-                .collect::<Result<Vec<_>, _>>()?,
-        ))
-    }
-
     #[inline]
-    pub fn inner(&self) -> &Vec<RawMessageSeg> {
+    pub fn inner(&self) -> &VecDeque<RawMessageSeg> {
         &self.0
     }
 
     #[inline]
-    pub fn inner_mut(&mut self) -> &mut Vec<RawMessageSeg> {
+    pub fn inner_mut(&mut self) -> &mut VecDeque<RawMessageSeg> {
         &mut self.0
     }
 
-    pub fn append<T: TryInto<RawMessageSeg>>(&mut self, seg: T) -> Result<(), T::Error> {
-        self.0.push(seg.try_into()?);
+    pub fn append_back<T: IntoMessage>(&mut self, seg: T) -> Result<(), T::Error> {
+        self.0.push_back(seg.into_raw_msg()?);
         Ok(())
     }
 
-    pub fn extend<T: TryInto<RawMessageSeg>>(&mut self, segs: Vec<T>) -> Result<(), T::Error> {
-        self.0.extend(
-            segs.into_iter()
-                .map(|r| r.try_into())
-                .collect::<Result<Vec<_>, _>>()?,
-        );
+    pub fn append_front<T: IntoMessage>(&mut self, seg: T) -> Result<(), T::Error> {
+        self.0.push_front(seg.into_raw_msg()?);
+        Ok(())
+    }
+
+    pub fn extend<T: IntoMessage>(
+        &mut self,
+        segs: impl IntoIterator<Item = T>,
+    ) -> Result<(), T::Error> {
+        for ele in segs.into_iter() {
+            self.append_back(ele)?;
+        }
         Ok(())
     }
 
     #[inline]
-    pub fn into_inner(self) -> Vec<RawMessageSeg> {
+    pub fn into_inner(self) -> VecDeque<RawMessageSeg> {
         self.0
     }
 }

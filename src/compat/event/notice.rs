@@ -69,7 +69,7 @@ pub mod ob11to12 {
     use ob11event::notice::*;
 
     use crate::base::ext::ValueMapExt;
-    use crate::base::MessageChain;
+    use crate::base::IntoMessage;
     use crate::compat::compat_self;
     use crate::ob12;
 
@@ -114,6 +114,7 @@ pub mod ob11to12 {
         upload: GroupUploadFile,
     ) -> CompatResult<ob12event::Event> {
         use ob12event::message::{Group, MessageArgs, MessageEvent};
+        let file: ob12::message::File = upload.into();
         let event = Group {
             group_id,
             args: MessageArgs {
@@ -121,7 +122,7 @@ pub mod ob11to12 {
                 message_id,
                 user_id,
                 sub_type: Default::default(),
-                message: MessageChain::try_from_msg(ob12::MessageSeg::File(upload.into()))?,
+                message: file.into_msg_chain().map_err(CompatError::other)?,
                 alt_message: Some("[OneBot 11 File]".into()),
                 extra: Default::default(),
             },

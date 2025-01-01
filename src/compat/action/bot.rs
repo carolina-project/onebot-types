@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use ob_types_macro::__data;
 
 use super::*;
@@ -17,10 +19,10 @@ where
     type Output = ob11action::SendMsg;
 
     async fn into_ob11(self, msg_trans_fn: F) -> CompatResult<Self::Output> {
-        let message: Vec<_> = {
-            let mut transformed = vec![];
+        let message: VecDeque<_> = {
+            let mut transformed = VecDeque::new();
             for ele in self.message.into_inner() {
-                transformed.push(msg_trans_fn(ele).await.map_err(DeserializerError::custom)?);
+                transformed.push_back(msg_trans_fn(ele).await.map_err(DeserializerError::custom)?);
             }
 
             transformed

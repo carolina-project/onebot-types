@@ -2,6 +2,8 @@ use super::*;
 
 pub mod ob11to12 {
 
+    use std::collections::VecDeque;
+
     use crate::compat::{compat_self, CompatError};
 
     use super::*;
@@ -34,9 +36,9 @@ pub mod ob11to12 {
                             font,
                         },
                 }) => {
-                    let mut message = vec![];
+                    let mut message = VecDeque::new();
                     for ele in message_segs.into_inner() {
-                        message.push(trans_fn(ele).await?);
+                        message.push_back(trans_fn(ele).await?);
                     }
 
                     let sub_type = tool::serde_to_string(sub_type)?;
@@ -69,9 +71,9 @@ pub mod ob11to12 {
                             font,
                         },
                 }) => {
-                    let mut message = vec![];
+                    let mut message = VecDeque::new();
                     for ele in message_segs.into_inner() {
-                        message.push(trans_fn(ele).await?);
+                        message.push_back(trans_fn(ele).await?);
                     }
 
                     let sub_type = tool::serde_to_string(sub_type)?;

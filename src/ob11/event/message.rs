@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use ob_types_macro::__data;
 use serde::{
     de::{Error as DeErr, IntoDeserializer},
@@ -135,7 +137,7 @@ impl From<MsgEventChain> for MessageChain {
     }
 }
 impl MsgEventChain {
-    pub fn into_inner(self) -> Vec<RawMessageSeg> {
+    pub fn into_inner(self) -> VecDeque<RawMessageSeg> {
         self.0.into_inner()
     }
 }
