@@ -155,6 +155,14 @@ pub trait IntoMessageChain {
     fn into_msg_chain(self) -> Result<MessageChain, Self::Error>;
 }
 
+impl IntoMessageChain for MessageChain {
+    type Error = Infallible;
+
+    fn into_msg_chain(self) -> Result<MessageChain, Self::Error> {
+        Ok(self)
+    }
+}
+
 impl<T: IntoMessage, I: IntoIterator<Item = T>> IntoMessageChain for I {
     type Error = T::Error;
 
@@ -185,10 +193,7 @@ impl MessageChain {
 
     #[inline]
     pub fn remove<T: OBMessage>(&mut self, idx: usize) -> Result<T, ParseError> {
-        self.0
-            .remove(idx)
-            .ok_or(ParseError::NotFound(idx))?
-            .parse()
+        self.0.remove(idx).ok_or(ParseError::NotFound(idx))?.parse()
     }
 
     #[inline]
