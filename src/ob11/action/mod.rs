@@ -9,10 +9,7 @@ use ob_types_macro::__data;
 use serde::{ser::Error, Deserialize};
 use serde_value::{DeserializerError, SerializerError, Value};
 
-use crate::{
-    base::ext::{IntoValue, ValueExt},
-    ValueMap,
-};
+use crate::base::ext::{IntoValue, ValueExt};
 
 pub(crate) type EmptyResp = ();
 
@@ -26,7 +23,7 @@ pub struct RawAction {
 #[__data]
 pub struct ActionDetail {
     pub action: String,
-    pub params: ValueMap,
+    pub params: Value,
 }
 
 macro_rules! actions {
@@ -99,7 +96,7 @@ impl TryFrom<ActionDetail> for ActionType {
         Deserialize::deserialize(Value::from_map(
             [
                 ("action", action.into_value()),
-                ("params", Value::from_map(params)),
+                ("params", params),
             ]
             .into(),
         ))

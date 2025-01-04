@@ -122,14 +122,10 @@ macro_rules! compat_actions {
                 }
             }
 
-            pub fn into_ob11_data(self) -> Result<(&'static str, ValueMap), SerializerError> {
+            pub fn into_ob11_data(self) -> Result<(&'static str, Value), SerializerError> {
                 match self {
                     $(CompatAction::$ob11action(action)
-                        => Ok(($name,
-                            serde_value::to_value(action)
-                            .and_then(|r| {
-                                ValueMap::deserialize(r).map_err(SerializerError::custom)
-                            })?)),
+                        => Ok(($name, serde_value::to_value(action)?)),
                     )*
                 }
             }
@@ -270,22 +266,19 @@ impl FromOB11Resp for ob12::UserInfo {
 
     fn from_ob11(from: Self::In, _: ()) -> CompatResult<Self> {
         match from {
-            UserInfoResp::LoginInfo(ob11action::LoginInfo {
-                user_id,
-                nickname: user_display_name,
-            }) => {
+            UserInfoResp::LoginInfo(ob11action::LoginInfo { user_id, nickname }) => {
                 let user_id = user_id.to_string();
                 Ok(Self {
-                    user_name: user_id.clone(),
+                    user_name: nickname.clone(),
                     user_id,
-                    user_display_name,
+                    user_display_name: nickname,
                     user_remark: None,
                     extra: Default::default(),
                 })
             }
             UserInfoResp::StrangerInfo(ob11action::StrangerInfo {
                 user_id,
-                nickname: user_display_name,
+                nickname,
                 sex,
                 age,
             }) => {
@@ -299,23 +292,23 @@ impl FromOB11Resp for ob12::UserInfo {
                 ]
                 .into_map();
                 Ok(Self {
-                    user_name: user_id.clone(),
+                    user_name: nickname.clone(),
                     user_id,
-                    user_display_name,
+                    user_display_name: nickname,
                     user_remark: None,
                     extra,
                 })
             }
             UserInfoResp::FriendInfo(ob11action::FriendInfo {
                 user_id,
-                nickname: user_display_name,
+                nickname,
                 remark,
             }) => {
                 let user_id = user_id.to_string();
                 Ok(Self {
-                    user_name: user_id.clone(),
+                    user_name: nickname.clone(),
                     user_id,
-                    user_display_name,
+                    user_display_name: nickname,
                     user_remark: Some(remark),
                     extra: Default::default(),
                 })
@@ -323,8 +316,8 @@ impl FromOB11Resp for ob12::UserInfo {
             UserInfoResp::GroupMemberInfo(ob11action::GroupMemberInfo {
                 group_id: _,
                 user_id,
-                nickname: user_name,
-                card: user_display_name,
+                nickname,
+                card,
                 sex,
                 age,
                 area,
@@ -360,8 +353,8 @@ impl FromOB11Resp for ob12::UserInfo {
 
                 Ok(Self {
                     user_id: user_id.to_string(),
-                    user_name,
-                    user_display_name,
+                    user_name: nickname,
+                    user_display_name: card,
                     user_remark: None,
                     extra,
                 })

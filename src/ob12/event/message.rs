@@ -61,6 +61,7 @@ pub struct MessageExtacted {
     #[serde(rename = "self")]
     pub self_: BotSelf,
     pub chat_target: ChatTarget,
+    pub sender_id: String,
     pub message_id: String,
     pub message: MessageChain,
     pub alt_message: Option<String>,
@@ -130,8 +131,9 @@ impl MessageEvent {
             MessageEvent::Private(Private(args)) => Ok(MessageExtacted {
                 self_: args.self_,
                 chat_target: ChatTarget::Private {
-                    user_id: args.user_id,
+                    user_id: args.user_id.clone(),
                 },
+                sender_id: args.user_id,
                 message_id: args.message_id,
                 message: args.message,
                 alt_message: args.alt_message,
@@ -140,6 +142,7 @@ impl MessageEvent {
             MessageEvent::Group(Group { group_id, args }) => Ok(MessageExtacted {
                 self_: args.self_,
                 chat_target: ChatTarget::Group { group_id },
+                sender_id: args.user_id,
                 message_id: args.message_id,
                 message: args.message,
                 alt_message: args.alt_message,
@@ -155,6 +158,7 @@ impl MessageEvent {
                     guild_id,
                     channel_id,
                 },
+                sender_id: args.user_id,
                 message_id: args.message_id,
                 message: args.message,
                 alt_message: args.alt_message,
