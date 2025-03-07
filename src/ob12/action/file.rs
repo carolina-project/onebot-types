@@ -288,6 +288,20 @@ scalable_struct! {
     },
 }
 
+impl GetFile {
+    pub fn new(file_id: impl Into<String>) -> Self {
+        Self {
+            file_id: file_id.into(),
+            r#type: GetFileType::Url,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn set_type(&mut self, file_type: GetFileType) {
+        self.r#type = file_type;
+    }
+}
+
 #[__data]
 #[derive(OBAction)]
 #[action(resp = GetFileFrag, __crate_path = crate)]
