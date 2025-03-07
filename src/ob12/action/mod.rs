@@ -56,7 +56,7 @@ impl TryFrom<ActionDetail> for ActionType {
 }
 
 impl ActionDetail {
-    pub fn from_acton(action: impl OBAction) -> Result<Self, SerializerError> {
+    pub fn from_action(action: impl OBAction) -> Result<Self, SerializerError> {
         let action_name = action.action_name().to_owned();
         serde_value::to_value(action)
             .and_then(|r| ValueMap::deserialize(r).map_err(serde::ser::Error::custom))
