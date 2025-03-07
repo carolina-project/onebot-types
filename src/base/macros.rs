@@ -1,16 +1,21 @@
 #[allow(unused)]
 macro_rules! define_action {
-    {$(
+    {
+        $(#[data($tokens:tt)])?
         #[resp($resp:ty)]
         $it:item
-    )*} => {
-        $(
-            #[ob_types_macro::__data]
-            #[derive(ob_types_macro::OBAction)]
-            #[action(__crate_path = crate, resp = $resp)]
-            $it
-        )*
+        $($rest:tt)*
+    } => {
+        #[ob_types_macro::__data $(($tokens))?]
+        #[derive(ob_types_macro::OBAction)]
+        #[action(__crate_path = crate, resp = $resp)]
+        $it
+
+        define_action! {
+            $($rest)*
+        }
     };
+    {} => {}
 }
 
 macro_rules! trait_alias {

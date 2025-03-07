@@ -75,6 +75,55 @@ pub enum UploadKind {
     },
 }
 
+impl UploadKind {
+    pub fn url(headers: Option<HashMap<String, String>>, url: String) -> Self {
+        Self::Url {
+            headers,
+            url,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn path(path: String) -> Self {
+        Self::Path {
+            path,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn data(data: UploadData) -> Self {
+        Self::Data {
+            data,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn other(r#type: String) -> Self {
+        Self::Other {
+            r#type,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn extra(&self) -> &ValueMap {
+        match self {
+            UploadKind::Url { extra, .. } => extra,
+            UploadKind::Path { extra, .. } => extra,
+            UploadKind::Data { extra, .. } => extra,
+            UploadKind::Other { extra, .. } => extra,
+        }
+    }
+
+    pub fn extra_mut(&mut self) -> &mut ValueMap {
+        match self {
+            UploadKind::Url { extra, .. } => extra,
+            UploadKind::Path { extra, .. } => extra,
+            UploadKind::Data { extra, .. } => extra,
+            UploadKind::Other { extra, .. } => extra,
+        }
+    }
+}
+
 #[__data]
 pub struct FileOpt {
     #[serde(flatten)]
@@ -121,6 +170,49 @@ pub enum UploadFileReq {
     },
 }
 
+impl UploadFileReq {
+    pub fn prepare(name: String, total_size: i64) -> Self {
+        Self::Prepare {
+            name,
+            total_size,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn transfer(file_id: String, offset: i64, data: UploadData) -> Self {
+        Self::Transfer {
+            file_id,
+            offset,
+            data,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn finish(file_id: String, sha256: Option<String>) -> Self {
+        Self::Finish {
+            file_id,
+            sha256,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn extra(&self) -> &ValueMap {
+        match self {
+            UploadFileReq::Prepare { extra, .. } => extra,
+            UploadFileReq::Transfer { extra, .. } => extra,
+            UploadFileReq::Finish { extra, .. } => extra,
+        }
+    }
+
+    pub fn extra_mut(&mut self) -> &mut ValueMap {
+        match self {
+            UploadFileReq::Prepare { extra, .. } => extra,
+            UploadFileReq::Transfer { extra, .. } => extra,
+            UploadFileReq::Finish { extra, .. } => extra,
+        }
+    }
+}
+
 #[__data]
 #[serde(rename_all = "snake_case", tag = "stage")]
 pub enum GetFileReq {
@@ -134,6 +226,36 @@ pub enum GetFileReq {
         #[serde(flatten)]
         extra: ValueMap,
     },
+}
+
+impl GetFileReq {
+    pub fn prepare() -> Self {
+        Self::Prepare {
+            extra: Default::default(),
+        }
+    }
+
+    pub fn transfer(offset: i64, size: i64) -> Self {
+        Self::Transfer {
+            offset,
+            size,
+            extra: Default::default(),
+        }
+    }
+
+    pub fn extra(&self) -> &ValueMap {
+        match self {
+            GetFileReq::Prepare { extra } => extra,
+            GetFileReq::Transfer { extra, .. } => extra,
+        }
+    }
+
+    pub fn extra_mut(&mut self) -> &mut ValueMap {
+        match self {
+            GetFileReq::Prepare { extra } => extra,
+            GetFileReq::Transfer { extra, .. } => extra,
+        }
+    }
 }
 
 #[__data]
@@ -175,14 +297,35 @@ pub struct GetFileFragmented {
     pub req: GetFileReq,
 }
 
+impl GetFileFragmented {
+    pub fn new(file_id: impl Into<String>, req: GetFileReq) -> Self {
+        Self {
+            file_id: file_id.into(),
+            req,
+        }
+    }
+}
+
 #[__data]
 #[derive(OBAction)]
 #[action(resp = Uploaded, __crate_path = crate)]
 #[serde(transparent)]
 pub struct UploadFile(pub FileOpt);
 
+impl UploadFile {
+    pub fn new(opt: FileOpt) -> Self {
+        Self(opt)
+    }
+}
+
 #[__data]
 #[derive(OBAction)]
 #[action(resp = UploadFragmented, __crate_path = crate)]
 #[serde(transparent)]
 pub struct UploadFileFragmented(pub UploadFileReq);
+
+impl UploadFileFragmented {
+    pub fn new(req: UploadFileReq) -> Self {
+        Self(req)
+    }
+}

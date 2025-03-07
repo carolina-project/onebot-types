@@ -71,6 +71,20 @@ pub struct SendMsg {
     pub message: MessageChain,
 }
 
+impl SendMsg {
+    pub fn new(target: impl Into<ChatTarget>) -> Self {
+        Self {
+            target: target.into(),
+            message: MessageChain::default(),
+        }
+    }
+
+    pub fn message_chain(mut self, chain: impl Into<MessageChain>) -> Self {
+        self.message = chain.into();
+        self
+    }
+}
+
 #[__data]
 pub struct MessageResp {
     pub message_id: i32,
@@ -84,11 +98,23 @@ pub struct DeleteMsg {
     pub message_id: i32,
 }
 
+impl DeleteMsg {
+    pub fn new(message_id: i32) -> Self {
+        Self { message_id }
+    }
+}
+
 #[__data]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = GetMessageResp)]
 pub struct GetMsg {
     pub message_id: i32,
+}
+
+impl GetMsg {
+    pub fn new(message_id: i32) -> Self {
+        Self { message_id }
+    }
 }
 
 #[__data]
@@ -208,12 +234,18 @@ pub struct GetForwardMsg {
     pub id: String,
 }
 
+impl GetForwardMsg {
+    pub fn new(id: impl Into<String>) -> Self {
+        Self { id: id.into() }
+    }
+}
+
 #[__data]
 pub struct GetForwardMsgResp {
     pub message: Vec<MessageSeg>,
 }
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = LoginInfo)]
 pub struct GetLoginInfo;
@@ -224,11 +256,22 @@ pub struct LoginInfo {
     pub nickname: String,
 }
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = Cookies)]
 pub struct GetCookies {
     pub domain: Option<String>,
+}
+
+impl GetCookies {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn domain(mut self, domain: impl Into<String>) -> Self {
+        self.domain = Some(domain.into());
+        self
+    }
 }
 
 #[__data]
@@ -236,7 +279,7 @@ pub struct Cookies {
     pub cookies: String,
 }
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = CSRFToken)]
 pub struct GetCsrfToken;
@@ -246,11 +289,22 @@ pub struct CSRFToken {
     pub token: i32,
 }
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = Credentials)]
 pub struct GetCredentials {
     pub domain: Option<String>,
+}
+
+impl GetCredentials {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn domain(mut self, domain: impl Into<String>) -> Self {
+        self.domain = Some(domain.into());
+        self
+    }
 }
 
 #[__data]
@@ -272,6 +326,20 @@ pub struct GetRecord {
     pub out_format: String,
 }
 
+impl GetRecord {
+    pub fn new(file: impl Into<String>) -> Self {
+        Self {
+            file: file.into(),
+            out_format: "mp3".into(),
+        }
+    }
+
+    pub fn out_format(mut self, format: impl Into<String>) -> Self {
+        self.out_format = format.into();
+        self
+    }
+}
+
 #[__data]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = FileResp)]
@@ -279,27 +347,33 @@ pub struct GetImage {
     pub file: String,
 }
 
+impl GetImage {
+    pub fn new(file: impl Into<String>) -> Self {
+        Self { file: file.into() }
+    }
+}
+
 #[__data]
 pub struct IsAllowd {
     pub yes: bool,
 }
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = IsAllowd)]
 pub struct CanSendImage;
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = IsAllowd)]
 pub struct CanSendRecord;
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = Status)]
 pub struct GetStatus;
 
-#[__data]
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = VersionInfo)]
 pub struct GetVersionInfo;
@@ -320,7 +394,13 @@ pub struct SetRestart {
     pub delay: i32,
 }
 
-#[__data]
+impl SetRestart {
+    pub fn new(delay: i32) -> Self {
+        Self { delay }
+    }
+}
+
+#[__data(default)]
 #[derive(OBAction)]
 #[action(__crate_path = crate, resp = EmptyResp)]
 pub struct CleanCache;

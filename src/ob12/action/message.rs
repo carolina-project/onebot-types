@@ -21,3 +21,22 @@ scalable_struct! {
         message_id: String
     }
 }
+
+impl SendMessage {
+    pub fn new(target: ChatTarget, message: impl Into<MessageChain>) -> Self {
+        Self {
+            target,
+            message: message.into(),
+            extra: Default::default(),
+        }
+    }
+}
+
+impl DeleteMessage {
+    pub fn new(message_id: impl Into<String>) -> Self {
+        Self {
+            message_id: message_id.into(),
+            extra: Default::default(),
+        }
+    }
+}

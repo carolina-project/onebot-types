@@ -146,3 +146,30 @@ pub enum ChatTarget {
         detail_type: String,
     },
 }
+
+impl ChatTarget {
+    pub fn private(user_id: impl Into<String>) -> Self {
+        ChatTarget::Private {
+            user_id: user_id.into(),
+        }
+    }
+
+    pub fn group(group_id: impl Into<String>) -> Self {
+        ChatTarget::Group {
+            group_id: group_id.into(),
+        }
+    }
+
+    pub fn channel(guild_id: impl Into<String>, channel_id: impl Into<String>) -> Self {
+        ChatTarget::Channel {
+            guild_id: guild_id.into(),
+            channel_id: channel_id.into(),
+        }
+    }
+
+    pub fn other(detail_type: impl Into<String>) -> Self {
+        ChatTarget::Other {
+            detail_type: detail_type.into(),
+        }
+    }
+}

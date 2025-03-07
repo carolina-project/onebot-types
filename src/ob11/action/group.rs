@@ -34,8 +34,9 @@ define_action! {
     #[resp(EmptyResp)]
     pub struct SetGroupAnonymousBan {
         pub group_id: i64,
-        #[serde(alias = "anonymous_flag", alias = "flag")]
-        pub anonymous: AnonymousFlag,
+        pub anonymous: Option<AnonymousSender>,
+        #[serde(alias = "flag")]
+        pub anonymous_flag: Option<String>,
         #[serde(with = "duration_secs_opt")]
         pub duration: Option<Duration>,
     }
@@ -82,11 +83,184 @@ define_action! {
     }
 }
 
-#[__data]
-#[serde(untagged)]
-pub enum AnonymousFlag {
-    Sender(AnonymousSender),
-    Flag(String),
+impl SendGroupMsg {
+    pub fn new(group_id: i64) -> Self {
+        Self {
+            group_id,
+            message: MessageChain::default(),
+        }
+    }
+
+    pub fn message(mut self, message: impl Into<MessageChain>) -> Self {
+        self.message = message.into();
+        self
+    }
+}
+
+impl SetGroupKick {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            reject_add_request: None,
+        }
+    }
+
+    pub fn reject_add_request(mut self, reject_add_request: bool) -> Self {
+        self.reject_add_request = Some(reject_add_request);
+        self
+    }
+}
+
+impl SetGroupBan {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            duration: None,
+        }
+    }
+
+    pub fn duration(mut self, duration: Option<Duration>) -> Self {
+        self.duration = duration;
+        self
+    }
+}
+
+impl SetGroupAnonymousBan {
+    pub fn anonymous(group_id: i64, anonymous: AnonymousSender) -> Self {
+        Self {
+            group_id,
+            anonymous: Some(anonymous),
+            anonymous_flag: None,
+            duration: None,
+        }
+    }
+
+    pub fn anonymous_flag(group_id: i64, flag: impl Into<String>) -> Self {
+        Self {
+            group_id,
+            anonymous: None,
+            anonymous_flag: Some(flag.into()),
+            duration: None,
+        }
+    }
+
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = Some(duration);
+        self
+    }
+}
+
+impl SetGroupWholeBan {
+    pub fn new(group_id: i64) -> Self {
+        Self {
+            group_id,
+            enable: None,
+        }
+    }
+
+    pub fn enable(mut self, enable: Option<bool>) -> Self {
+        self.enable = enable;
+        self
+    }
+}
+
+impl SetGroupAdmin {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            enable: None,
+        }
+    }
+
+    pub fn enable(mut self, enable: Option<bool>) -> Self {
+        self.enable = enable;
+        self
+    }
+}
+
+impl SetGroupAnonymous {
+    pub fn builder() -> Self {
+        Self {
+            group_id: 0,
+            enable: None,
+        }
+    }
+
+    pub fn group_id(mut self, group_id: i64) -> Self {
+        self.group_id = group_id;
+        self
+    }
+
+    pub fn enable(mut self, enable: Option<bool>) -> Self {
+        self.enable = enable;
+        self
+    }
+
+    pub fn build(self) -> Self {
+        self
+    }
+}
+
+impl SetGroupCard {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            card: None,
+        }
+    }
+
+    pub fn card(mut self, card: Option<impl Into<String>>) -> Self {
+        self.card = card.map(Into::into);
+        self
+    }
+}
+
+impl SetGroupName {
+    pub fn new(group_id: i64, group_name: impl Into<String>) -> Self {
+        Self {
+            group_id,
+            group_name: group_name.into(),
+        }
+    }
+}
+
+impl SetGroupLeave {
+    pub fn new(group_id: i64) -> Self {
+        Self {
+            group_id,
+            is_dismiss: false,
+        }
+    }
+
+    pub fn is_dismiss(mut self, is_dismiss: bool) -> Self {
+        self.is_dismiss = is_dismiss;
+        self
+    }
+}
+
+impl SetGroupSpecialTitle {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            special_title: None,
+            duration: None,
+        }
+    }
+
+    pub fn special_title(mut self, special_title: Option<String>) -> Self {
+        self.special_title = special_title;
+        self
+    }
+
+    pub fn duration(mut self, duration: Option<Duration>) -> Self {
+        self.duration = duration;
+        self
+    }
 }
 
 const fn true_v() -> bool {
@@ -110,6 +284,41 @@ define_action! {
     }
 }
 
+impl SetGroupAddRequest {
+    pub fn new(flag: impl Into<String>, sub_type: AddGroupType) -> Self {
+        Self {
+            flag: flag.into(),
+            sub_type,
+            approve: true,
+            reason: None,
+        }
+    }
+
+    pub fn approve(mut self, approve: bool) -> Self {
+        self.approve = approve;
+        self
+    }
+
+    pub fn reason(mut self, reason: impl Into<String>) -> Self {
+        self.reason = Some(reason.into());
+        self
+    }
+}
+
+impl GetGroupInfo {
+    pub fn new(group_id: i64) -> Self {
+        Self {
+            group_id,
+            no_cache: false,
+        }
+    }
+
+    pub fn no_cache(mut self, no_cache: bool) -> Self {
+        self.no_cache = no_cache;
+        self
+    }
+}
+
 #[__data]
 pub struct GroupInfo {
     pub group_id: i64,
@@ -119,6 +328,7 @@ pub struct GroupInfo {
 }
 
 define_action! {
+    #[data(default)]
     #[resp(Vec<GroupInfo>)]
     pub struct GetGroupList;
     #[resp(GroupMemberInfo)]
@@ -127,6 +337,21 @@ define_action! {
         pub user_id: i64,
         #[serde(default)]
         pub no_cache: bool,
+    }
+}
+
+impl GetGroupMemberInfo {
+    pub fn new(group_id: i64, user_id: i64) -> Self {
+        Self {
+            group_id,
+            user_id,
+            no_cache: false,
+        }
+    }
+
+    pub fn no_cache(mut self, no_cache: bool) -> Self {
+        self.no_cache = no_cache;
+        self
     }
 }
 
@@ -156,6 +381,12 @@ define_action! {
     }
 }
 
+impl GetGroupMemberList {
+    pub fn new(group_id: i64) -> Self {
+        Self { group_id }
+    }
+}
+
 #[__data]
 #[serde(rename_all = "snake_case")]
 pub enum GroupHonor {
@@ -173,6 +404,20 @@ define_action! {
     pub struct GetGroupHonorInfo {
         pub group_id: i64,
         pub r#type: GroupHonor,
+    }
+}
+
+impl GetGroupHonorInfo {
+    pub fn new(group_id: i64) -> Self {
+        Self {
+            group_id,
+            r#type: GroupHonor::All,
+        }
+    }
+
+    pub fn set_type(mut self, r#type: GroupHonor) -> Self {
+        self.r#type = r#type;
+        self
     }
 }
 
